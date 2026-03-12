@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #F5F2EA; /* text color from theme applied as bg */
+    color: #0B3A2E; /* primary color applied as text */
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+
+/* Custom thermal receipt print styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #receipt-print-area, #receipt-print-area * {
+    visibility: visible;
+  }
+  #receipt-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    margin: 0;
+    padding: 0;
+    font-family: 'Courier New', Courier, monospace !important;
+  }
+}
+
+@keyframes fly-to-cart {
+    0% { transform: scale(0.5); opacity: 0; }
+    15% { transform: scale(1.2) translateY(-20px); opacity: 1; box-shadow: 0 20px 25px -5px rgba(202, 91, 4, 0.4); }
+    80% { transform: scale(1) translateY(30px); opacity: 0.8; }
+    100% { transform: scale(0.5) translateY(60px); opacity: 0; }
+}
+.animate-fly-up {
+    animation: fly-to-cart 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
