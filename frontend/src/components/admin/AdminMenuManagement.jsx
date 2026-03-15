@@ -14,6 +14,7 @@ export default function AdminMenuManagement() {
     
     // Availability Modal State
     const [availabilityModal, setAvailabilityModal] = useState(null); // { item, type: 'manual'|'today'|'custom' }
+    const [customTime, setCustomTime] = useState('1'); // Hours
 
     const [newItem, setNewItem] = useState({
         name: '',
@@ -286,21 +287,43 @@ export default function AdminMenuManagement() {
                                     <span className="text-[10px] text-nizam-textMuted uppercase tracking-widest">Until Midnight</span>
                                 </div>
                             </button>
-                            <button 
-                                onClick={() => {
-                                    const hours = prompt('How many hours?', '1');
-                                    if (hours && !isNaN(hours)) {
-                                        const until = new Date(Date.now() + parseInt(hours) * 3600000);
-                                        toggleAvailability(availabilityModal, false, until.toISOString());
-                                    }
-                                }}
-                                className="w-full text-left p-4 rounded-lg bg-black/40 border border-white/5 hover:border-nizam-gold/50 hover:bg-nizam-gold/5 transition-all group"
-                            >
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm font-medium text-white group-hover:text-nizam-gold transition-colors">Custom Time</span>
+                            <div className="p-4 rounded-lg bg-black/40 border border-white/5 space-y-3">
+                                <div className="flex justify-between items-center mb-1">
+                                    <span className="text-sm font-medium text-white">Custom Time</span>
                                     <span className="text-[10px] text-nizam-textMuted uppercase tracking-widest">Select Hours</span>
                                 </div>
-                            </button>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {['1', '2', '4', '8'].map(h => (
+                                        <button 
+                                            key={h}
+                                            onClick={() => setCustomTime(h)}
+                                            className={`py-2 rounded border text-[10px] font-bold transition-all ${customTime === h ? 'bg-nizam-gold border-nizam-gold text-black' : 'bg-white/5 border-white/10 text-nizam-textMuted hover:border-white/30'}`}
+                                        >
+                                            {h}h
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="flex gap-2">
+                                    <input 
+                                        type="number" 
+                                        value={customTime}
+                                        onChange={(e) => setCustomTime(e.target.value)}
+                                        className="flex-1 bg-black/40 border border-white/10 rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-nizam-gold"
+                                        placeholder="Enter hours..."
+                                    />
+                                    <button 
+                                        onClick={() => {
+                                            if (customTime && !isNaN(customTime)) {
+                                                const until = new Date(Date.now() + parseInt(customTime) * 3600000);
+                                                toggleAvailability(availabilityModal, false, until.toISOString());
+                                            }
+                                        }}
+                                        className="bg-nizam-gold text-black px-4 py-2 rounded text-[10px] font-bold uppercase tracking-widest hover:brightness-110 transition-all"
+                                    >
+                                        Set
+                                    </button>
+                                </div>
+                            </div>
                             <button 
                                 onClick={() => toggleAvailability(availabilityModal, false, null)}
                                 className="w-full text-left p-4 rounded-lg bg-black/40 border border-white/5 hover:border-nizam-gold/50 hover:bg-nizam-gold/5 transition-all group"

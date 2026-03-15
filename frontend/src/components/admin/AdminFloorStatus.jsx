@@ -107,6 +107,19 @@ export default function AdminFloorStatus({ orders: sessions, updateStatus, print
                                 <button onClick={() => session.ids.forEach(id => updateStatus(id, 'billed'))} className={`py-3 px-2 rounded font-bold text-[10px] sm:text-xs tracking-wider transition-all uppercase text-center shadow-lg ${isVip ? 'bg-gradient-to-b from-nizam-gold to-[#9e8020] text-black hover:brightness-110' : 'bg-gradient-to-br from-emerald-700 to-emerald-900 text-emerald-100 hover:from-emerald-600'}`}>
                                     Settle Table
                                 </button>
+                                <button 
+                                    onClick={() => {
+                                        if (confirm(`Cancel all active orders for Table ${session.tableId}?`)) {
+                                            session.ids.forEach(id => {
+                                                const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
+                                                fetch(`${API_URL}/orders/${id}`, { method: 'DELETE' });
+                                            });
+                                        }
+                                    }}
+                                    className="col-span-2 py-2 rounded font-bold text-[9px] tracking-widest transition-all uppercase text-center border border-red-900/40 text-red-500 hover:bg-red-900/20 bg-black/40 mt-1"
+                                >
+                                    Cancel Order
+                                </button>
                             </div>
                         </div>
                     );

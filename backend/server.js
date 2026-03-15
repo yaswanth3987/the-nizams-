@@ -161,6 +161,24 @@ app.delete('/api/tables/:tableId/orders', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+app.get('/api/tables/:tableId/sessions', async (req, res) => {
+    try {
+        const statuses = ['confirmed', 'active', 'billed', 'completed'];
+        const sessions = await getSessionsByTable(req.params.tableId, statuses);
+        res.json(sessions);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/tables/:tableId/new-orders', async (req, res) => {
+    try {
+        const orders = await getOrdersByTable(req.params.tableId, ['new', 'pending']);
+        res.json(orders);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 app.get('/api/new-orders', async (req, res) => {
     try {

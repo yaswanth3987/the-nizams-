@@ -43,7 +43,11 @@ export default function AdminTableOverview({ socket, API_URL }) {
             });
         }
 
+        // Fallback refresh every 5 seconds
+        const interval = setInterval(fetchStatuses, 5000);
+
         return () => {
+            clearInterval(interval);
             if (socket) {
                 socket.off('tableStatusUpdated');
                 socket.off('tableReset');
@@ -111,6 +115,18 @@ export default function AdminTableOverview({ socket, API_URL }) {
                                         {new Date(table.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </div>
                                 )}
+                                
+                                <button 
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (confirm(`Force reset Table ${table.tableId}? This will archive all active orders.`)) {
+                                            fetch(`${API_URL}/tables/${encodeURIComponent(table.tableId)}/orders`, { method: 'DELETE' });
+                                        }
+                                    }}
+                                    className="mt-3 opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 border border-white/10 hover:border-red-500/50 hover:text-red-400 text-[8px] font-bold uppercase tracking-widest px-2 py-1 rounded relative z-20"
+                                >
+                                    Reset Table
+                                </button>
                             </div>
                         );
                     })}

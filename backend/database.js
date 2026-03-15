@@ -453,6 +453,26 @@ const updateTableStatus = async (tableId, status) => {
     }
 };
 
+const getSessionsByTable = async (tableId, statuses) => {
+    const placeholders = statuses.map(() => '?').join(',');
+    const colName = isPg ? '"tableId"' : 'tableId';
+    const sql = isPg 
+        ? `SELECT * FROM table_sessions WHERE ${colName} = ? AND status IN (${placeholders}) ORDER BY "createdAt" DESC` 
+        : `SELECT * FROM table_sessions WHERE tableId = ? AND status IN (${placeholders}) ORDER BY createdAt DESC`;
+    const res = await runQuery(sql, [tableId.toString(), ...statuses]);
+    return res.rows.map(row => ({ ...row, items: typeof row.items === 'string' ? JSON.parse(row.items) : row.items }));
+};
+
+const getOrdersByTable = async (tableId, statuses) => {
+    const placeholders = statuses.map(() => '?').join(',');
+    const colName = isPg ? '"tableId"' : 'tableId';
+    const sql = isPg 
+        ? `SELECT * FROM orders WHERE ${colName} = ? AND status IN (${placeholders}) ORDER BY "createdAt" DESC` 
+        : `SELECT * FROM orders WHERE tableId = ? AND status IN (${placeholders}) ORDER BY createdAt DESC`;
+    const res = await runQuery(sql, [tableId.toString(), ...statuses]);
+    return res.rows.map(row => ({ ...row, items: typeof row.items === 'string' ? JSON.parse(row.items) : row.items }));
+};
+
 module.exports = {
     db, pgPool, runQuery, isPg, getOrdersByStatus, createOrder, addOrderToSession, updateOrderStatus,
     deleteOrder, clearTableOrders, getAnalyticsDaily, getItemAnalytics,
@@ -460,5 +480,5 @@ module.exports = {
     getEmployees, createEmployee, updateEmployee, deleteEmployee, markAttendance, getAttendanceToday,
     getMenuItems, addMenuItem, updateMenuItem, deleteMenuItem, seedMenu,
     updateMenuItemStatus, checkMenuAvailabilityReset, getSessionsByStatus, updateSessionStatus,
-    getTableStatuses, updateTableStatus
+    getTableStatuses, updateTableStatus, getSessionsByTable, getOrdersByTable
 };

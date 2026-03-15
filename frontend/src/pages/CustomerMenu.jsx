@@ -40,8 +40,10 @@ export default function CustomerMenu() {
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [orderStatus, setOrderStatus] = useState(null);
     const [addedItems, setAddedItems] = useState({});
-    const [view, setView] = useState('landing'); // 'landing' | 'menu' | 'book'
+    const [view, setView] = useState('landing'); // 'landing' | 'menu' | 'book' | 'orders'
     const [expandedCategory, setExpandedCategory] = useState('Biryani Thaali');
+    const [myOrders, setMyOrders] = useState([]);
+    const [isOrdersLoading, setIsOrdersLoading] = useState(false);
     const [flyingDots, setFlyingDots] = useState([]);
     
     const [assistanceStatus, setAssistanceStatus] = useState(null);
@@ -212,6 +214,52 @@ export default function CustomerMenu() {
         setSearchParams({ table });
     };
 
+    const fetchMyOrders = async () => {
+        if (!selectedTable) return;
+        setIsOrdersLoading(true);
+        try {
+            const tableId = selectedTable.startsWith('T') ? selectedTable : `T${selectedTable}`;
+            const [sessionsRes, newOrdersRes] = await Promise.all([
+                fetch(`${API_URL}/tables/${tableId}/sessions`),
+                fetch(`${API_URL}/tables/${tableId}/new-orders`)
+            ]);
+            const sessionsData = await sessionsRes.json();
+            const newOrdersData = await newOrdersRes.json();
+            
+            // Format sessions as status display
+            const formattedSessions = sessionsData.map(s => ({
+                id: s.id,
+                items: s.items,
+                total: s.finalTotal,
+                status: s.status === 'confirmed' ? 'Preparing' : (s.status === 'billed' ? 'Billed' : 'Completed'),
+                createdAt: s.createdAt
+            }));
+
+            const formattedNew = newOrdersData.map(o => ({
+                id: o.id,
+                items: o.items,
+                total: o.finalTotal,
+                status: 'Pending',
+                createdAt: o.createdAt
+            }));
+
+            setMyOrders([...formattedNew, ...formattedSessions]);
+        } catch (err) {
+            console.error("Failed to fetch my orders", err);
+        } finally {
+            setIsOrdersLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        let interval;
+        if (view === 'orders') {
+            fetchMyOrders();
+            interval = setInterval(fetchMyOrders, 10000); // Refresh every 10s
+        }
+        return () => clearInterval(interval);
+    }, [view]);
+
     const renderTableSelection = () => (
         <div className="min-h-screen bg-[#111312] py-8 px-4 flex flex-col items-center justify-center font-sans">
             <div className="w-full max-w-[360px] bg-[#1c1e1c] rounded-2xl shadow-2xl overflow-hidden border border-[#d4af37]/20 p-8 text-center">
@@ -308,6 +356,18 @@ export default function CustomerMenu() {
                             )}
                         </button>
 
+                        <button 
+                            onClick={() => setView('orders')}
+                            className="w-full bg-[#F5EFE3] text-[#6D421B] border border-[#E3D7C1] rounded-md p-3.5 flex items-center gap-3 hover:bg-[#EAE0CA] transition-colors shadow-sm"
+                        >
+                            <Clock strokeWidth={1.5} className="w-5 h-5 shrink-0 text-[#9E6E3D]" />
+                            <div className="text-left flex-1">
+                                <h2 className="font-semibold text-[13px] leading-tight text-[#6D421B]">My Orders</h2>
+                                <p className="text-[#9E6E3D] text-[10px] font-medium">Track your active orders & bill status</p>
+                            </div>
+                            <ChevronRight strokeWidth={2} className="w-4 h-4 text-[#9E6E3D]" />
+                        </button>
+
                         <button className="w-full bg-[#F5EFE3] text-[#6D421B] border border-[#E3D7C1] rounded-md p-3.5 flex items-center gap-3 hover:bg-[#EAE0CA] transition-colors shadow-sm">
                             <Globe strokeWidth={1.5} className="w-5 h-5 shrink-0 text-[#9E6E3D]" />
                             <div className="text-left flex-1">
@@ -380,7 +440,15 @@ export default function CustomerMenu() {
                         <div key={cat.id} className="bg-[#FCF5E4] rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.05)] border border-[#E9DCC8] overflow-hidden">
                             <div 
                                 className="flex items-center p-3.5 cursor-pointer hover:bg-[#F2E5CA]/50 active:bg-[#F2E5CA] transition-colors"
-                                onClick={() => setExpandedCategory(expandedCategory === cat.name ? null : cat.name)}
+                                onClick={(e) => {
+                                    const nextState = expandedCategory === cat.name ? null : cat.name;
+                                    setExpandedCategory(nextState);
+                                    if (nextState) {
+                                        setTimeout(() => {
+                                            e.currentTarget.scrollIntoView({ behavior: "smooth", block: "start" });
+                                        }, 100);
+                                    }
+                                }}
                             >
                                 <div className="w-[32px] h-[32px] shrink-0 rounded-full bg-[#CD6003] text-white flex items-center justify-center font-bold text-[15px] mr-3 shadow-inner">
                                     {cat.id}
@@ -401,7 +469,7 @@ export default function CustomerMenu() {
                                     <p className="text-center text-sm text-[#966336] py-3">Items coming soon</p>
                                 ) : (
                                     menu.filter(i => i.category === cat.name).map(item => (
-                                        <div key={item.id} className="bg-[#FFFFFF] rounded-md p-2.5 border border-[#E5D3BA] flex gap-3 shadow-[0_2px_5px_rgba(0,0,0,0.02)] relative">
+                                        <div key={item.id} className={`bg-[#FFFFFF] rounded-md p-2.5 border flex gap-3 shadow-[0_2px_5px_rgba(0,0,0,0.02)] relative transition-all duration-300 ${cart.find(i => i.id === item.id) ? 'border-[#CA5B04]/60 shadow-[0_0_15px_rgba(202,91,4,0.05)] bg-[#FFF9F2]' : 'border-[#E5D3BA]'}`}>
                                             {/* Image & Badge */}
                                             <div className="relative w-[84px] h-[84px] shrink-0 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
                                                 {item.image ? (
@@ -447,13 +515,39 @@ export default function CustomerMenu() {
                                                         </div>
                                                     )}
 
-                                                    <button 
-                                                        onClick={(e) => handleAddToCart(item, e)}
-                                                        disabled={!item.isAvailable}
-                                                        className={`w-full text-white text-[12px] font-bold py-1.5 rounded-[4px] shadow-[0_1px_2px_rgba(0,0,0,0.15)] active:scale-[0.98] transition-all leading-tight flex items-center justify-center gap-1.5 ${addedItems[item.id] ? 'bg-green-600 hover:bg-green-700' : (!item.isAvailable ? 'bg-gray-400 cursor-not-allowed opacity-60' : 'bg-[#CA5B04] hover:bg-[#A94C00]')}`}
-                                                    >
-                                                        {addedItems[item.id] ? <><CheckCircle size={14} strokeWidth={3}/> Added</> : (!item.isAvailable ? 'Out of Stock' : 'Add to Cart')}
-                                                    </button>
+                                                    {(() => {
+                                                        const inCart = cart.find(i => i.id === item.id);
+                                                        if (inCart) {
+                                                            return (
+                                                                <div className="flex items-center gap-2 bg-[#F5D890]/30 rounded-lg p-1 border border-[#F5D890]/50 mt-1 shadow-sm">
+                                                                    <button 
+                                                                        onClick={() => updateQuantity(item.id, -1)}
+                                                                        className="w-8 h-8 bg-white/80 hover:bg-[#CA5B04] hover:text-white rounded-md flex items-center justify-center text-[#CA5B04] transition-all shadow-sm active:scale-90 border border-[#F5D890]"
+                                                                    >
+                                                                        <Minus className="w-4 h-4" strokeWidth={3} />
+                                                                    </button>
+                                                                    <div className="flex-1 text-center font-black text-[#6A3D18] text-sm tabular-nums">
+                                                                        {inCart.qty}
+                                                                    </div>
+                                                                    <button 
+                                                                        onClick={() => updateQuantity(item.id, 1)}
+                                                                        className="w-8 h-8 bg-[#CA5B04] hover:bg-[#A94C00] rounded-md flex items-center justify-center text-white transition-all shadow-sm active:scale-90"
+                                                                    >
+                                                                        <Plus className="w-4 h-4" strokeWidth={3} />
+                                                                    </button>
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return (
+                                                            <button 
+                                                                onClick={(e) => handleAddToCart(item, e)}
+                                                                disabled={!item.isAvailable}
+                                                                className={`w-full text-white text-[12px] font-bold py-1.5 rounded-[4px] shadow-[0_1px_2px_rgba(0,0,0,0.15)] active:scale-[0.98] transition-all leading-tight flex items-center justify-center gap-1.5 ${addedItems[item.id] ? 'bg-green-600 hover:bg-green-700' : (!item.isAvailable ? 'bg-gray-400 cursor-not-allowed opacity-60' : 'bg-[#CA5B04] hover:bg-[#A94C00]')}`}
+                                                            >
+                                                                {addedItems[item.id] ? <><CheckCircle size={14} strokeWidth={3}/> Added</> : (!item.isAvailable ? 'Out of Stock' : 'Add to Cart')}
+                                                            </button>
+                                                        );
+                                                    })()}
 
                                                 </div>
                                             </div>
@@ -510,7 +604,7 @@ export default function CustomerMenu() {
             )}
 
             {isCartOpen && (
-                <div className="fixed inset-0 z-50 flex justify-center bg-black/60 backdrop-blur-sm sm:items-center items-end pb-0 sm:pb-4 sm:px-4">
+                <div className="fixed inset-0 z-50 flex justify-center bg-black/40 backdrop-blur-md sm:items-center items-end pb-0 sm:pb-4 sm:px-4">
                     <div className="w-full max-w-md bg-[#FFF6E5] rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[85vh] animate-slide-in overflow-hidden border-t border-white/20">
                         {/* Header */}
                         <div className="p-4 flex justify-between items-center border-b border-[#EAD5B9]">
@@ -605,10 +699,74 @@ export default function CustomerMenu() {
         </div>
     );
 
+    const renderMyOrders = () => (
+        <div className="min-h-screen bg-[#C2A165] py-4 px-4 flex flex-col items-center font-sans tracking-tight">
+            <div className="w-full max-w-[360px] bg-[#F4EBD7] rounded-lg shadow-xl overflow-hidden flex flex-col border border-white/20 flex-1 h-[90vh]">
+                <header className="bg-[#D35D01] text-white p-3 flex justify-between items-center z-10 relative">
+                    <button onClick={() => setView('landing')} className="flex items-center gap-1 font-bold text-[13px] hover:opacity-80 active:scale-95 z-20">
+                        <ChevronLeft strokeWidth={2.5} className="w-4 h-4" /> Back
+                    </button>
+                    <div className="absolute left-1/2 -translate-x-1/2 z-10 flex flex-col items-center">
+                        <h2 className="font-serif text-lg font-bold">My Orders</h2>
+                    </div>
+                    <div className="text-right text-[10px] z-20">
+                        <p className="font-semibold text-white/95">{selectedTable}</p>
+                    </div>
+                </header>
+
+                <main className="flex-1 p-4 space-y-4 overflow-y-auto bg-[#FFF9F0]">
+                    {isOrdersLoading ? (
+                        <div className="flex flex-col items-center justify-center h-40 space-y-2">
+                             <div className="w-8 h-8 border-4 border-[#D35D01]/20 border-t-[#D35D01] rounded-full animate-spin"></div>
+                             <p className="text-[#966336] text-xs font-bold uppercase tracking-widest">Fetching Orders...</p>
+                        </div>
+                    ) : myOrders.length === 0 ? (
+                        <div className="text-center py-20">
+                            <Clock className="w-12 h-12 text-[#966336]/20 mx-auto mb-4" />
+                            <p className="text-[#966336] font-medium">No active orders yet.</p>
+                            <button onClick={() => setView('menu')} className="mt-4 text-[#D35D01] font-bold text-sm underline decoration-wavy underline-offset-4">Order Something Yummy</button>
+                        </div>
+                    ) : (
+                        myOrders.map((order, idx) => (
+                            <div key={idx} className="bg-white rounded-xl border border-[#E9DCC8] p-4 shadow-sm">
+                                <div className="flex justify-between items-start mb-3 border-b border-[#F5EDDF] pb-2">
+                                    <div>
+                                        <p className="text-[10px] font-bold text-[#AB8B63] uppercase tracking-widest leading-none mb-1">Order ID #{order.id}</p>
+                                        <p className="text-[9px] text-[#966336]/60">{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                    </div>
+                                    <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full border ${
+                                        order.status === 'Pending' ? 'text-orange-500 border-orange-500/20 bg-orange-50' : 
+                                        order.status === 'Preparing' ? 'text-blue-500 border-blue-500/20 bg-blue-50' :
+                                        'text-green-600 border-green-600/20 bg-green-50'
+                                    }`}>
+                                        {order.status}
+                                    </span>
+                                </div>
+                                <div className="space-y-1.5">
+                                    {order.items.map((item, i) => (
+                                        <div key={i} className="flex justify-between text-[11px] text-[#6D421B]">
+                                            <span className="font-medium">x{item.qty} {item.name}</span>
+                                            <span className="font-bold">£{(item.price * item.qty).toFixed(2)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="mt-3 pt-2 border-t border-dashed border-[#E9DCC8] flex justify-between items-center">
+                                    <span className="text-[10px] font-bold text-[#966336] uppercase">Total</span>
+                                    <span className="text-sm font-black text-[#D35D01]">£{order.total.toFixed(2)}</span>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </main>
+            </div>
+        </div>
+    );
+
     const renderContent = () => {
         if (!selectedTable) return renderTableSelection();
         if (view === 'landing') return renderLanding();
         if (view === 'book') return renderBookTime();
+        if (view === 'orders') return renderMyOrders();
         return renderMenu();
     };
 
