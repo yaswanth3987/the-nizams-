@@ -405,7 +405,7 @@ export default function CustomerMenu() {
     );
 
     const renderHeader = () => (
-        <header className="sticky top-0 z-50 bg-[#F9F6F0]/80 backdrop-blur-md px-6 py-4 flex justify-between items-center border-b border-[#0B3A2E]/5">
+        <header className="sticky top-0 z-50 bg-[#F6EFE6]/80 backdrop-blur-md px-6 py-4 flex justify-between items-center border-b border-[#0B3A2E]/5">
             <div className="flex items-center gap-3">
                 <img src="/logo-icon.png" alt="The Nizam's" className="h-10 w-10 object-contain drop-shadow-sm brightness-90" />
                 <div className="h-8 w-px bg-[#0B3A2E]/10 mx-1"></div>
@@ -418,50 +418,50 @@ export default function CustomerMenu() {
     );
 
     const renderTabs = () => (
-        <div className="fixed bottom-0 left-0 right-0 bg-[#0B3A2E] px-6 py-3 pb-8 flex justify-between items-center z-[60] rounded-t-[32px] shadow-[0_-15px_40px_rgba(0,0,0,0.3)] border-t border-white/5">
+        <div className="fixed bottom-0 left-0 right-0 bg-[#0B3A2E] px-8 py-2 pb-6 flex justify-between items-center z-[60] rounded-t-[28px] shadow-[0_-10px_30px_rgba(0,0,0,0.3)] border-t border-white/5">
             <button 
                 onClick={() => setView('menu')}
-                className={`flex flex-col items-center gap-1.5 transition-all duration-300 ${view === 'menu' ? 'text-[#C29958] scale-110' : 'text-white/40'}`}
+                className={`flex flex-col items-center gap-1 transition-all duration-300 ${view === 'menu' ? 'text-[#C29958] scale-105' : 'text-white/40'}`}
             >
-                <div className={`p-2.5 rounded-2xl transition-all ${view === 'menu' ? 'bg-white/10 shadow-inner' : ''}`}>
-                    <MenuIcon size={22} strokeWidth={view === 'menu' ? 2.5 : 2} />
+                <div className={`p-2 rounded-xl transition-all ${view === 'menu' ? 'bg-white/5' : ''}`}>
+                    <MenuIcon size={20} strokeWidth={view === 'menu' ? 2.5 : 2} />
                 </div>
-                <span className="text-[9px] font-black uppercase tracking-[0.15em]">Menu</span>
+                <span className="text-[8px] font-black uppercase tracking-[0.15em]">Menu</span>
             </button>
             <button 
                 onClick={() => setView('search')}
-                className={`flex flex-col items-center gap-1.5 transition-all duration-300 ${view === 'search' ? 'text-[#C29958] scale-110' : 'text-white/40'}`}
+                className={`flex flex-col items-center gap-1 transition-all duration-300 ${view === 'search' ? 'text-[#C29958] scale-105' : 'text-white/40'}`}
             >
-                <div className={`p-2.5 rounded-2xl transition-all ${view === 'search' ? 'bg-white/10 shadow-inner' : ''}`}>
-                    <Search size={22} strokeWidth={view === 'search' ? 2.5 : 2} />
+                <div className={`p-2 rounded-xl transition-all ${view === 'search' ? 'bg-white/5' : ''}`}>
+                    <Search size={20} strokeWidth={view === 'search' ? 2.5 : 2} />
                 </div>
-                <span className="text-[9px] font-black uppercase tracking-[0.15em]">Search</span>
+                <span className="text-[8px] font-black uppercase tracking-[0.15em]">Search</span>
             </button>
             <button 
                 onClick={() => setView('orders')}
-                className="relative -top-6 flex flex-col items-center gap-1.5 transition-all group"
+                className="relative -top-5 flex flex-col items-center gap-1 transition-all group"
             >
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all shadow-2xl border-4 border-[#F9F6F0] ${view === 'orders' ? 'bg-[#C29958] text-[#0B3A2E] rotate-[360deg]' : 'bg-[#0B3A2E] text-white/80'}`}>
-                    <Clock size={28} strokeWidth={2.5} />
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-2xl border-4 border-[#F6EFE6] ${view === 'orders' ? 'bg-[#C29958] text-[#0B3A2E] rotate-[360deg]' : 'bg-[#0B3A2E] text-white/80'}`}>
+                    <Clock size={24} strokeWidth={2.5} />
                 </div>
-                <span className={`text-[9px] font-black uppercase tracking-[0.15em] mt-1 ${view === 'orders' ? 'text-[#C29958]' : 'text-white/40'}`}>Orders</span>
+                <span className={`text-[8px] font-black uppercase tracking-[0.15em] mt-0.5 ${view === 'orders' ? 'text-[#C29958]' : 'text-white/40'}`}>Orders</span>
                 {myOrders.length > 0 && (
-                    <span className="absolute top-0 right-0 w-5 h-5 bg-[#C29958] text-[#0B3A2E] rounded-full text-[10px] font-black flex items-center justify-center border-2 border-[#F9F6F0]">
+                    <span className="absolute top-0 right-0 w-4 h-4 bg-[#C29958] text-[#0B3A2E] rounded-full text-[9px] font-black flex items-center justify-center border-2 border-[#F6EFE6]">
                         {myOrders.length}
                     </span>
                 )}
             </button>
             <button 
                 onClick={() => setIsCartOpen(true)}
-                className={`flex flex-col items-center gap-1.5 transition-all duration-300 ${isCartOpen ? 'text-[#C29958] scale-110' : 'text-white/40'}`}
+                className={`flex flex-col items-center gap-1 transition-all duration-300 ${isCartOpen ? 'text-[#C29958] scale-105' : 'text-white/40'}`}
             >
-                <div className={`p-2.5 rounded-2xl transition-all ${isCartOpen ? 'bg-white/10 shadow-inner' : ''} relative`}>
-                    <ShoppingBag size={22} strokeWidth={isCartOpen ? 2.5 : 2} />
+                <div className={`p-2 rounded-xl transition-all ${isCartOpen ? 'bg-white/5' : ''} relative`}>
+                    <ShoppingBag size={20} strokeWidth={isCartOpen ? 2.5 : 2} />
                     {cart.length > 0 && (
-                        <span className="absolute top-2 right-2 w-2 h-2 bg-[#C29958] rounded-full animate-pulse shadow-[0_0_10px_#C29958]"></span>
+                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#C29958] rounded-full animate-pulse shadow-[0_0_10px_#C29958]"></span>
                     )}
                 </div>
-                <span className="text-[9px] font-black uppercase tracking-[0.15em]">Cart</span>
+                <span className="text-[8px] font-black uppercase tracking-[0.15em]">Cart</span>
             </button>
         </div>
     );
@@ -834,7 +834,7 @@ export default function CustomerMenu() {
     const renderPremiumContent = () => {
         if (!selectedTable) return renderTableSelection();
         return (
-            <div className="fixed inset-0 bg-[#F9F6F0] flex flex-col font-sans animate-fade-in no-scrollbar overflow-hidden select-none">
+            <div className="fixed inset-0 bg-[#F6EFE6] flex flex-col font-sans animate-fade-in no-scrollbar overflow-hidden select-none">
                 {renderHeader()}
                 <div className="flex-1 overflow-hidden flex flex-col relative">
                     {view === 'menu' && renderPremiumMenu()}
