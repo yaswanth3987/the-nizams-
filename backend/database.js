@@ -353,19 +353,24 @@ const seedMenu = async (menuData) => {
     console.log(`Current menu size: ${existing.length}. Checking for missing items...`);
     
     let addedCount = 0;
+    let updatedCount = 0;
     for (const item of menuData) {
-        const isDuplicate = existing.some(ext => 
+        const existingItem = existing.find(ext => 
             ext.name.toLowerCase() === item.name.toLowerCase() && 
             ext.category.toLowerCase() === item.category.toLowerCase()
         );
         
-        if (!isDuplicate) {
+        if (!existingItem) {
             await addMenuItem(item);
             addedCount++;
+        } else if (item.image && existingItem.image !== item.image) {
+            await updateMenuItem(existingItem.id, { ...existingItem, image: item.image });
+            updatedCount++;
         }
     }
-    if (addedCount > 0) {
-        console.log(`Successfully seeded ${addedCount} new menu items.`);
+    
+    if (addedCount > 0 || updatedCount > 0) {
+        console.log(`Successfully seeded ${addedCount} new items and updated images for ${updatedCount} items.`);
     } else {
         console.log('Menu is already up to date with seed data.');
     }
