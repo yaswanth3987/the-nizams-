@@ -51,6 +51,13 @@ export default function AdminDashboard() {
             audio.play().catch(e => console.log('Audio play blocked:', e));
         };
 
+        const playOrderPing = () => {
+            // Loud and clear digital alert sound
+            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2865/2865-preview.mp3');
+            audio.volume = 1.0; // Max volume
+            audio.play().catch(e => console.log('Audio play blocked:', e));
+        };
+
         const handleSessionUpdate = (session) => {
             setSessions(prev => {
                 const exists = prev.find(s => s.id === session.id);
@@ -58,7 +65,7 @@ export default function AdminDashboard() {
                     return prev.map(s => s.id === session.id ? session : s);
                 }
                 setUnreadAlerts(unread => unread + 1);
-                // playOrderPing(); // Removed if not defined or add definition
+                playOrderPing(); // Play sound for new table session
                 return [session, ...prev];
             });
             
@@ -72,7 +79,10 @@ export default function AdminDashboard() {
         socket.on('orderCreated', (newOrder) => {
             setNewOrders(prev => {
                 if (prev.some(o => o.id === newOrder.id)) return prev;
-                setTimeout(() => setUnreadAlerts(u => u + 1), 0);
+                setTimeout(() => {
+                    setUnreadAlerts(u => u + 1);
+                    playOrderPing(); // Play sound for new order
+                }, 0);
                 return [newOrder, ...prev];
             });
         });
