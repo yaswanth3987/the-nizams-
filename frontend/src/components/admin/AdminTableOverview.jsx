@@ -75,32 +75,40 @@ export default function AdminTableOverview({ socket, API_URL }) {
                 <p className="text-[#a8b8b2] text-sm">Real-time status overview of all restaurant tables.</p>
             </div>
 
-            <div className="p-6 bg-nizam-card border border-nizam-border rounded-lg shadow-xl relative overflow-hidden">
+            <div className="p-4 bg-nizam-card border border-nizam-border rounded-lg shadow-xl relative overflow-hidden">
                 {/* Decorative Elements */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-nizam-gold/5 blur-[50px] rounded-full point-events-none"></div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                {/* Legend - Moved to Top */}
+                <div className="mb-6 flex flex-wrap justify-start gap-4 px-4 py-2 bg-black/20 rounded-lg border border-white/5 w-fit">
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-emerald-400 uppercase tracking-wider"><span className="w-2 h-2 rounded bg-emerald-500"></span> Free</div>
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-yellow-500 uppercase tracking-wider"><span className="w-2 h-2 rounded bg-yellow-500"></span> Ordering</div>
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-blue-400 uppercase tracking-wider"><span className="w-2 h-2 rounded bg-blue-500"></span> Occupied</div>
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-orange-400 uppercase tracking-wider"><span className="w-2 h-2 rounded bg-orange-500"></span> Billing</div>
+                </div>
+
+                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
                     {tableStatuses.map((table) => {
                         const config = getStatusConfig(table.status);
 
                         return (
                             <div 
                                 key={table.tableId} 
-                                className={`flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all duration-300 relative overflow-hidden group shadow-lg ${config.color}`}
+                                className={`flex flex-col items-center justify-center p-3 rounded-lg border transition-all duration-300 relative overflow-hidden group shadow-md ${config.color}`}
                             >
                                 {/* Light bleed effect for the specific color */}
-                                <div className={`absolute top-0 inset-x-0 h-1/2 opacity-20 bg-gradient-to-b ${config.color.split(' ')[0]} to-transparent`}></div>
+                                <div className={`absolute top-0 inset-x-0 h-1/2 opacity-10 bg-gradient-to-b ${config.color.split(' ')[0]} to-transparent`}></div>
 
-                                <div className="text-3xl font-serif font-bold text-white mb-2 relative z-10 flex items-center gap-2">
-                                    <span className="opacity-50 text-xl font-sans"></span>{table.tableId}
+                                <div className="text-xl font-serif font-bold text-white mb-1 relative z-10 flex items-center gap-2">
+                                    {table.tableId}
                                 </div>
-                                <div className="flex items-center gap-2 relative z-10">
-                                    <span className={`w-2 h-2 rounded-full animate-pulse shadow-[0_0_8px_currentColor] ${config.iconBg}`}></span>
-                                    <span className="text-sm font-semibold tracking-widest uppercase">{config.label}</span>
+                                <div className="flex items-center gap-1.5 relative z-10">
+                                    <span className={`w-1.5 h-1.5 rounded-full animate-pulse shadow-[0_0_6px_currentColor] ${config.iconBg}`}></span>
+                                    <span className="text-[10px] font-semibold tracking-widest uppercase">{config.label}</span>
                                 </div>
                                 {table.updatedAt && (
-                                    <div className="mt-4 text-[9px] opacity-60 uppercase tracking-widest relative z-10">
-                                        Last Action: {new Date(table.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    <div className="mt-2 text-[8px] opacity-60 uppercase tracking-widest relative z-10">
+                                        {new Date(table.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </div>
                                 )}
                             </div>
@@ -109,13 +117,6 @@ export default function AdminTableOverview({ socket, API_URL }) {
                 </div>
             </div>
 
-            {/* Legend */}
-            <div className="mt-8 flex flex-wrap justify-center gap-6 px-4 py-3 bg-black/20 rounded-full border border-white/5 inline-flex mx-auto w-fit">
-                <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 uppercase tracking-wider"><span className="w-3 h-3 rounded bg-emerald-500"></span> Free</div>
-                <div className="flex items-center gap-2 text-xs font-bold text-yellow-500 uppercase tracking-wider"><span className="w-3 h-3 rounded bg-yellow-500"></span> Ordering</div>
-                <div className="flex items-center gap-2 text-xs font-bold text-blue-400 uppercase tracking-wider"><span className="w-3 h-3 rounded bg-blue-500"></span> Occupied</div>
-                <div className="flex items-center gap-2 text-xs font-bold text-orange-400 uppercase tracking-wider"><span className="w-3 h-3 rounded bg-orange-500"></span> Billing</div>
-            </div>
         </div>
     );
 }
