@@ -7,7 +7,7 @@
 :root {
   --primary-green: #0B3A2E;
   --accent-gold: #C29958;
-  --bg-cream: #F9F6F0;
+  --bg-cream: #F6EFE6;
   --text-primary: #0B3A2E;
   --text-secondary: #6D5D4B;
 }
@@ -73,6 +73,62 @@
   animation: fade-in 0.4s ease-out forwards;
 }
 
+
+@keyframes kitchen-steam {
+  0% { transform: translateY(0) scale(1); opacity: 0; filter: blur(4px); }
+  50% { opacity: 0.15; filter: blur(8px); }
+  100% { transform: translateY(-40px) scale(1.5); opacity: 0; filter: blur(12px); }
+}
+
+@keyframes spice-glow {
+  0% { box-shadow: 0 0 0 0 rgba(194, 153, 88, 0); }
+  50% { box-shadow: 0 0 25px 10px rgba(194, 153, 88, 0.3); }
+  100% { box-shadow: 0 0 0 0 rgba(194, 153, 88, 0); }
+}
+
+@keyframes flame-flicker {
+  0% { opacity: 0.05; transform: scale(1); }
+  25% { opacity: 0.1; transform: scale(1.02); }
+  50% { opacity: 0.07; transform: scale(0.98); }
+  75% { opacity: 0.12; transform: scale(1.01); }
+  100% { opacity: 0.05; transform: scale(1); }
+}
+
+@keyframes item-added-toast {
+  0% { transform: translateY(0); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(-30px); opacity: 0; }
+}
+
+@keyframes cart-bounce {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.2); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+@keyframes item-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@keyframes button-tap {
+  0% { transform: scale(1); }
+  30% { transform: scale(0.92); }
+  60% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.animate-steam { animation: kitchen-steam 1.5s ease-out forwards; }
+.animate-spice-glow { animation: spice-glow 0.8s ease-in-out forwards; }
+.animate-flame { animation: flame-flicker 0.6s infinite; }
+.animate-toast { animation: item-added-toast 1s ease-out forwards; }
+.animate-cart-bounce { animation: cart-bounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.animate-item-pop { animation: item-pop 0.4s ease-out; }
+.animate-button-tap { animation: button-tap 0.3s ease-out; }
+
 /* Custom scrollbar for menu */
 ::-webkit-scrollbar {
   width: 5px;
@@ -81,9 +137,9 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #CA5B0488;
+  background: #0B3A2E44;
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #CA5B04;
+  background: #0B3A2E;
 }

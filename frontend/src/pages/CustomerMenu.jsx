@@ -46,6 +46,21 @@ export default function CustomerMenu() {
     const [view, setView] = useState('menu'); // 'menu' | 'search' | 'orders'
     const [expandedCategory, setExpandedCategory] = useState('Biryani Thaali');
     const [myOrders, setMyOrders] = useState([]);
+    const [activeEffect, setActiveEffect] = useState(null); // { id, effect }
+    const [cartPulse, setCartPulse] = useState(false);
+
+    const KITCHEN_EFFECTS = ['steam', 'spice', 'flame'];
+
+    const triggerKitchenFeedback = (itemId) => {
+        const randomEffect = KITCHEN_EFFECTS[Math.floor(Math.random() * KITCHEN_EFFECTS.length)];
+        setActiveEffect({ id: itemId, effect: randomEffect });
+        setCartPulse(true);
+        if (window.navigator.vibrate) window.navigator.vibrate(10);
+        setTimeout(() => {
+            setActiveEffect(null);
+            setCartPulse(false);
+        }, 1000);
+    };
     const [isOrdersLoading, setIsOrdersLoading] = useState(false);
     
     const [assistanceStatus, setAssistanceStatus] = useState(null);
@@ -143,17 +158,15 @@ export default function CustomerMenu() {
     };
 
     const handleAddToCart = (item, e) => {
+        if (e) e.stopPropagation();
+        triggerKitchenFeedback(item.id);
         addToCart(item);
-        
-        // Button Added State
         setAddedItems(prev => ({ ...prev, [item.id]: true }));
-        setTimeout(() => {
-            setAddedItems(prev => ({ ...prev, [item.id]: false }));
-        }, 1500);
-
+        setTimeout(() => setAddedItems(prev => ({ ...prev, [item.id]: false })), 1500);
     };
 
     const updateQuantity = (id, delta) => {
+        if (delta > 0) triggerKitchenFeedback(id);
         setCart(prev => prev.map(item => {
             if (item.id === id) {
                 const newQty = item.qty + delta;
@@ -453,7 +466,7 @@ export default function CustomerMenu() {
             </button>
             <button 
                 onClick={() => setIsCartOpen(true)}
-                className={`flex flex-col items-center gap-1 transition-all duration-300 ${isCartOpen ? 'text-[#C29958] scale-105' : 'text-white/40'}`}
+                className={`flex flex-col items-center gap-1 transition-all duration-300 ${isCartOpen ? 'text-[#C29958] scale-105' : 'text-white/40'} ${cartPulse ? 'animate-cart-bounce' : ''}`}
             >
                 <div className={`p-2 rounded-xl transition-all ${isCartOpen ? 'bg-white/5' : ''} relative`}>
                     <ShoppingBag size={20} strokeWidth={isCartOpen ? 2.5 : 2} />
@@ -523,7 +536,28 @@ export default function CustomerMenu() {
                                             key={item.id} 
                                             className={`flex gap-5 p-3 rounded-[32px] transition-all duration-500 ${inCart ? 'bg-white shadow-[0_20px_40px_rgba(0,0,0,0.08)] border border-[#C29958]/10' : 'hover:bg-white/40'}`}
                                         >
-                                            <div className="relative w-28 h-28 shrink-0 rounded-[28px] overflow-hidden bg-white shadow-lg border border-white">
+                                            <div className={`relative w-28 h-28 shrink-0 rounded-[28px] overflow-hidden bg-white shadow-lg border border-white ${activeEffect?.id === item.id ? 'animate-item-pop' : ''}`}>
+                                                {/* Kitchen Effects Overlays */}
+                                                {activeEffect?.id === item.id && (
+                                                    <div className="absolute inset-0 z-10 pointer-events-none">
+                                                        {activeEffect.effect === 'steam' && (
+                                                            <div className="absolute inset-x-0 bottom-0 flex justify-center">
+                                                                <div className="w-12 h-12 bg-white/20 rounded-full blur-xl animate-steam"></div>
+                                                            </div>
+                                                        )}
+                                                        {activeEffect.effect === 'spice' && (
+                                                            <div className="absolute inset-0 animate-spice-glow rounded-[28px]"></div>
+                                                        )}
+                                                        {activeEffect.effect === 'flame' && (
+                                                            <div className="absolute inset-0 bg-gradient-to-t from-orange-500/10 to-transparent animate-flame"></div>
+                                                        )}
+                                                        <div className="absolute inset-0 flex items-center justify-center">
+                                                            <span className="bg-[#0B3A2E] text-[#C29958] text-[8px] font-black uppercase px-3 py-1.5 rounded-full shadow-2xl animate-toast border border-[#C29958]/20">
+                                                                Added to cart
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                )}
                                                 {item.image ? (
                                                     <img src={item.image} alt={item.name} className={`w-full h-full object-cover transition-all duration-500 ${item.isAvailable ? '' : 'grayscale opacity-40'} ${inCart ? 'scale-105' : ''}`} />
                                                 ) : (
@@ -558,7 +592,7 @@ export default function CustomerMenu() {
                                                             <span className="text-sm font-black text-[#0B3A2E] min-w-[16px] text-center tabular-nums">{inCart.qty}</span>
                                                             <button 
                                                                 onClick={() => updateQuantity(item.id, 1)}
-                                                                className="w-7 h-7 bg-[#0B3A2E] rounded-full flex items-center justify-center text-white shadow-lg active:scale-75 transition-all"
+                                                                className="w-7 h-7 bg-[#0B3A2E] rounded-full flex items-center justify-center text-white shadow-lg active:scale-75 transition-all animate-button-tap"
                                                             >
                                                                 <Plus size={14} strokeWidth={3} />
                                                             </button>
@@ -567,7 +601,7 @@ export default function CustomerMenu() {
                                                         <button 
                                                             onClick={(e) => handleAddToCart(item, e)}
                                                             disabled={!item.isAvailable}
-                                                            className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-black text-[10px] tracking-[0.1em] uppercase transition-all shadow-lg active:scale-95 ${!item.isAvailable ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-[#0B3A2E] text-white hover:bg-[#082e25] ring-4 ring-transparent hover:ring-[#0B3A2E]/10'}`}
+                                                            className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-black text-[10px] tracking-[0.1em] uppercase transition-all shadow-lg active:scale-95 ${!item.isAvailable ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-[#0B3A2E] text-white hover:bg-[#082e25] ring-4 ring-transparent hover:ring-[#0B3A2E]/10'} ${activeEffect?.id === item.id ? 'animate-button-tap' : ''}`}
                                                         >
                                                             {item.isAvailable ? <><Plus size={14} strokeWidth={3} /> Add</> : 'Unavailable'}
                                                         </button>
