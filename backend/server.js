@@ -173,7 +173,7 @@ app.get('/api/tables/:tableId/sessions', async (req, res) => {
 
 app.get('/api/tables/:tableId/new-orders', async (req, res) => {
     try {
-        const orders = await getOrdersByTable(req.params.tableId, ['new', 'pending']);
+        const orders = await getOrdersByTable(req.params.tableId, ['new', 'pending', 'accepted', 'rejected']);
         res.json(orders);
     } catch (err) {
         res.status(500).json({ error: err.message });

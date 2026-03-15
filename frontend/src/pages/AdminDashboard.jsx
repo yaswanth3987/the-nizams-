@@ -199,9 +199,15 @@ export default function AdminDashboard() {
     };
 
     const cancelOrder = async (id) => {
-        if (!confirm('Are you sure you want to cancel this order?')) return;
+        if (!confirm('Reject this order? The customer will be notified.')) return;
         try {
-            await fetch(`${API_URL}/orders/${id}`, { method: 'DELETE' });
+            // Mark as rejected (not delete) so order status is properly tracked
+            await fetch(`${API_URL}/new-orders/${id}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'rejected' })
+            });
+            fetchNewOrders();
         } catch (err) {
             console.error(err);
         }

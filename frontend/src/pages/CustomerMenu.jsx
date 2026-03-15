@@ -233,20 +233,34 @@ export default function CustomerMenu() {
             const sessionsData = await sessionsRes.json();
             const newOrdersData = await newOrdersRes.json();
             
-            // Format sessions as status display
+            // Map session statuses to customer-friendly labels
+            const statusLabel = (s) => {
+                if (s === 'confirmed' || s === 'active') return 'Preparing';
+                if (s === 'billed' || s === 'payment') return 'Ready to Pay';
+                if (s === 'completed') return 'Completed';
+                return 'Processing';
+            };
+
             const formattedSessions = sessionsData.map(s => ({
                 id: s.id,
                 items: s.items,
                 total: s.finalTotal,
-                status: s.status === 'confirmed' ? 'Preparing' : (s.status === 'billed' ? 'Billed' : 'Completed'),
+                status: statusLabel(s.status),
                 createdAt: s.createdAt
             }));
+
+            // Include new, pending, accepted, and rejected orders
+            const rawStatusLabel = (s) => {
+                if (s === 'accepted') return 'Accepted ✓';
+                if (s === 'rejected') return 'Rejected ✗';
+                return 'Pending';
+            };
 
             const formattedNew = newOrdersData.map(o => ({
                 id: o.id,
                 items: o.items,
                 total: o.finalTotal,
-                status: 'Pending',
+                status: rawStatusLabel(o.status),
                 createdAt: o.createdAt
             }));
 
