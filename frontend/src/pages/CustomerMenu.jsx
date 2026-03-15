@@ -62,6 +62,7 @@ export default function CustomerMenu() {
         }, 1000);
     };
     const [isOrdersLoading, setIsOrdersLoading] = useState(false);
+    const [isMenuLoading, setIsMenuLoading] = useState(true);
     
     const [assistanceStatus, setAssistanceStatus] = useState(null);
     const [assistanceCooldown, setAssistanceCooldown] = useState(() => {
@@ -119,14 +120,19 @@ export default function CustomerMenu() {
         setMenu(menuData);
         
         const fetchRemoteMenu = () => {
+            setIsMenuLoading(true);
             fetch(`${API_URL}/menu`)
                 .then(res => res.json())
                 .then(data => {
                     if(data && data.length > 0) {
-                        setMenu(data); // Use server data as source of truth
+                        setMenu(data);
                     }
+                    setIsMenuLoading(false);
                 })
-                .catch(err => console.log("Silent fail on menu API, using defaults"));
+                .catch(err => {
+                    console.log("Silent fail on menu API, using defaults");
+                    setIsMenuLoading(false);
+                });
         };
 
         fetchRemoteMenu();
@@ -431,50 +437,50 @@ export default function CustomerMenu() {
     );
 
     const renderTabs = () => (
-        <div className="fixed bottom-0 left-0 right-0 bg-[#0B3A2E] px-8 py-2 pb-6 flex justify-between items-center z-[60] rounded-t-[28px] shadow-[0_-10px_30px_rgba(0,0,0,0.3)] border-t border-white/5">
+        <div className="fixed bottom-0 left-0 right-0 h-[64px] bg-[#0B3A2E]/95 backdrop-blur-xl px-8 flex justify-between items-center z-[100] rounded-t-[24px] shadow-[0_-8px_30px_rgba(0,0,0,0.3)] border-t border-white/10">
             <button 
                 onClick={() => setView('menu')}
-                className={`flex flex-col items-center gap-1 transition-all duration-300 ${view === 'menu' ? 'text-[#C29958] scale-105' : 'text-white/40'}`}
+                className={`flex flex-col items-center gap-0.5 transition-all duration-300 ${view === 'menu' ? 'text-[#C29958] scale-105' : 'text-white/40'}`}
             >
-                <div className={`p-2 rounded-xl transition-all ${view === 'menu' ? 'bg-white/5' : ''}`}>
-                    <MenuIcon size={20} strokeWidth={view === 'menu' ? 2.5 : 2} />
+                <div className={`p-1.5 rounded-lg transition-all ${view === 'menu' ? 'bg-white/5' : ''}`}>
+                    <MenuIcon size={18} strokeWidth={view === 'menu' ? 2.5 : 2} />
                 </div>
-                <span className="text-[8px] font-black uppercase tracking-[0.15em]">Menu</span>
+                <span className="text-[7px] font-black uppercase tracking-[0.15em]">Menu</span>
             </button>
             <button 
                 onClick={() => setView('search')}
-                className={`flex flex-col items-center gap-1 transition-all duration-300 ${view === 'search' ? 'text-[#C29958] scale-105' : 'text-white/40'}`}
+                className={`flex flex-col items-center gap-0.5 transition-all duration-300 ${view === 'search' ? 'text-[#C29958] scale-105' : 'text-white/40'}`}
             >
-                <div className={`p-2 rounded-xl transition-all ${view === 'search' ? 'bg-white/5' : ''}`}>
-                    <Search size={20} strokeWidth={view === 'search' ? 2.5 : 2} />
+                <div className={`p-1.5 rounded-lg transition-all ${view === 'search' ? 'bg-white/5' : ''}`}>
+                    <Search size={18} strokeWidth={view === 'search' ? 2.5 : 2} />
                 </div>
-                <span className="text-[8px] font-black uppercase tracking-[0.15em]">Search</span>
+                <span className="text-[7px] font-black uppercase tracking-[0.15em]">Search</span>
             </button>
             <button 
                 onClick={() => setView('orders')}
-                className="relative -top-5 flex flex-col items-center gap-1 transition-all group"
+                className="relative -top-4 flex flex-col items-center gap-0.5 transition-all group"
             >
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-2xl border-4 border-[#F6EFE6] ${view === 'orders' ? 'bg-[#C29958] text-[#0B3A2E] rotate-[360deg]' : 'bg-[#0B3A2E] text-white/80'}`}>
-                    <Clock size={24} strokeWidth={2.5} />
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-2xl border-4 border-[#F6EFE6] ${view === 'orders' ? 'bg-[#C29958] text-[#0B3A2E] rotate-[360deg]' : 'bg-[#0B3A2E] text-white/80'}`}>
+                    <Clock size={20} strokeWidth={2.5} />
                 </div>
-                <span className={`text-[8px] font-black uppercase tracking-[0.15em] mt-0.5 ${view === 'orders' ? 'text-[#C29958]' : 'text-white/40'}`}>Orders</span>
+                <span className={`text-[7px] font-black uppercase tracking-[0.15em] mt-0.5 ${view === 'orders' ? 'text-[#C29958]' : 'text-white/40'}`}>Orders</span>
                 {myOrders.length > 0 && (
-                    <span className="absolute top-0 right-0 w-4 h-4 bg-[#C29958] text-[#0B3A2E] rounded-full text-[9px] font-black flex items-center justify-center border-2 border-[#F6EFE6]">
+                    <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-[#C29958] text-[#0B3A2E] rounded-full text-[8px] font-black flex items-center justify-center border-2 border-[#F6EFE6]">
                         {myOrders.length}
                     </span>
                 )}
             </button>
             <button 
                 onClick={() => setIsCartOpen(true)}
-                className={`flex flex-col items-center gap-1 transition-all duration-300 ${isCartOpen ? 'text-[#C29958] scale-105' : 'text-white/40'} ${cartPulse ? 'animate-cart-bounce' : ''}`}
+                className={`flex flex-col items-center gap-0.5 transition-all duration-300 ${isCartOpen ? 'text-[#C29958] scale-105' : 'text-white/40'} ${cartPulse ? 'animate-cart-bounce' : ''}`}
             >
-                <div className={`p-2 rounded-xl transition-all ${isCartOpen ? 'bg-white/5' : ''} relative`}>
-                    <ShoppingBag size={20} strokeWidth={isCartOpen ? 2.5 : 2} />
+                <div className={`p-1.5 rounded-lg transition-all ${isCartOpen ? 'bg-white/5' : ''} relative`}>
+                    <ShoppingBag size={18} strokeWidth={isCartOpen ? 2.5 : 2} />
                     {cart.length > 0 && (
-                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#C29958] rounded-full animate-pulse shadow-[0_0_10px_#C29958]"></span>
+                        <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-[#C29958] rounded-full animate-pulse shadow-[0_0_10px_#C29958]"></span>
                     )}
                 </div>
-                <span className="text-[8px] font-black uppercase tracking-[0.15em]">Cart</span>
+                <span className="text-[7px] font-black uppercase tracking-[0.15em]">Cart</span>
             </button>
         </div>
     );
@@ -484,7 +490,7 @@ export default function CustomerMenu() {
         const featuredItem = menu.find(i => i.name === 'Nizami Dum Biryani') || menu[0];
 
         return (
-            <div className="flex-1 overflow-y-auto pb-48 no-scrollbar scroll-smooth">
+            <div className="flex-1 overflow-y-auto pb-[90px] no-scrollbar scroll-smooth">
                 {/* Categories Bar */}
                 <div className="flex overflow-x-auto px-6 py-5 gap-8 no-scrollbar sticky top-0 bg-[#F9F6F0]/90 backdrop-blur-xl z-[45] border-b border-[#0B3A2E]/5 shadow-sm">
                     {categories.map(cat => (
@@ -521,119 +527,139 @@ export default function CustomerMenu() {
                 </div>
 
                 {/* Menu Grid */}
-                <div className="px-6 space-y-10">
-                    {categories.map(cat => (
-                        <div key={cat.id} id={`cat-${cat.name}`} className="space-y-6 pt-2 scroll-mt-24">
-                            <div className="flex items-center gap-4">
-                                <h3 className="text-[#0B3A2E] text-2xl font-black font-serif">{cat.name}</h3>
-                                <div className="h-px flex-1 bg-gradient-to-r from-[#0B3A2E]/20 to-transparent"></div>
+                <div className="px-4 space-y-8 mt-2">
+                    {isMenuLoading ? (
+                        [1,2,3,4].map(n => (
+                            <div key={n} className="flex gap-4 p-4 bg-white rounded-[20px] premium-shadow border border-black/5 animate-pulse">
+                                <div className="w-24 h-24 bg-gray-100 rounded-[18px] skeleton shrink-0"></div>
+                                <div className="flex-1 space-y-3 py-1">
+                                    <div className="h-4 bg-gray-100 rounded-full w-3/4 skeleton"></div>
+                                    <div className="h-3 bg-gray-100 rounded-full w-1/2 skeleton"></div>
+                                    <div className="pt-4 flex gap-2">
+                                        <div className="h-8 bg-gray-100 rounded-full w-20 skeleton"></div>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="space-y-5">
-                                {menu.filter(i => i.category === cat.name).map(item => {
-                                    const inCart = cart.find(i => i.id === item.id);
-                                    return (
-                                        <div 
-                                            key={item.id} 
-                                            className={`flex gap-5 p-3 rounded-[32px] transition-all duration-500 ${inCart ? 'bg-white shadow-[0_20px_40px_rgba(0,0,0,0.08)] border border-[#C29958]/10' : 'hover:bg-white/40'}`}
-                                        >
-                                            <div className={`relative w-28 h-28 shrink-0 rounded-[28px] overflow-hidden bg-white shadow-lg border border-white ${activeEffect?.id === item.id ? 'animate-item-pop' : ''}`}>
-                                                {/* Kitchen Effects Overlays */}
-                                                {activeEffect?.id === item.id && (
-                                                    <div className="absolute inset-0 z-10 pointer-events-none">
-                                                        {activeEffect.effect === 'steam' && (
-                                                            <div className="absolute inset-x-0 bottom-0 flex justify-center">
-                                                                <div className="w-12 h-12 bg-white/20 rounded-full blur-xl animate-steam"></div>
+                        ))
+                    ) : (
+                        categories.map(cat => (
+                            <div key={cat.id} id={`cat-${cat.name}`} className="space-y-5 pt-2 scroll-mt-24">
+                                <div className="flex items-center gap-4 mb-2">
+                                    <h3 className="text-[#0B3A2E] text-xl font-bold font-serif opacity-90">{cat.name}</h3>
+                                    <div className="h-[2px] flex-1 bg-gradient-to-r from-[#0B3A2E]/10 to-transparent"></div>
+                                </div>
+                                <div className="space-y-5 flex flex-col">
+                                    {menu.filter(i => i.category === cat.name).map(item => {
+                                        const inCart = cart.find(i => i.id === item.id);
+                                        return (
+                                            <div 
+                                                key={item.id} 
+                                                className={`flex gap-4 p-4 rounded-[20px] transition-all duration-300 bg-white premium-shadow border border-black/5 ${inCart ? 'ring-1 ring-[#C29958]/20 bg-gradient-to-br from-white to-[#F6EFE6]/20' : ''}`}
+                                            >
+                                                <div className={`relative w-24 h-24 shrink-0 rounded-[18px] overflow-hidden bg-[#F6EFE6]/30 border border-black/5 ${activeEffect?.id === item.id ? 'animate-item-pop' : ''}`}>
+                                                    {/* Kitchen Effects Overlays */}
+                                                    {activeEffect?.id === item.id && (
+                                                        <div className="absolute inset-0 z-10 pointer-events-none">
+                                                            {activeEffect.effect === 'steam' && (
+                                                                <div className="absolute inset-x-0 bottom-0 flex justify-center">
+                                                                    <div className="w-12 h-12 bg-white/30 rounded-full blur-xl animate-steam"></div>
+                                                                </div>
+                                                            )}
+                                                            {activeEffect.effect === 'spice' && (
+                                                                <div className="absolute inset-0 animate-spice-glow rounded-[18px]"></div>
+                                                            )}
+                                                            {activeEffect.effect === 'flame' && (
+                                                                <div className="absolute inset-0 bg-gradient-to-t from-orange-500/10 to-transparent animate-flame"></div>
+                                                            )}
+                                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                                <span className="bg-[#0B3A2E]/90 backdrop-blur-md text-[#C29958] text-[8px] font-black uppercase px-2 py-1 rounded-full shadow-2xl animate-toast border border-[#C29958]/20">
+                                                                    Added
+                                                                </span>
                                                             </div>
-                                                        )}
-                                                        {activeEffect.effect === 'spice' && (
-                                                            <div className="absolute inset-0 animate-spice-glow rounded-[28px]"></div>
-                                                        )}
-                                                        {activeEffect.effect === 'flame' && (
-                                                            <div className="absolute inset-0 bg-gradient-to-t from-orange-500/10 to-transparent animate-flame"></div>
-                                                        )}
-                                                        <div className="absolute inset-0 flex items-center justify-center">
-                                                            <span className="bg-[#0B3A2E] text-[#C29958] text-[8px] font-black uppercase px-3 py-1.5 rounded-full shadow-2xl animate-toast border border-[#C29958]/20">
-                                                                Added to cart
-                                                            </span>
                                                         </div>
-                                                    </div>
-                                                )}
-                                                {item.image ? (
-                                                    <img src={item.image} alt={item.name} className={`w-full h-full object-cover transition-all duration-500 ${item.isAvailable ? '' : 'grayscale opacity-40'} ${inCart ? 'scale-105' : ''}`} />
-                                                ) : (
-                                                    <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 p-2">
-                                                        <ShoppingBag size={20} className="text-gray-200" />
-                                                        <span className="text-[8px] text-gray-300 uppercase font-black mt-1">No Image</span>
-                                                    </div>
-                                                )}
-                                                {!item.isAvailable && (
-                                                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center backdrop-blur-[2px]">
-                                                        <span className="bg-white/90 text-black text-[9px] font-black uppercase px-2 py-1 rounded-lg tracking-widest shadow-xl">Out</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="flex-1 flex flex-col justify-between py-1.5 pr-2">
-                                                <div>
-                                                    <div className="flex justify-between items-start mb-1.5">
-                                                        <h4 className="font-extrabold text-[#0B3A2E] text-[15px] leading-tight pr-3">{item.name}</h4>
-                                                        <span className="font-black text-[#0B3A2E] text-base">£{item.price.toFixed(2)}</span>
-                                                    </div>
-                                                    <p className="text-[#6D5D4B] text-[11px] leading-relaxed line-clamp-2 font-medium opacity-80">{item.desc}</p>
-                                                </div>
-                                                <div className="flex justify-start pt-3">
-                                                    {inCart ? (
-                                                        <div className="flex items-center gap-4 bg-[#F5E6CC]/40 rounded-full p-1.5 border border-[#C29958]/20 transition-all animate-slide-in shadow-inner">
-                                                            <button 
-                                                                onClick={() => updateQuantity(item.id, -1)}
-                                                                className="w-7 h-7 bg-white rounded-full flex items-center justify-center text-[#0B3A2E] shadow-md active:scale-75 transition-all"
-                                                            >
-                                                                <Minus size={14} strokeWidth={3} />
-                                                            </button>
-                                                            <span className="text-sm font-black text-[#0B3A2E] min-w-[16px] text-center tabular-nums">{inCart.qty}</span>
-                                                            <button 
-                                                                onClick={() => updateQuantity(item.id, 1)}
-                                                                className="w-7 h-7 bg-[#0B3A2E] rounded-full flex items-center justify-center text-white shadow-lg active:scale-75 transition-all animate-button-tap"
-                                                            >
-                                                                <Plus size={14} strokeWidth={3} />
-                                                            </button>
-                                                        </div>
+                                                    )}
+                                                    {item.image ? (
+                                                        <img src={item.image} alt={item.name} className={`w-full h-full object-cover transition-all duration-700 ${item.isAvailable ? '' : 'grayscale opacity-40'} ${inCart ? 'scale-110' : ''}`} />
                                                     ) : (
-                                                        <button 
-                                                            onClick={(e) => handleAddToCart(item, e)}
-                                                            disabled={!item.isAvailable}
-                                                            className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-black text-[10px] tracking-[0.1em] uppercase transition-all shadow-lg active:scale-95 ${!item.isAvailable ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-[#0B3A2E] text-white hover:bg-[#082e25] ring-4 ring-transparent hover:ring-[#0B3A2E]/10'} ${activeEffect?.id === item.id ? 'animate-button-tap' : ''}`}
-                                                        >
-                                                            {item.isAvailable ? <><Plus size={14} strokeWidth={3} /> Add</> : 'Unavailable'}
-                                                        </button>
+                                                        <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50/50 p-2">
+                                                            <ShoppingBag size={18} className="text-gray-200" />
+                                                            <span className="text-[7px] text-gray-300 uppercase font-black mt-1">No Image</span>
+                                                        </div>
+                                                    )}
+                                                    {!item.isAvailable && (
+                                                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center backdrop-blur-[2px]">
+                                                            <span className="bg-white/90 text-black text-[8px] font-black uppercase px-2 py-1 rounded-md tracking-[0.2em] shadow-xl">SOULD OUT</span>
+                                                        </div>
                                                     )}
                                                 </div>
+                                                <div className="flex-1 flex flex-col justify-between py-0.5">
+                                                    <div>
+                                                        <div className="flex justify-between items-start gap-2 mb-1">
+                                                            <h4 className="font-extrabold text-[#0B3A2E] text-[14px] leading-tight flex-1">{item.name}</h4>
+                                                            <span className="font-black text-[#0B3A2E] text-sm">£{item.price.toFixed(2)}</span>
+                                                        </div>
+                                                        <p className="text-[#6D5D4B] text-[10px] leading-relaxed line-clamp-2 font-medium opacity-70 mb-3">{item.desc}</p>
+                                                    </div>
+                                                    <div className="flex justify-start">
+                                                        {inCart ? (
+                                                            <div className="flex items-center gap-3 bg-[#0B3A2E] rounded-full p-1 border border-white/10 transition-all animate-slide-in shadow-lg">
+                                                                <button 
+                                                                    onClick={() => updateQuantity(item.id, -1)}
+                                                                    className="w-7 h-7 bg-white/10 rounded-full flex items-center justify-center text-white active:scale-75 transition-all"
+                                                                >
+                                                                    <Minus size={12} strokeWidth={3} />
+                                                                </button>
+                                                                <span className="text-xs font-black text-white min-w-[14px] text-center tabular-nums">{inCart.qty}</span>
+                                                                <button 
+                                                                    onClick={() => updateQuantity(item.id, 1)}
+                                                                    className="w-7 h-7 bg-[#C29958] rounded-full flex items-center justify-center text-[#0B3A2E] shadow-md active:scale-75 transition-all animate-button-tap"
+                                                                >
+                                                                    <Plus size={12} strokeWidth={3} />
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <button 
+                                                                onClick={(e) => handleAddToCart(item, e)}
+                                                                disabled={!item.isAvailable}
+                                                                className={`group relative flex items-center gap-1.5 px-5 py-2 rounded-full font-black text-[9px] tracking-[0.05em] uppercase transition-all shadow-md active:scale-95 ${!item.isAvailable ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-[#0B3A2E] text-white hover:bg-[#082e25] border border-white/5'} ${activeEffect?.id === item.id ? 'animate-button-tap' : ''}`}
+                                                            >
+                                                                {item.isAvailable ? (
+                                                                    <>
+                                                                        <Plus size={12} strokeWidth={3} className="group-hover:rotate-90 transition-transform" /> 
+                                                                        <span>Add</span>
+                                                                    </>
+                                                                ) : 'Sold Out'}
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    );
-                                })}
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))
+                    )}
                 </div>
 
                 {/* Floating Bottom Cart Summary */}
                 {cart.length > 0 && !isCartOpen && (
-                    <div className="fixed bottom-36 left-6 right-6 z-50 animate-slide-in">
+                    <div className="fixed bottom-[76px] left-4 right-4 z-50 animate-slide-in">
                         <button 
                             onClick={() => setIsCartOpen(true)}
-                            className="w-full bg-[#0B3A2E] p-4 pr-6 rounded-[36px] shadow-[0_25px_50px_rgba(0,0,0,0.4)] flex justify-between items-center group active:scale-[0.98] transition-all duration-300 border border-white/10"
+                            className="w-full bg-[#0B3A2E] p-3.5 pr-5 rounded-[28px] shadow-[0_20px_40px_rgba(0,0,0,0.35)] flex justify-between items-center group active:scale-[0.98] transition-all duration-300 border border-white/10"
                         >
-                            <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 bg-[#C29958] rounded-[24px] flex items-center justify-center text-[#0B3A2E] shadow-inner rotate-3 group-hover:rotate-0 transition-transform">
-                                    <ShoppingBag size={28} strokeWidth={2.5} />
+                            <div className="flex items-center gap-3">
+                                <div className="w-11 h-11 bg-[#C29958] rounded-[18px] flex items-center justify-center text-[#0B3A2E] shadow-inner">
+                                    <ShoppingBag size={20} strokeWidth={2.5} />
                                 </div>
                                 <div className="text-left">
-                                    <p className="text-white/40 text-[9px] font-black uppercase tracking-[0.2em] mb-0.5">{cart.reduce((s, i) => s + i.qty, 0)} Items</p>
-                                    <p className="text-white text-2xl font-black tabular-nums">£{cart.reduce((s, i) => s + i.price * i.qty, 0).toFixed(2)}</p>
+                                    <p className="text-white/50 text-[8px] font-black uppercase tracking-[0.2em] mb-0">{cart.reduce((s, i) => s + i.qty, 0)} Items in cart</p>
+                                    <p className="text-white text-lg font-black tabular-nums leading-tight">£{cart.reduce((s, i) => s + i.price * i.qty, 0).toFixed(2)}</p>
                                 </div>
                             </div>
-                            <div className="bg-[#C29958] text-[#0B3A2E] px-8 py-3.5 rounded-[22px] font-black uppercase tracking-[0.15em] text-[11px] group-hover:bg-white group-hover:scale-105 transition-all shadow-xl">
-                                VIEW CART
+                            <div className="bg-[#C29958] text-[#0B3A2E] px-5 py-2.5 rounded-[18px] font-black uppercase tracking-[0.1em] text-[10px] group-hover:bg-white transition-all shadow-lg">
+                                View Cart →
                             </div>
                         </button>
                     </div>
