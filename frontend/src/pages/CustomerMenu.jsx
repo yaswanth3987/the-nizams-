@@ -608,8 +608,6 @@ export default function CustomerMenu() {
         );
     };
 
-        );
-    };
 
     const renderCartSheet = () => {
         if (!isCartOpen) return null;
