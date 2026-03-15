@@ -4,11 +4,24 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --primary-green: #0B3A2E;
+  --accent-gold: #C29958;
+  --bg-cream: #F9F6F0;
+  --text-primary: #0B3A2E;
+  --text-secondary: #6D5D4B;
+}
+
 @layer base {
   body {
-    background-color: #F5F2EA; /* text color from theme applied as bg */
-    color: #0B3A2E; /* primary color applied as text */
+    background-color: var(--bg-cream);
+    color: var(--text-primary);
     font-family: 'Inter', system-ui, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  h1, h2, h3, h4, .font-serif {
+    font-family: 'Playfair Display', serif;
   }
 }
 
