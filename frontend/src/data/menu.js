@@ -23,24 +23,24 @@ export const categoriesData = [
 
 export const menuData = [
     // Non Veg Starters
-    { id: 'nvs1', name: 'CHICKEN 65', price: 9.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/Chicken 65.jpeg' },
-    { id: 'nvs2', name: 'CHILLI CHICKEN', price: 9.99, category: 'Non Veg Starters', spice: 3, veg: false, image: '/Chilli chicken.jpeg' },
-    { id: 'nvs3', name: 'CHICKEN MAJESTIC', price: 11.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/Majestic chicken.jpeg' },
-    { id: 'nvs4', name: 'CHICKEN TIKKA KEBAB (4 PCS)', price: 11.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/Chicken tikka kebab.jpeg' },
-    { id: 'nvs5', name: 'CHICKEN SEEKH KEBAB (4 PCS)', price: 10.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/Chicken seekh kebab.jpeg' },
+    { id: 'nvs1', name: 'CHICKEN 65', price: 9.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/chicken-65.webp' },
+    { id: 'nvs2', name: 'CHILLI CHICKEN', price: 9.99, category: 'Non Veg Starters', spice: 3, veg: false, image: '/chilli-chicken.webp' },
+    { id: 'nvs3', name: 'CHICKEN MAJESTIC', price: 11.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/majestic-chicken.webp' },
+    { id: 'nvs4', name: 'CHICKEN TIKKA KEBAB (4 PCS)', price: 11.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/chicken-tikka-kebab.webp' },
+    { id: 'nvs5', name: 'CHICKEN SEEKH KEBAB (4 PCS)', price: 10.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/chicken-seekh-kebab.webp' },
     { id: 'nvs6', name: 'PEPPER CHICKEN', price: 11.99, category: 'Non Veg Starters', spice: 3, veg: false },
-    { id: 'nvs7', name: 'CHICKEN TANDOORI FULL', price: 14.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/Chicken tandoori full.jpeg' },
-    { id: 'nvs8', name: 'CHICKEN TANDOORI HALF', price: 9.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/Chicken tandoori half.jpeg' },
-    { id: 'nvs9', name: 'CHICKEN TANGDI (4 PCS)', price: 9.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/Chicken tangdi.jpeg' },
-    { id: 'nvs10', name: 'LAMB SEEKH KEBAB (4 PCS)', price: 11.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/Lamb seekh kebab.jpeg' },
-    { id: 'nvs11', name: 'LAMB CHOPS (4 PCS)', price: 12.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/Lamb chops.jpeg' },
-    { id: 'nvs12', name: 'MUTTON HALEEM', price: 14.99, category: 'Non Veg Starters', spice: 1, veg: false, image: '/Mutton Haleem.jpeg' },
+    { id: 'nvs7', name: 'CHICKEN TANDOORI FULL', price: 14.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/chicken-tandoori-full.webp' },
+    { id: 'nvs8', name: 'CHICKEN TANDOORI HALF', price: 9.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/chicken-tandoori-half.webp' },
+    { id: 'nvs9', name: 'CHICKEN TANGDI (4 PCS)', price: 9.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/chicken-tangdi.webp' },
+    { id: 'nvs10', name: 'LAMB SEEKH KEBAB (4 PCS)', price: 11.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/lamb-seekh-kebab.webp' },
+    { id: 'nvs11', name: 'LAMB CHOPS (4 PCS)', price: 12.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/lamb-chops.webp' },
+    { id: 'nvs12', name: 'MUTTON HALEEM', price: 14.99, category: 'Non Veg Starters', spice: 1, veg: false, image: '/mutton-haleem.webp' },
     { id: 'nvs13', name: 'MUTTON MARAG', price: 14.99, category: 'Non Veg Starters', spice: 1, veg: false },
 
     // Sea Food
-    { id: 'sf1', name: 'MASALA FISH (1 PC)', price: 7.99, category: 'Sea Food', spice: 2, veg: false, image: '/Masala fish.jpeg' },
+    { id: 'sf1', name: 'MASALA FISH (1 PC)', price: 7.99, category: 'Sea Food', spice: 2, veg: false, image: '/masala-fish.webp' },
     { id: 'sf2', name: 'APOLLO FISH', price: 14.99, category: 'Sea Food', spice: 2, veg: false },
-    { id: 'sf3', name: 'TANDOORI GRILLED FISH', price: 14.99, category: 'Sea Food', spice: 2, veg: false, image: '/Tandoori grill fish.jpeg' },
+    { id: 'sf3', name: 'TANDOORI GRILLED FISH', price: 14.99, category: 'Sea Food', spice: 2, veg: false, image: '/tandoori-grill-fish.webp' },
     { id: 'sf4', name: 'CHILLI GARLIC PRAWNS', price: 14.99, category: 'Sea Food', spice: 3, veg: false },
 
     // Veg Starters
@@ -59,10 +59,10 @@ export const menuData = [
     { id: 'b9', name: 'LAMB BIRYANI (JUMBO)', price: 39.99, category: 'Biryani', spice: 2, veg: false, group: 6 },
 
     // Biryani Thaali
-    { id: 'bt1', name: 'THAALI FOR 2 (LAMB)', price: 29.99, category: 'Biryani Thaali', desc: '1 Double Biryani, Chicken 65, Chilli Chicken, 1 Pc Tandoori, 1 Naan, 1 Rumali, 2 Drinks', spice: 2, veg: false, group: 2, image: '/Lamb Biryani Thaali for 2 people.jpeg' },
-    { id: 'bt2', name: 'THAALI FOR 2 (CHICKEN)', price: 25.99, category: 'Biryani Thaali', desc: '1 Double Biryani, Chicken 65, Chilli Chicken, 1 Pc Tandoori, 1 Naan, 1 Rumali, 2 Drinks', spice: 2, veg: false, group: 2, image: '/Chicken Biryani Thaali for 2 people.jpeg' },
-    { id: 'bt3', name: 'THAALI FOR 4 (LAMB)', price: 59.99, category: 'Biryani Thaali', desc: '2 Double Biryani, 2 Pc Tandoori, 2 Naan, 2 Rumali, 4 Drinks', spice: 2, veg: false, group: 4, image: '/Lamb Biryani Thaali for 4 People.jpeg' },
-    { id: 'bt4', name: 'THAALI FOR 4 (CHICKEN)', price: 54.99, category: 'Biryani Thaali', desc: '2 Double Biryani, 2 Pc Tandoori, 2 Naan, 2 Rumali, 4 Drinks', spice: 2, veg: false, group: 4, image: '/Chicken Biryani Thaali for 4 People.jpeg' },
+    { id: 'bt1', name: 'THAALI FOR 2 (LAMB)', price: 29.99, category: 'Biryani Thaali', desc: '1 Double Biryani, Chicken 65, Chilli Chicken, 1 Pc Tandoori, 1 Naan, 1 Rumali, 2 Drinks', spice: 2, veg: false, group: 2, image: '/lamb-biryani-thaali-for-2-people.webp' },
+    { id: 'bt2', name: 'THAALI FOR 2 (CHICKEN)', price: 25.99, category: 'Biryani Thaali', desc: '1 Double Biryani, Chicken 65, Chilli Chicken, 1 Pc Tandoori, 1 Naan, 1 Rumali, 2 Drinks', spice: 2, veg: false, group: 2, image: '/chicken-biryani-thaali-for-2-people.webp' },
+    { id: 'bt3', name: 'THAALI FOR 4 (LAMB)', price: 59.99, category: 'Biryani Thaali', desc: '2 Double Biryani, 2 Pc Tandoori, 2 Naan, 2 Rumali, 4 Drinks', spice: 2, veg: false, group: 4, image: '/lamb-biryani-thaali-for-4-people.webp' },
+    { id: 'bt4', name: 'THAALI FOR 4 (CHICKEN)', price: 54.99, category: 'Biryani Thaali', desc: '2 Double Biryani, 2 Pc Tandoori, 2 Naan, 2 Rumali, 4 Drinks', spice: 2, veg: false, group: 4, image: '/chicken-biryani-thaali-for-4-people.webp' },
 
     // Chicken Main Course
     { id: 'cmc1', name: 'DUM KA CHICKEN', price: 12.99, category: 'Chicken Main Course', spice: 2, veg: false },
