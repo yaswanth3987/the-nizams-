@@ -10,14 +10,14 @@ export default function AdminLayout({
     children 
 }) {
     return (
-        <div className="flex h-screen bg-nizam-dark text-nizam-text overflow-hidden selection:bg-nizam-gold/30 antialiased font-sans">
+        <div className="flex h-screen bg-[#071a15] text-[#F9F6F0] overflow-hidden selection:bg-[#C29958]/30 antialiased font-sans">
             <AdminSidebar 
                 activeView={activeView} 
                 onViewChange={onViewChange} 
                 onRefresh={onRefresh} 
                 counts={counts}
             />
-            <div className="flex-1 flex flex-col min-w-0 bg-nizam-dark">
+            <div className="flex-1 flex flex-col min-w-0 bg-[#071a15]">
                 <AdminTopHeader 
                     title={title}
                     tabs={tabs}

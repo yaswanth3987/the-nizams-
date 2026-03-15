@@ -3,7 +3,8 @@ import { Clock, User, Bell } from 'lucide-react';
 
 export default function AdminTopHeader({ title, tabs = [], activeTab, onTabChange, unreadAlerts = 0, onClearAlerts }) {
     return (
-        <header className="bg-nizam-green text-nizam-text px-8 py-4 flex flex-col md:flex-row justify-between items-start md:items-center border-b border-nizam-border z-10 shadow-md">
+        <header className="bg-[#0B3A2E] text-[#F9F6F0] px-10 py-5 flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/5 z-10 shadow-2xl relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent pointer-events-none"></div>
             <div className="flex items-center gap-8 mb-4 md:mb-0">
                 <h1 className="text-2xl font-serif text-white shadow-sm italic">{title}</h1>
                 {tabs.length > 0 && (

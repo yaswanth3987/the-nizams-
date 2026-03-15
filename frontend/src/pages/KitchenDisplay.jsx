@@ -97,9 +97,13 @@ export default function KitchenDisplay() {
     return (
         <div className="min-h-screen bg-gray-900 text-gray-100 font-sans">
             <header className="bg-black text-white p-4 shadow-xl sticky top-0 z-10 border-b border-gray-800 flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                    <img src="/logo-icon.png" alt="Logo" className="w-12 h-12 object-contain" />
-                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">Kitchen Display <span className="text-yellow-500">•</span> The Great Nizam</h1>
+                <div className="flex items-center gap-5">
+                    <img src="/logo-icon.png" alt="Logo" className="w-14 h-14 object-contain brightness-110 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]" />
+                    <div className="h-10 w-px bg-white/10 mx-2"></div>
+                    <div>
+                        <h1 className="text-2xl font-black tracking-[0.2em] text-white uppercase leading-none">Kitchen Console</h1>
+                        <p className="text-[10px] font-bold tracking-[0.4em] text-yellow-500/80 mt-2 uppercase">Royal Culinary Ops</p>
+                    </div>
                 </div>
                 <div className="text-xl font-mono text-gray-400">
                     Active Orders: <span className="font-bold text-yellow-500">{orders.length}</span>
