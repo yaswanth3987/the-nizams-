@@ -1,15 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ShoppingCart, Plus, Minus, X, CheckCircle, ChevronRight, ChevronDown, ChevronUp, Clock, MapPin, Phone, Instagram, Star, QrCode, BookOpen, Calendar, AlertTriangle, Globe, Flame, Bell } from 'lucide-react';
+import { 
+    ChevronLeft, 
+    BookOpen, 
+    ChevronRight, 
+    Calendar, 
+    AlertTriangle, 
+    Phone, 
+    Globe, 
+    MapPin, 
+    Instagram, 
+    Star, 
+    QrCode, 
+    ChevronUp, 
+    ChevronDown, 
+    Flame, 
+    ShoppingCart, 
+    X, 
+    Minus, 
+    Plus,
+    Bell,
+    CheckCircle,
+    Clock
+} from 'lucide-react';
 import { categoriesData, menuData } from '../data/menu.js';
+import { socket } from '../utils/socket';
 
-const API_URL = window.location.hostname === 'localhost' 
-    ? 'http://localhost:3001/api' 
+const API_URL = import.meta.env.DEV 
+    ? `http://${window.location.hostname}:3001/api` 
     : '/api';
 
 export default function CustomerMenu() {
-    const [searchParams] = useSearchParams();
-    const tableId = searchParams.get('table') || '12';
+    const [searchParams, setSearchParams] = useSearchParams();
+    const tableParam = searchParams.get('table');
+    const [selectedTable, setSelectedTable] = useState(tableParam || null);
 
     const [menu, setMenu] = useState([]);
     const [cart, setCart] = useState([]);
@@ -22,36 +46,45 @@ export default function CustomerMenu() {
     
     const [assistanceStatus, setAssistanceStatus] = useState(null);
     const [assistanceCooldown, setAssistanceCooldown] = useState(() => {
-        const saved = localStorage.getItem(`assist_cooldown_${tableId}`);
+        const saved = localStorage.getItem(`assist_cooldown_${selectedTable}`);
         return saved ? parseInt(saved, 10) : 0;
     });
 
     useEffect(() => {
+        if (!selectedTable) return;
+
+        // Auto-mark table as ordering when customer opens the menu
+        fetch(`${API_URL}/table-status/${selectedTable.startsWith('T') ? selectedTable : `T${selectedTable}`}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'ordering' })
+        }).catch(err => console.log('Silent table status update failed', err));
+
         if (assistanceCooldown > 0) {
             const timer = setInterval(() => {
                 if (Date.now() > assistanceCooldown) {
                     setAssistanceCooldown(0);
-                    localStorage.removeItem(`assist_cooldown_${tableId}`);
+                    localStorage.removeItem(`assist_cooldown_${selectedTable}`);
                 }
             }, 1000);
             return () => clearInterval(timer);
         }
-    }, [assistanceCooldown, tableId]);
+    }, [assistanceCooldown, selectedTable]);
 
     const requestAssistance = async () => {
-        if (assistanceCooldown > 0) return;
+        if (assistanceCooldown > 0 || !selectedTable) return;
         setAssistanceStatus('notifying');
         try {
             const res = await fetch(`${API_URL}/assistance`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tableId: `T${tableId}` })
+                body: JSON.stringify({ tableId: selectedTable.startsWith('T') ? selectedTable : `T${selectedTable}` })
             });
             if (res.ok) {
                 setAssistanceStatus('success');
                 const expire = Date.now() + 180000; // 3 minutes
                 setAssistanceCooldown(expire);
-                localStorage.setItem(`assist_cooldown_${tableId}`, expire);
+                localStorage.setItem(`assist_cooldown_${selectedTable}`, expire);
                 setTimeout(() => setAssistanceStatus(null), 3000);
             } else {
                 setAssistanceStatus('error');
@@ -64,27 +97,33 @@ export default function CustomerMenu() {
     };
 
     useEffect(() => {
-        // We now populate the menu instantly with our rich client-side hardcoded data
-        // while also silently trying to fetch any dynamic server-side updates if present.
         setMenu(menuData);
         
-        fetch(`${API_URL}/menu`)
-            .then(res => res.json())
-            .then(data => {
-                if(data && data.length > 0) {
-                   setMenu(prev => {    
-                        const combined = [...prev];
-                        // Overwrite or append server data
-                        data.forEach(serverItem => {
-                            if (!combined.find(i => i.id === serverItem.id)) {
-                                combined.push(serverItem);
-                            }
-                        });
-                        return combined;
-                   });
-                }
-            })
-            .catch(err => console.log("Silent fail on menu API, using defaults"));
+        const fetchRemoteMenu = () => {
+            fetch(`${API_URL}/menu`)
+                .then(res => res.json())
+                .then(data => {
+                    if(data && data.length > 0) {
+                        setMenu(data); // Use server data as source of truth
+                    }
+                })
+                .catch(err => console.log("Silent fail on menu API, using defaults"));
+        };
+
+        fetchRemoteMenu();
+
+        socket.on('menuUpdated', (updatedItem) => {
+            setMenu(prev => prev.map(item => item.id === updatedItem.id ? { ...item, ...updatedItem } : item));
+        });
+
+        socket.on('menuReset', (fullMenu) => {
+            setMenu(fullMenu);
+        });
+
+        return () => {
+            socket.off('menuUpdated');
+            socket.off('menuReset');
+        };
     }, []);
 
     const categories = categoriesData;
@@ -108,13 +147,19 @@ export default function CustomerMenu() {
             setAddedItems(prev => ({ ...prev, [item.id]: false }));
         }, 1500);
 
-        // Flying animation payload
-        if (e && e.clientX) {
-            const newDot = { id: Date.now(), x: e.clientX, y: e.clientY, image: item.image };
+        // Elegant flame/cooking animation payload
+        if (e && e.target) {
+            const rect = e.target.getBoundingClientRect();
+            const newDot = { 
+                id: Date.now(), 
+                x: rect.left + rect.width / 2, 
+                y: rect.top, 
+                image: item.image 
+            };
             setFlyingDots(prev => [...prev, newDot]);
             setTimeout(() => {
                 setFlyingDots(prev => prev.filter(d => d.id !== newDot.id));
-            }, 800);
+            }, 600);
         }
     };
 
@@ -122,23 +167,26 @@ export default function CustomerMenu() {
         setCart(prev => prev.map(item => {
             if (item.id === id) {
                 const newQty = item.qty + delta;
-                return newQty > 0 ? { ...item, qty: newQty } : item;
+                return { ...item, qty: newQty };
             }
             return item;
         }).filter(item => item.qty > 0));
     };
 
     const submitOrder = async () => {
-        if (cart.length === 0) return;
+        if (cart.length === 0 || !selectedTable) return;
         setOrderStatus('submitting');
         
-        const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        const serviceCharge = Number((subtotal * 0.10).toFixed(2));
+        const finalTotal = Number((subtotal + serviceCharge).toFixed(2));
+        
         const orderData = {
-            tableId: `T${tableId}`,
+            tableId: selectedTable.startsWith('T') ? selectedTable : `T${selectedTable}`,
             items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
-            total,
-            net: total / 1.2,
-            vat: total - (total / 1.2),
+            finalTotal,
+            subtotal,
+            serviceCharge,
             status: 'new'
         };
 
@@ -153,15 +201,47 @@ export default function CustomerMenu() {
                 setOrderStatus('success');
                 setIsCartOpen(false);
                 setTimeout(() => setOrderStatus(null), 3000);
-            } else setOrderStatus('error');
+            } else {
+                setOrderStatus('error');
+            }
         } catch (err) { setOrderStatus('error'); }
     };
+
+    const handleTableSelect = (table) => {
+        setSelectedTable(table);
+        setSearchParams({ table });
+    };
+
+    const renderTableSelection = () => (
+        <div className="min-h-screen bg-[#111312] py-8 px-4 flex flex-col items-center justify-center font-sans">
+            <div className="w-full max-w-[360px] bg-[#1c1e1c] rounded-2xl shadow-2xl overflow-hidden border border-[#d4af37]/20 p-8 text-center">
+                <img src="/logo-icon.png" alt="Logo" className="w-16 h-16 mx-auto mb-4 drop-shadow-md brightness-150" />
+                <h2 className="text-3xl font-serif text-[#d4af37] mb-2 leading-tight">Welcome to<br/>The Nizam's</h2>
+                <p className="text-[#a8b8b2] text-sm mb-8">Please select your table number to view the menu.</p>
+                
+                <div className="grid grid-cols-3 gap-3">
+                    {Array.from({length: 24}).map((_, i) => {
+                        const t = `T${String(i+1).padStart(2, '0')}`;
+                        return (
+                            <button 
+                                key={t}
+                                onClick={() => handleTableSelect(t)}
+                                className="bg-[#111312] border border-[#d4af37]/30 text-[#d4af37] py-3 rounded-lg font-bold text-xl hover:bg-[#d4af37]/10 transition-colors shadow-inner"
+                            >
+                                {t}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
+    );
 
     const renderLanding = () => (
         <div className="min-h-screen bg-[#C2A165] py-8 px-4 flex flex-col items-center font-sans tracking-tight">
             <div className="w-full max-w-[360px] bg-[#F7EFE1] rounded-lg shadow-xl overflow-hidden border border-white/20">
                 <div className="p-6 pb-4 flex flex-col items-center">
-                    <img src="/logo-with-name.png" alt="THE NIZAM'S" className="w-[140px] mb-2 drop-shadow-sm" />
+                    <img src="/logo-with-name.png" alt="THE NIZAM'S" className="w-[160px] mb-2 drop-shadow-sm mix-blend-multiply" />
                     <p className="text-[#966336] font-medium tracking-[0.15em] text-[9px] mb-6 uppercase text-center w-full border-b border-transparent">Authentic Indian Cuisine</p>
 
                     <div className="w-full bg-[#EAE0CA] border border-[#D5CAA1] rounded-md p-3 px-4 flex items-center justify-between mb-6 shadow-sm">
@@ -169,7 +249,7 @@ export default function CustomerMenu() {
                             Scan & browse the all menu. No app required.
                         </p>
                         <div className="text-right border-l border-[#D5CAA1] pl-4">
-                            <p className="text-[#6D421B] text-[11px] font-semibold">Table {tableId} -</p>
+                            <p className="text-[#6D421B] text-[11px] font-semibold">Table: {selectedTable}</p>
                             <p className="text-[#6D421B] text-[11px] font-semibold">Westminster</p>
                         </div>
                     </div>
@@ -281,16 +361,15 @@ export default function CustomerMenu() {
             <div className="w-full max-w-[360px] bg-[#F4EBD7] rounded-lg shadow-xl overflow-hidden flex flex-col border border-white/20 flex-1 h-[90vh]">
                 
                 {/* Header */}
-                <header className="bg-[#D35D01] text-white p-4 flex justify-between items-center z-10 relative">
+                <header className="bg-[#D35D01] text-white p-3 flex justify-between items-center z-10 relative">
                     <button onClick={() => setView('landing')} className="flex items-center gap-1 font-bold text-[13px] hover:opacity-80 active:scale-95 z-20">
                         <ChevronLeft strokeWidth={2.5} className="w-4 h-4" /> Back
                     </button>
-                    <div className="absolute left-1/2 -translate-x-1/2 text-center w-full z-10 px-16">
-                        <h1 className="text-[16px] font-black tracking-wider uppercase leading-tight drop-shadow-sm">The Nizam's</h1>
-                        <p className="text-[8px] font-bold tracking-widest uppercase opacity-90 mt-0.5">Authentic Indian Cuisine</p>
+                    <div className="absolute left-1/2 -translate-x-1/2 z-10 flex flex-col items-center">
+                        <img src="/logo-with-name.png" alt="The Nizam's" className="h-9 object-contain drop-shadow-sm" />
                     </div>
                     <div className="text-right text-[10px] leading-tight z-20">
-                        <p className="font-semibold text-white/95">Table {tableId}</p>
+                        <p className="font-semibold text-white/95">{selectedTable}</p>
                         <p className="font-medium text-white/80">QR Menu</p>
                     </div>
                 </header>
@@ -355,17 +434,27 @@ export default function CustomerMenu() {
                                                         </div>
                                                         <div className="flex items-center gap-1">
                                                             <div className={`w-[11px] h-[11px] flex items-center justify-center border ${item.veg ? 'border-green-600' : 'border-[#D31C13]'} rounded-[2px]`}>
-                                                                <div className={`w-1.5 h-1.5 rounded-full ${item.veg ? 'bg-green-600' : 'bg-[#D31C13]'}`}></div>
+                                                                 <div className={`w-1.5 h-1.5 rounded-full ${item.veg ? 'bg-green-600' : 'bg-[#D31C13]'}`}></div>
                                                             </div>
                                                             <span className={`text-[9.5px] font-bold tracking-tight ${item.veg ? 'text-green-700' : 'text-[#D31C13]'}`}>{item.veg ? 'Veg' : 'Non-Veg'}</span>
                                                         </div>
                                                     </div>
+                                                                                                         {!item.isAvailable && (
+                                                        <div className="mb-2 bg-red-50 border border-red-100 rounded p-1 text-center">
+                                                            <span className="text-[9px] font-bold text-red-600 uppercase tracking-wider flex items-center justify-center gap-1">
+                                                                <Clock className="w-2.5 h-2.5" /> Not Available
+                                                            </span>
+                                                        </div>
+                                                    )}
+
                                                     <button 
                                                         onClick={(e) => handleAddToCart(item, e)}
-                                                        className={`w-full text-white text-[12px] font-bold py-1.5 rounded-[4px] shadow-[0_1px_2px_rgba(0,0,0,0.15)] active:scale-[0.98] transition-all leading-tight flex items-center justify-center gap-1.5 ${addedItems[item.id] ? 'bg-green-600 hover:bg-green-700' : 'bg-[#CA5B04] hover:bg-[#A94C00]'}`}
+                                                        disabled={!item.isAvailable}
+                                                        className={`w-full text-white text-[12px] font-bold py-1.5 rounded-[4px] shadow-[0_1px_2px_rgba(0,0,0,0.15)] active:scale-[0.98] transition-all leading-tight flex items-center justify-center gap-1.5 ${addedItems[item.id] ? 'bg-green-600 hover:bg-green-700' : (!item.isAvailable ? 'bg-gray-400 cursor-not-allowed opacity-60' : 'bg-[#CA5B04] hover:bg-[#A94C00]')}`}
                                                     >
-                                                        {addedItems[item.id] ? <><CheckCircle size={14} strokeWidth={3}/> Added</> : 'Add to Cart'}
+                                                        {addedItems[item.id] ? <><CheckCircle size={14} strokeWidth={3}/> Added</> : (!item.isAvailable ? 'Out of Stock' : 'Add to Cart')}
                                                     </button>
+
                                                 </div>
                                             </div>
                                         </div>
@@ -379,14 +468,19 @@ export default function CustomerMenu() {
         </div>
 
             {/* Cart Floating / Modal functionality */}
-            {/* Same cart logic, re-styled to match theme */}
+            {/* Cooking Animation Dots */}
             {flyingDots.map(dot => (
                 <div 
                     key={dot.id}
-                    className="fixed z-[100] w-14 h-14 bg-white rounded-full shadow-2xl flex items-center justify-center pointer-events-none animate-fly-up overflow-hidden border-2 border-[#CA5B04]"
-                    style={{ left: dot.x - 28, top: dot.y - 28 }}
+                    className="fixed z-[100] w-16 h-16 flex flex-col items-center justify-center pointer-events-none animate-kitchen-fly-up"
+                    style={{ left: dot.x - 32, top: dot.y - 40 }}
                 >
-                    {dot.image ? <img src={dot.image} className="w-full h-full object-cover" /> : <Plus className="w-5 h-5 text-[#CA5B04]" strokeWidth={4} />}
+                    <div className="relative w-12 h-12 bg-black rounded-full shadow-[0_0_20px_rgba(212,175,55,0.7)] overflow-hidden border-2 border-[#d4af37]">
+                        {dot.image ? <img src={dot.image} className="w-full h-full object-cover opacity-90" /> : <Flame className="w-6 h-6 text-[#d4af37]" strokeWidth={2} />}
+                        {/* Subtle steam overlay */}
+                        <div className="absolute inset-0 bg-white/20 animate-pulse mix-blend-overlay"></div>
+                    </div>
+                    <span className="mt-1 bg-[#d4af37] text-black text-[9px] font-bold px-1.5 py-0.5 rounded shadow-lg animate-pulse whitespace-nowrap">🔥 Cooking...</span>
                 </div>
             ))}
             
@@ -451,11 +545,29 @@ export default function CustomerMenu() {
                         </div>
 
                         {/* Footer */}
-                        <div className="p-4 bg-[#FAEBD4] border-t border-[#EDDDCA]">
-                            <div className="flex justify-between items-end mb-4 text-[#6F3E14]">
-                                <span className="font-medium text-[14px] leading-none mb-0.5">Total:</span>
-                                <span className="text-[#7F4810] font-bold text-[18px] leading-none">£{cart.reduce((s, i) => s + i.price * i.qty, 0).toFixed(2)}</span>
-                            </div>
+                        <div className="p-4 bg-[#FAEBD4] border-t border-[#EDDDCA] space-y-2">
+                            {(() => {
+                                const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+                                const serviceCharge = Number((subtotal * 0.10).toFixed(2));
+                                const finalTotal = Number((subtotal + serviceCharge).toFixed(2));
+                                
+                                return (
+                                    <>
+                                        <div className="flex justify-between items-center text-[#6F3E14]/70 text-[12px]">
+                                            <span>Subtotal</span>
+                                            <span>£{subtotal.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-[#6F3E14]/70 text-[12px]">
+                                            <span>Service Charge</span>
+                                            <span>£{serviceCharge.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-end pt-2 border-t border-[#EAD5B9] text-[#6F3E14]">
+                                            <span className="font-bold text-[14px]">Total:</span>
+                                            <span className="text-[#7F4810] font-black text-[20px] leading-none">£{finalTotal.toFixed(2)}</span>
+                                        </div>
+                                    </>
+                                );
+                            })()}
                             <button 
                                 onClick={submitOrder}
                                 disabled={orderStatus === 'submitting'}
@@ -494,6 +606,7 @@ export default function CustomerMenu() {
     );
 
     const renderContent = () => {
+        if (!selectedTable) return renderTableSelection();
         if (view === 'landing') return renderLanding();
         if (view === 'book') return renderBookTime();
         return renderMenu();
@@ -529,9 +642,3 @@ export default function CustomerMenu() {
     );
 }
 
-// Adding a quick replacement for lucide-react ChevronLeft since I missed it in import
-const ChevronLeft = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <path d="m15 18-6-6 6-6"/>
-    </svg>
-);

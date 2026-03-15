@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { socket } from '../utils/socket';
 import { ChefHat, Bell } from 'lucide-react';
 
-const API_URL = window.location.hostname === 'localhost' 
-    ? 'http://localhost:3001/api' 
+const API_URL = import.meta.env.DEV 
+    ? `http://${window.location.hostname}:3001/api` 
     : '/api';
 
 export default function KitchenDisplay() {

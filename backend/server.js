@@ -3,7 +3,15 @@ const http = require('http');
 const cors = require('cors');
 const path = require('path');
 const { Server } = require('socket.io');
-const { getOrdersByStatus, createOrder, updateOrderStatus, deleteOrder, clearTableOrders, getAnalyticsDaily, getItemAnalytics, getAssistanceRequests, createAssistanceRequest, updateAssistanceStatus, deleteAssistanceRequest } = require('./database');
+const { 
+    getOrdersByStatus, createOrder, updateOrderStatus, deleteOrder, clearTableOrders, 
+    getAnalyticsDaily, getItemAnalytics, getAssistanceRequests, createAssistanceRequest, 
+    updateAssistanceStatus, deleteAssistanceRequest, getEmployees, createEmployee, 
+    updateEmployee, deleteEmployee, markAttendance, getAttendanceToday,
+    getMenuItems, addMenuItem, updateMenuItem, deleteMenuItem, seedMenu,
+    updateMenuItemStatus, checkMenuAvailabilityReset, getSessionsByStatus, updateSessionStatus,
+    getTableStatuses, updateTableStatus
+} = require('./database');
 
 const app = express();
 app.use(cors());
@@ -26,26 +34,65 @@ io.on('connection', (socket) => {
     });
 });
 
-// Menu items API (Mocked array)
-const mockMenu = [
-    { id: 'm1', name: 'Nizam Special Biryani', price: 12.50, category: 'Mains', image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?q=80&w=600&auto=format&fit=crop' },
-    { id: 'm2', name: 'Chicken Tikka Masala', price: 10.95, category: 'Mains', image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?q=80&w=600&auto=format&fit=crop' },
-    { id: 'm3', name: 'Garlic Naan', price: 2.95, category: 'Sides', image: 'https://images.unsplash.com/photo-1626200419188-f1523a661fbc?q=80&w=600&auto=format&fit=crop' },
-    { id: 'm4', name: 'Paneer Butter Masala', price: 9.50, category: 'Mains', image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc0?q=80&w=600&auto=format&fit=crop' },
-    { id: 'm5', name: 'Samosa (2pcs)', price: 4.50, category: 'Starters', image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?q=80&w=600&auto=format&fit=crop' },
-    { id: 'm6', name: 'Mango Lassi', price: 3.50, category: 'Drinks', image: 'https://images.unsplash.com/photo-1546173159-315724a31696?q=80&w=600&auto=format&fit=crop' }
-];
-
-app.get('/api/menu', (req, res) => {
-    res.json(mockMenu);
+app.get('/api/menu', async (req, res) => {
+    try {
+        const menu = await getMenuItems();
+        res.json(menu);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-// Orders API
+app.put('/api/menu/:id/availability', async (req, res) => {
+    try {
+        const { isAvailable, until } = req.body;
+        const item = await updateMenuItemStatus(req.params.id, isAvailable, until);
+        io.emit('menuUpdated', item);
+        res.json(item);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/menu', async (req, res) => {
+    try {
+        await addMenuItem(req.body);
+        const fullMenu = await getMenuItems();
+        io.emit('menuReset', fullMenu); 
+        res.status(201).json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/menu/:id', async (req, res) => {
+    try {
+        await updateMenuItem(req.params.id, req.body);
+        const fullMenu = await getMenuItems();
+        io.emit('menuReset', fullMenu);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/menu/:id', async (req, res) => {
+    try {
+        await deleteMenuItem(req.params.id);
+        const fullMenu = await getMenuItems();
+        io.emit('menuReset', fullMenu);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Orders (Sessions) API
 app.get('/api/orders', async (req, res) => {
     try {
-        const statuses = req.query.statuses ? req.query.statuses.split(',') : ['new', 'confirmed', 'billed', 'completed'];
-        const orders = await getOrdersByStatus(statuses);
-        res.json(orders);
+        const statuses = req.query.statuses ? req.query.statuses.split(',') : ['confirmed', 'active', 'billed', 'completed'];
+        const sessions = await getSessionsByStatus(statuses);
+        res.json(sessions);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -54,7 +101,15 @@ app.get('/api/orders', async (req, res) => {
 app.post('/api/orders', async (req, res) => {
     try {
         const order = await createOrder(req.body);
-        io.emit('orderCreated', order);
+        
+        // Auto-update table status to ordering when new order arrives
+        if (order.tableId) {
+            const tStatus = await updateTableStatus(order.tableId, 'ordering');
+            io.emit('tableStatusUpdated', tStatus);
+        }
+
+        // This is a NEW order from customer, admin uses 'orderCreated' listener
+        io.emit('orderCreated', order); 
         res.status(201).json(order);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -63,9 +118,20 @@ app.post('/api/orders', async (req, res) => {
 
 app.put('/api/orders/:id/status', async (req, res) => {
     try {
-        const updatedOrder = await updateOrderStatus(req.params.id, req.body.status);
-        io.emit('orderUpdated', updatedOrder);
-        res.json(updatedOrder);
+        const updatedSession = await updateSessionStatus(req.params.id, req.body.status);
+        
+        // Auto-update table status on billing/completion
+        if (req.body.status === 'billed') {
+            const tStatus = await updateTableStatus(updatedSession.tableId, 'billing');
+            io.emit('tableStatusUpdated', tStatus);
+        } else if (req.body.status === 'completed') {
+            const tStatus = await updateTableStatus(updatedSession.tableId, 'free');
+            io.emit('tableStatusUpdated', tStatus);
+        }
+
+        io.emit('sessionUpdated', updatedSession);
+        io.emit('orderUpdated', updatedSession); // Ensure both are notified
+        res.json(updatedSession);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -84,8 +150,63 @@ app.delete('/api/orders/:id', async (req, res) => {
 app.delete('/api/tables/:tableId/orders', async (req, res) => {
     try {
         await clearTableOrders(req.params.tableId);
+        
+        // Table cleared -> free
+        const tStatus = await updateTableStatus(req.params.tableId, 'free');
+        io.emit('tableStatusUpdated', tStatus);
+
         io.emit('tableReset', { tableId: req.params.tableId });
         res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/new-orders', async (req, res) => {
+    try {
+        const orders = await getOrdersByStatus(['new', 'pending']);
+        res.json(orders);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/new-orders/:id/status', async (req, res) => {
+    try {
+        const { status } = req.body;
+        const row = await updateOrderStatus(req.params.id, status);
+        
+        // Auto-update table status when admin confirms order
+        if ((status === 'accepted' || status === 'confirmed') && row && row.tableId) {
+            const tStatus = await updateTableStatus(row.tableId, 'occupied');
+            io.emit('tableStatusUpdated', tStatus);
+        }
+
+        // Broadcast event to refresh New Orders and Table Sessions tabs
+        io.emit('orderUpdated', { id: req.params.id, status });
+        // The frontend 'orderUpdated' listener handles fetching the updated sessions cleanly.
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Table Status APIs
+app.get('/api/table-status', async (req, res) => {
+    try {
+        const statuses = await getTableStatuses();
+        res.json(statuses);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/table-status/:tableId', async (req, res) => {
+    try {
+        const { status } = req.body;
+        const tStatus = await updateTableStatus(req.params.tableId, status);
+        io.emit('tableStatusUpdated', tStatus);
+        res.json(tStatus);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -153,16 +274,143 @@ app.delete('/api/assistance/:id', async (req, res) => {
     }
 });
 
+// Staff APIs
+app.get('/api/employees', async (req, res) => {
+    try {
+        const emps = await getEmployees();
+        res.json(emps);
+    } catch (err) { 
+        console.error('API Error /api/employees:', err);
+        res.status(500).json({ error: err.message }); 
+    }
+});
+
+app.post('/api/employees', async (req, res) => {
+    try {
+        const embeddingStr = req.body.faceEmbedding ? JSON.stringify(Array.from(req.body.faceEmbedding)) : null;
+        const emp = await createEmployee(req.body.name, req.body.phone, embeddingStr);
+        res.status(201).json(emp);
+    } catch (err) { 
+        console.error('API Error /api/employees (POST):', err);
+        res.status(500).json({ error: err.message }); 
+    }
+});
+
+app.put('/api/employees/:id', async (req, res) => {
+    try {
+        const emp = await updateEmployee(req.params.id, req.body.name, req.body.phone);
+        res.json(emp);
+    } catch (err) { 
+        console.error('API Error /api/employees/:id (PUT):', err);
+        res.status(500).json({ error: err.message }); 
+    }
+});
+
+app.delete('/api/employees/:id', async (req, res) => {
+    try {
+        await deleteEmployee(req.params.id);
+        res.json({ success: true });
+    } catch (err) { 
+        console.error('API Error /api/employees/:id (DELETE):', err);
+        res.status(500).json({ error: err.message }); 
+    }
+});
+
+// Attendance & OTP APIs
+// In-memory OTP store for simplicity. Format: { employeeId: { otp, expiresAt } }
+const otpStore = {};
+
+app.get('/api/attendance/today', async (req, res) => {
+    try {
+        const { getAttendanceToday } = require('./database');
+        const logs = await getAttendanceToday();
+        res.json(logs);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/attendance/request-otp', (req, res) => {
+    const { employeeId } = req.body;
+    if (!employeeId) return res.status(400).json({ error: 'employeeId required' });
+
+    // Generate 4 digit OTP
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    console.log(`\n==========================================`);
+    console.log(`🛡️  ATTENDANCE OTP FOR EMPLOYEE #${employeeId}: ${otp}`);
+    console.log(`==========================================\n`);
+
+    // Store PIN valid for 5 mins
+    otpStore[employeeId] = { otp, expiresAt: Date.now() + 5 * 60000 };
+    res.json({ success: true, message: 'OTP generated', devOtp: otp });
+});
+
+app.post('/api/attendance/verify', async (req, res) => {
+    const { employeeId, otp } = req.body;
+    if (!employeeId || !otp) return res.status(400).json({ error: 'employeeId and otp required' });
+
+    const storedData = otpStore[employeeId];
+    if (!storedData) return res.status(400).json({ error: 'No OTP requested for this employee' });
+    if (Date.now() > storedData.expiresAt) {
+        delete otpStore[employeeId];
+        return res.status(400).json({ error: 'OTP expired' });
+    }
+    
+    if (storedData.otp !== otp) {
+        return res.status(400).json({ error: 'Invalid OTP' });
+    }
+
+    // OTP Correct!
+    try {
+        const { markAttendance } = require('./database');
+        const log = await markAttendance(employeeId);
+        delete otpStore[employeeId];
+        res.json({ success: true, log });
+    } catch (err) {
+        res.status(400).json({ error: err.message }); // likely already marked
+    }
+});
+
+app.post('/api/attendance/biometric', async (req, res) => {
+    const { employeeId, biometricType } = req.body;
+    if (!employeeId) return res.status(400).json({ error: 'employeeId required' });
+    console.log(`\n=== 🧬 BIOMETRIC MATCH: ${biometricType} for Emp #${employeeId} ===\n`);
+    
+    try {
+        const { markAttendance } = require('./database');
+        const log = await markAttendance(employeeId);
+        res.json({ success: true, log, method: biometricType });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
 // Catch-all to serve the React app (compatible with Express 5)
-app.use((req, res, next) => {
-    if (req.path.startsWith('/api')) return next();
+app.use((req, res) => {
+    if (req.path.startsWith('/api')) return res.status(404).json({ error: 'API endpoint not found' });
     res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
 });
 
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, '0.0.0.0', async () => {
     console.log(`Server running on port ${PORT}`);
+    
+    // Seed menu if needed
+    try {
+        const { menuData } = require('./menu_seed_data');
+        await seedMenu(menuData);
+    } catch (err) {
+        console.error('Menu seeding failed:', err.message);
+    }
+
+    // Availability auto-reset checker (every 1 minute)
+    setInterval(async () => {
+        const resets = await checkMenuAvailabilityReset().catch(e => 0);
+        if (resets > 0) {
+            console.log(`Auto-reset ${resets} menu items to Available.`);
+            const fullMenu = await getMenuItems().catch(e => []);
+            io.emit('menuReset', fullMenu); 
+        }
+    }, 60000);
 });
