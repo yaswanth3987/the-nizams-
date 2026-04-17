@@ -20,7 +20,11 @@ export default function AdminMenuManagement() {
         name: '',
         price: '',
         category: 'Main Course',
-        description: ''
+        description: '',
+        isPopular: false,
+        isRecommended: false,
+        isBestSeller: false,
+        isNew: false
     });
 
     useEffect(() => {
@@ -63,7 +67,10 @@ export default function AdminMenuManagement() {
             if (res.ok) {
                 fetchMenu();
                 setIsAddModalOpen(false);
-                setNewItem({ name: '', price: '', category: 'Main Course', description: '' });
+                setNewItem({ 
+                    name: '', price: '', category: 'Main Course', description: '',
+                    isPopular: false, isRecommended: false, isBestSeller: false, isNew: false
+                });
             }
         } catch (err) {
             console.error('Failed to add item:', err);
@@ -159,7 +166,7 @@ export default function AdminMenuManagement() {
                 </div>
                 <button 
                     onClick={() => setIsAddModalOpen(true)}
-                    className="bg-nizam-gold text-black hover:bg-yellow-500 px-5 py-2.5 rounded text-xs font-bold uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg shadow-nizam-gold/10"
+                    className="bg-nizam-gold text-black hover:bg-nizam-gold/90 px-5 py-2.5 rounded text-[11px] font-bold uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg shadow-nizam-gold/10"
                 >
                     <Plus className="w-4 h-4" /> Add Item
                 </button>
@@ -174,7 +181,7 @@ export default function AdminMenuManagement() {
                         placeholder="Search by name..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-[#111312] border border-nizam-border rounded-lg pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-nizam-gold/50 transition-colors"
+                        className="w-full bg-nizam-dark border border-nizam-border rounded-lg pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-nizam-gold/50 transition-colors shadow-inner"
                     />
                 </div>
                 <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
@@ -184,8 +191,8 @@ export default function AdminMenuManagement() {
                             onClick={() => setActiveCategory(cat)}
                             className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border transition-all whitespace-nowrap ${
                                 activeCategory === cat 
-                                ? 'bg-nizam-gold/10 border-nizam-gold text-nizam-gold' 
-                                : 'bg-[#111312] border-nizam-border text-nizam-textMuted hover:border-white/20'
+                                ? 'bg-nizam-gold/10 border-nizam-gold text-nizam-gold shadow-sm' 
+                                : 'bg-nizam-dark border-nizam-border text-nizam-textMuted hover:border-nizam-gold/30'
                             }`}
                         >
                             {cat}
@@ -204,22 +211,29 @@ export default function AdminMenuManagement() {
                         </div>
                         <div className="grid grid-cols-1 gap-2">
                             {groupedMenu[category].map(item => (
-                                <div key={item.id} className={`bg-[#0d0f0e] border rounded-lg p-4 flex items-center justify-between transition-all group ${!item.isAvailable ? 'border-red-900/30 opacity-70' : 'border-white/5 hover:border-white/10 shadow-lg shadow-black/20'}`}>
+                                <div key={item.id} className={`bg-nizam-card border rounded-lg p-4 flex items-center justify-between transition-all group ${!item.isAvailable ? 'border-red-900/30 opacity-70' : 'border-nizam-border/30 hover:border-nizam-border/60 shadow-lg shadow-black/20'}`}>
                                     <div className="flex-1">
                                         <div className="flex items-center gap-3">
                                             <h4 className={`font-medium ${!item.isAvailable ? 'text-nizam-textMuted line-through' : 'text-white'}`}>{item.name}</h4>
                                             {!item.isAvailable && (
                                                 <span className="bg-red-950/40 text-red-500 text-[9px] font-bold px-2 py-0.5 rounded border border-red-900/30 uppercase tracking-widest">
-                                                    Unavailable {item.unavailableUntil && new Date(item.unavailableUntil) > new Date() ? `until ${new Date(item.unavailableUntil).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : '(Manual)'}
+                                                    Unavailable
                                                 </span>
                                             )}
+                                            {/* Badge Indicators for Admin */}
+                                            <div className="flex gap-1">
+                                                {item.isPopular && <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]" title="Popular"></div>}
+                                                {item.isBestSeller && <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]" title="Best Seller"></div>}
+                                                {item.isRecommended && <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_5px_rgba(245,158,11,0.5)]" title="Recommended"></div>}
+                                                {item.isNew && <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,0.5)]" title="New"></div>}
+                                            </div>
                                         </div>
                                         <p className="text-nizam-textMuted text-xs mt-1 truncate max-w-md">{item.description || 'No description available.'}</p>
                                     </div>
 
                                     <div className="flex items-center gap-8">
                                         <div className="text-right">
-                                            <p className="text-nizam-gold font-bold text-sm">£{item.price.toFixed(2)}</p>
+                                            <p className="text-nizam-gold font-bold text-sm">£{Number(item.price || 0).toFixed(2)}</p>
                                         </div>
 
                                         <div className="flex items-center h-10 gap-2">
@@ -238,21 +252,21 @@ export default function AdminMenuManagement() {
                                                 {item.isAvailable ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
                                                 {item.isAvailable ? 'Available' : 'Unavailable'}
                                             </button>
-
-                                            <div className="flex items-center gap-1 border-l border-white/5 pl-2">
+                                             <div className="flex items-center gap-1 border-l border-nizam-border/30 pl-2">
                                                 <button 
                                                     onClick={() => setEditingItem(item)}
-                                                    className="p-2.5 rounded hover:bg-white/5 text-nizam-textMuted hover:text-white transition-all shadow-sm"
+                                                    className="p-2.5 rounded hover:bg-nizam-gold/10 text-nizam-textMuted hover:text-nizam-gold transition-all"
                                                 >
                                                     <Edit2 className="w-3.5 h-3.5" />
                                                 </button>
                                                 <button 
                                                     onClick={() => handleDelete(item.id)}
-                                                    className="p-2.5 rounded hover:bg-red-950/20 text-nizam-textMuted hover:text-red-500 transition-all shadow-sm"
+                                                    className="p-2.5 rounded hover:bg-red-950/20 text-nizam-textMuted hover:text-red-500 transition-all"
                                                 >
                                                     <Trash2 className="w-3.5 h-3.5" />
                                                 </button>
                                             </div>
+
                                         </div>
                                     </div>
                                 </div>
@@ -265,8 +279,8 @@ export default function AdminMenuManagement() {
             {/* Availability Modal */}
             {availabilityModal && (
                 <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[110] flex items-center justify-center p-4">
-                    <div className="bg-[#111312] border border-nizam-border rounded-xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-                        <div className="p-6 border-b border-white/5 text-center">
+                    <div className="bg-nizam-card border border-nizam-border rounded-xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-nizam-border/30 text-center bg-nizam-dark/30">
                             <div className="w-12 h-12 bg-red-950/30 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-900/50">
                                 <Clock className="w-6 h-6 text-red-500" />
                             </div>
@@ -280,14 +294,14 @@ export default function AdminMenuManagement() {
                                     until.setHours(23, 59, 59, 999);
                                     toggleAvailability(availabilityModal, false, until.toISOString());
                                 }}
-                                className="w-full text-left p-4 rounded-lg bg-black/40 border border-white/5 hover:border-nizam-gold/50 hover:bg-nizam-gold/5 transition-all group"
+                                className="w-full text-left p-4 rounded-lg bg-nizam-dark/50 border border-nizam-border/30 hover:border-nizam-gold/50 hover:bg-nizam-gold/5 transition-all group"
                             >
                                 <div className="flex justify-between items-center">
                                     <span className="text-sm font-medium text-white group-hover:text-nizam-gold transition-colors">Today Only</span>
                                     <span className="text-[10px] text-nizam-textMuted uppercase tracking-widest">Until Midnight</span>
                                 </div>
                             </button>
-                            <div className="p-4 rounded-lg bg-black/40 border border-white/5 space-y-3">
+                            <div className="p-4 rounded-lg bg-nizam-dark/50 border border-nizam-border/30 space-y-3">
                                 <div className="flex justify-between items-center mb-1">
                                     <span className="text-sm font-medium text-white">Custom Time</span>
                                     <span className="text-[10px] text-nizam-textMuted uppercase tracking-widest">Select Hours</span>
@@ -297,7 +311,7 @@ export default function AdminMenuManagement() {
                                         <button 
                                             key={h}
                                             onClick={() => setCustomTime(h)}
-                                            className={`py-2 rounded border text-[10px] font-bold transition-all ${customTime === h ? 'bg-nizam-gold border-nizam-gold text-black' : 'bg-white/5 border-white/10 text-nizam-textMuted hover:border-white/30'}`}
+                                            className={`py-2 rounded border text-[10px] font-bold transition-all ${customTime === h ? 'bg-nizam-gold border-nizam-gold text-black' : 'bg-nizam-dark border-nizam-border/50 text-nizam-textMuted hover:border-nizam-gold/30'}`}
                                         >
                                             {h}h
                                         </button>
@@ -308,7 +322,7 @@ export default function AdminMenuManagement() {
                                         type="number" 
                                         value={customTime}
                                         onChange={(e) => setCustomTime(e.target.value)}
-                                        className="flex-1 bg-black/40 border border-white/10 rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-nizam-gold"
+                                        className="flex-1 bg-nizam-dark border border-nizam-border/50 rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-nizam-gold shadow-inner"
                                         placeholder="Enter hours..."
                                     />
                                     <button 
@@ -318,7 +332,7 @@ export default function AdminMenuManagement() {
                                                 toggleAvailability(availabilityModal, false, until.toISOString());
                                             }
                                         }}
-                                        className="bg-nizam-gold text-black px-4 py-2 rounded text-[10px] font-bold uppercase tracking-widest hover:brightness-110 transition-all"
+                                        className="bg-nizam-gold text-black px-4 py-2 rounded text-[10px] font-bold uppercase tracking-widest hover:brightness-110 transition-all shadow-sm shadow-nizam-gold/20"
                                     >
                                         Set
                                     </button>
@@ -326,7 +340,7 @@ export default function AdminMenuManagement() {
                             </div>
                             <button 
                                 onClick={() => toggleAvailability(availabilityModal, false, null)}
-                                className="w-full text-left p-4 rounded-lg bg-black/40 border border-white/5 hover:border-nizam-gold/50 hover:bg-nizam-gold/5 transition-all group"
+                                className="w-full text-left p-4 rounded-lg bg-nizam-dark/50 border border-nizam-border/30 hover:border-nizam-gold/50 hover:bg-nizam-gold/5 transition-all group"
                             >
                                 <div className="flex justify-between items-center">
                                     <span className="text-sm font-medium text-white group-hover:text-nizam-gold transition-colors">Manual Enable</span>
@@ -334,8 +348,8 @@ export default function AdminMenuManagement() {
                                 </div>
                             </button>
                         </div>
-                        <div className="p-4 bg-black/40 border-t border-white/5">
-                            <button onClick={() => setAvailabilityModal(null)} className="w-full py-2 text-xs font-bold text-nizam-textMuted hover:text-white uppercase tracking-widest transition-colors">
+                        <div className="p-4 bg-nizam-dark/40 border-t border-nizam-border/30">
+                            <button onClick={() => setAvailabilityModal(null)} className="w-full py-2 text-[10px] font-bold text-nizam-textMuted hover:text-white uppercase tracking-widest transition-colors">
                                 Cancel
                             </button>
                         </div>
@@ -345,9 +359,9 @@ export default function AdminMenuManagement() {
 
             {/* Edit/Add Modals (Similar to before but without image field) */}
             {editingItem && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-                    <div className="bg-[#111312] border border-nizam-border rounded-xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-                        <div className="p-6 border-b border-white/5 flex justify-between items-center">
+                <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+                    <div className="bg-nizam-card border border-nizam-border rounded-xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-nizam-border/30 flex justify-between items-center bg-nizam-dark/30">
                             <h3 className="text-xl font-serif text-white tracking-wide">Edit Item</h3>
                             <button onClick={() => setEditingItem(null)} className="text-nizam-textMuted hover:text-white transition-colors">
                                 <X className="w-5 h-5" />
@@ -361,7 +375,7 @@ export default function AdminMenuManagement() {
                                     type="text" 
                                     value={editingItem.name}
                                     onChange={e => setEditingItem({...editingItem, name: e.target.value})}
-                                    className="w-full bg-black/40 border border-nizam-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold shadow-inner"
+                                    className="w-full bg-nizam-dark border border-nizam-border/50 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold shadow-inner"
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
@@ -373,7 +387,7 @@ export default function AdminMenuManagement() {
                                         step="0.01"
                                         value={editingItem.price}
                                         onChange={e => setEditingItem({...editingItem, price: parseFloat(e.target.value)})}
-                                        className="w-full bg-black/40 border border-nizam-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold"
+                                        className="w-full bg-nizam-dark border border-nizam-border/50 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold shadow-inner"
                                     />
                                 </div>
                                 <div>
@@ -381,7 +395,7 @@ export default function AdminMenuManagement() {
                                     <select 
                                         value={editingItem.category}
                                         onChange={e => setEditingItem({...editingItem, category: e.target.value})}
-                                        className="w-full bg-black/40 border border-nizam-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold appearance-none shadow-inner"
+                                        className="w-full bg-nizam-dark border border-nizam-border/50 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold appearance-none shadow-inner"
                                     >
                                         <option>Biryani Thaali</option>
                                         <option>Non Veg Starters</option>
@@ -399,10 +413,45 @@ export default function AdminMenuManagement() {
                                 <textarea 
                                     value={editingItem.description}
                                     onChange={e => setEditingItem({...editingItem, description: e.target.value})}
-                                    className="w-full bg-black/40 border border-nizam-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold h-24 resize-none"
+                                    className="w-full bg-nizam-dark border border-nizam-border/50 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold h-20 resize-none shadow-inner"
                                 />
                             </div>
-                            <button type="submit" className="w-full py-4 bg-nizam-gold text-black font-bold uppercase tracking-widest text-xs rounded-lg mt-4 shadow-lg shadow-nizam-gold/10 hover:brightness-110 transition-all">
+
+                            {/* Badge Highlights */}
+                            <div className="space-y-3 pt-2">
+                                <label className="block text-[10px] font-bold text-nizam-textMuted uppercase tracking-widest mb-1">Badge Highlights (Max 2)</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {[
+                                        { id: 'isPopular', label: 'Popular', color: 'text-red-500' },
+                                        { id: 'isRecommended', label: 'Recommended', color: 'text-amber-500' },
+                                        { id: 'isBestSeller', label: 'Best Seller', color: 'text-emerald-500' },
+                                        { id: 'isNew', label: 'New', color: 'text-blue-500' }
+                                    ].map(badge => {
+                                        const activeCount = ['isPopular', 'isRecommended', 'isBestSeller', 'isNew'].filter(b => editingItem[b]).length;
+                                        const isDisabled = !editingItem[badge.id] && activeCount >= 2;
+
+                                        return (
+                                            <label 
+                                                key={badge.id}
+                                                className={`flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer ${editingItem[badge.id] ? 'bg-nizam-gold/10 border-nizam-gold/50' : 'bg-nizam-dark border-nizam-border/30'} ${isDisabled ? 'opacity-30 cursor-not-allowed' : 'hover:border-nizam-gold/30'}`}
+                                            >
+                                                <span className={`text-[10px] font-black uppercase tracking-wider ${editingItem[badge.id] ? badge.color : 'text-nizam-textMuted'}`}>{badge.label}</span>
+                                                <input 
+                                                    type="checkbox"
+                                                    disabled={isDisabled}
+                                                    checked={editingItem[badge.id]}
+                                                    onChange={e => setEditingItem({ ...editingItem, [badge.id]: e.target.checked })}
+                                                    className="w-4 h-4 rounded border-nizam-border/50 bg-nizam-dark text-nizam-gold focus:ring-0 focus:ring-offset-0"
+                                                />
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                                {['isPopular', 'isRecommended', 'isBestSeller', 'isNew'].filter(b => editingItem[b]).length >= 2 && (
+                                    <p className="text-[9px] text-amber-500 font-bold uppercase tracking-widest animate-pulse">Max 2 badges selected</p>
+                                )}
+                            </div>
+                            <button type="submit" className="w-full py-4 bg-nizam-gold text-black font-bold uppercase tracking-widest text-[11px] rounded-lg mt-4 shadow-lg shadow-nizam-gold/10 hover:bg-nizam-gold/90 transition-all">
                                 Save Changes
                             </button>
                         </form>
@@ -411,9 +460,9 @@ export default function AdminMenuManagement() {
             )}
 
             {isAddModalOpen && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-                    <div className="bg-[#111312] border border-nizam-border rounded-xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-                        <div className="p-6 border-b border-white/5 flex justify-between items-center">
+                <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+                    <div className="bg-nizam-card border border-nizam-border rounded-xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-nizam-border/30 flex justify-between items-center bg-nizam-dark/30">
                             <h3 className="text-xl font-serif text-white tracking-wide">Add Item</h3>
                             <button onClick={() => setIsAddModalOpen(false)} className="text-nizam-textMuted hover:text-white transition-colors">
                                 <X className="w-5 h-5" />
@@ -427,7 +476,7 @@ export default function AdminMenuManagement() {
                                     type="text" 
                                     value={newItem.name}
                                     onChange={e => setNewItem({...newItem, name: e.target.value})}
-                                    className="w-full bg-black/40 border border-nizam-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold shadow-inner"
+                                    className="w-full bg-nizam-dark border border-nizam-border/50 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold shadow-inner"
                                     placeholder="e.g. Lamb Chops"
                                 />
                             </div>
@@ -440,7 +489,7 @@ export default function AdminMenuManagement() {
                                         step="0.01"
                                         value={newItem.price}
                                         onChange={e => setNewItem({...newItem, price: parseFloat(e.target.value)})}
-                                        className="w-full bg-black/40 border border-nizam-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold"
+                                        className="w-full bg-nizam-dark border border-nizam-border/50 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold shadow-inner"
                                         placeholder="0.00"
                                     />
                                 </div>
@@ -449,7 +498,7 @@ export default function AdminMenuManagement() {
                                     <select 
                                         value={newItem.category}
                                         onChange={e => setNewItem({...newItem, category: e.target.value})}
-                                        className="w-full bg-black/40 border border-nizam-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold appearance-none shadow-inner"
+                                        className="w-full bg-nizam-dark border border-nizam-border/50 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold appearance-none shadow-inner"
                                     >
                                         <option>Biryani Thaali</option>
                                         <option>Non Veg Starters</option>
@@ -467,10 +516,45 @@ export default function AdminMenuManagement() {
                                 <textarea 
                                     value={newItem.description}
                                     onChange={e => setNewItem({...newItem, description: e.target.value})}
-                                    className="w-full bg-black/40 border border-nizam-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold h-24 resize-none"
+                                    className="w-full bg-nizam-dark border border-nizam-border/50 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold h-20 resize-none shadow-inner"
                                 />
                             </div>
-                            <button type="submit" className="w-full py-4 bg-emerald-700 text-white font-bold uppercase tracking-widest text-xs rounded-lg mt-4 shadow-lg hover:bg-emerald-600 transition-all">
+
+                            {/* Badge Highlights */}
+                            <div className="space-y-3 pt-2">
+                                <label className="block text-[10px] font-bold text-nizam-textMuted uppercase tracking-widest mb-1">Badge Highlights (Max 2)</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {[
+                                        { id: 'isPopular', label: 'Popular', color: 'text-red-500' },
+                                        { id: 'isRecommended', label: 'Recommended', color: 'text-amber-500' },
+                                        { id: 'isBestSeller', label: 'Best Seller', color: 'text-emerald-500' },
+                                        { id: 'isNew', label: 'New', color: 'text-blue-500' }
+                                    ].map(badge => {
+                                        const activeCount = ['isPopular', 'isRecommended', 'isBestSeller', 'isNew'].filter(b => newItem[b]).length;
+                                        const isDisabled = !newItem[badge.id] && activeCount >= 2;
+
+                                        return (
+                                            <label 
+                                                key={badge.id}
+                                                className={`flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer ${newItem[badge.id] ? 'bg-nizam-gold/10 border-nizam-gold/50' : 'bg-nizam-dark border-nizam-border/30'} ${isDisabled ? 'opacity-30 cursor-not-allowed' : 'hover:border-nizam-gold/30'}`}
+                                            >
+                                                <span className={`text-[10px] font-black uppercase tracking-wider ${newItem[badge.id] ? badge.color : 'text-nizam-textMuted'}`}>{badge.label}</span>
+                                                <input 
+                                                    type="checkbox"
+                                                    disabled={isDisabled}
+                                                    checked={newItem[badge.id]}
+                                                    onChange={e => setNewItem({ ...newItem, [badge.id]: e.target.checked })}
+                                                    className="w-4 h-4 rounded border-nizam-border/50 bg-nizam-dark text-nizam-gold focus:ring-0 focus:ring-offset-0"
+                                                />
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                                {['isPopular', 'isRecommended', 'isBestSeller', 'isNew'].filter(b => newItem[b]).length >= 2 && (
+                                    <p className="text-[9px] text-amber-500 font-bold uppercase tracking-widest animate-pulse">Max 2 badges selected</p>
+                                )}
+                            </div>
+                            <button type="submit" className="w-full py-4 bg-nizam-gold text-black font-bold uppercase tracking-widest text-[11px] rounded-lg mt-4 shadow-lg hover:bg-nizam-gold/90 transition-all">
                                 Create Item
                             </button>
                         </form>

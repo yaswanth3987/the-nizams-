@@ -10,7 +10,8 @@ const {
     updateEmployee, deleteEmployee, markAttendance, getAttendanceToday,
     getMenuItems, addMenuItem, updateMenuItem, deleteMenuItem, seedMenu,
     updateMenuItemStatus, checkMenuAvailabilityReset, getSessionsByStatus, updateSessionStatus,
-    getTableStatuses, updateTableStatus
+    getTableStatuses, updateTableStatus, allocateSession, getActiveSession, clearSession,
+    getSessionsByTable, getOrdersByTable
 } = require('./database');
 
 const app = express();
@@ -87,6 +88,21 @@ app.delete('/api/menu/:id', async (req, res) => {
     }
 });
 
+app.post('/api/sessions/validate', async (req, res) => {
+    try {
+        const { tableId, sessionId } = req.body;
+        if (!tableId || !sessionId) return res.status(400).json({ error: 'tableId and sessionId are required' });
+        
+        const success = await allocateSession(tableId, sessionId);
+        if (!success) {
+            return res.status(403).json({ error: 'Table is currently in use by another session.' });
+        }
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Orders (Sessions) API
 app.get('/api/orders', async (req, res) => {
     try {
@@ -100,10 +116,22 @@ app.get('/api/orders', async (req, res) => {
 
 app.post('/api/orders', async (req, res) => {
     try {
+        const { orderType, tableId, sessionId } = req.body;
+        
+        // Validate session for dine-in orders
+        if (orderType !== 'takeaway' && tableId && tableId !== 'TAKEAWAY') {
+            const activeSession = await getActiveSession(tableId);
+            const tokenToMatch = activeSession ? (activeSession.session_token || activeSession.sessionId) : null;
+            
+            if (!activeSession || tokenToMatch !== sessionId) {
+                return res.status(403).json({ error: 'Session expired. Please contact staff.' });
+            }
+        }
+        
         const order = await createOrder(req.body);
         
         // Auto-update table status to ordering when new order arrives
-        if (order.tableId) {
+        if (order.tableId && orderType !== 'takeaway' && order.tableId !== 'TAKEAWAY') {
             const tStatus = await updateTableStatus(order.tableId, 'ordering');
             io.emit('tableStatusUpdated', tStatus);
         }

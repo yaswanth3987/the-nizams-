@@ -24,7 +24,9 @@ import {
     Clock,
     Search,
     Menu as MenuIcon,
-    ShoppingBag
+    ShoppingBag,
+    Trophy,
+    Sparkles
 } from 'lucide-react';
 import { categoriesData, menuData } from '../data/menu.js';
 import { socket } from '../utils/socket';
@@ -48,6 +50,8 @@ export default function CustomerMenu() {
     const [myOrders, setMyOrders] = useState([]);
     const [activeEffect, setActiveEffect] = useState(null); // { id, effect }
     const [cartPulse, setCartPulse] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [previewItem, setPreviewItem] = useState(null);
 
     const KITCHEN_EFFECTS = ['steam', 'spice', 'flame'];
 
@@ -69,12 +73,42 @@ export default function CustomerMenu() {
         const saved = localStorage.getItem(`assist_cooldown_${selectedTable}`);
         return saved ? parseInt(saved, 10) : 0;
     });
+    const [sessionError, setSessionError] = useState(false);
+    const [sessionId, setSessionId] = useState(() => {
+        let sid = localStorage.getItem(`session_${selectedTable}`);
+        if (!sid) {
+            sid = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+            if (selectedTable) {
+                localStorage.setItem(`session_${selectedTable}`, sid);
+            }
+        }
+        return sid;
+    });
 
     useEffect(() => {
         if (!selectedTable) return;
+        
+        const validateSession = async () => {
+            try {
+                const sid = localStorage.getItem(`session_${selectedTable}`) || sessionId;
+                const formattedTable = /^[A-Z]/.test(selectedTable) ? selectedTable : `T${selectedTable}`;
+                const res = await fetch(`${API_URL}/sessions/validate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tableId: formattedTable, sessionId: sid })
+                });
+                if (!res.ok) {
+                    setSessionError(true);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        };
+        validateSession();
 
         // Auto-mark table as ordering when customer opens the menu
-        fetch(`${API_URL}/table-status/${selectedTable.startsWith('T') ? selectedTable : `T${selectedTable}`}`, {
+        const formattedTable = /^[A-Z]/.test(selectedTable) ? selectedTable : `T${selectedTable}`;
+        fetch(`${API_URL}/table-status/${formattedTable}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: 'ordering' })
@@ -95,10 +129,11 @@ export default function CustomerMenu() {
         if (assistanceCooldown > 0 || !selectedTable) return;
         setAssistanceStatus('notifying');
         try {
+            const formattedTable = /^[A-Z]/.test(selectedTable) ? selectedTable : `T${selectedTable}`;
             const res = await fetch(`${API_URL}/assistance`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tableId: selectedTable.startsWith('T') ? selectedTable : `T${selectedTable}` })
+                body: JSON.stringify({ tableId: formattedTable })
             });
             if (res.ok) {
                 setAssistanceStatus('success');
@@ -190,13 +225,15 @@ export default function CustomerMenu() {
         const serviceCharge = Number((subtotal * 0.10).toFixed(2));
         const finalTotal = Number((subtotal + serviceCharge).toFixed(2));
         
+        const formattedTable = /^[A-Z]/.test(selectedTable) ? selectedTable : `T${selectedTable}`;
         const orderData = {
-            tableId: selectedTable.startsWith('T') ? selectedTable : `T${selectedTable}`,
+            tableId: formattedTable,
             items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
             finalTotal,
             subtotal,
             serviceCharge,
-            status: 'new'
+            status: 'new',
+            sessionId: sessionId
         };
 
         try {
@@ -210,6 +247,9 @@ export default function CustomerMenu() {
                 setOrderStatus('success');
                 setIsCartOpen(false);
                 setTimeout(() => setOrderStatus(null), 3000);
+            } else if (res.status === 403) {
+                setSessionError(true);
+                setOrderStatus('error');
             } else {
                 setOrderStatus('error');
             }
@@ -225,7 +265,7 @@ export default function CustomerMenu() {
         if (!selectedTable) return;
         setIsOrdersLoading(true);
         try {
-            const tableId = selectedTable.startsWith('T') ? selectedTable : `T${selectedTable}`;
+            const tableId = /^[A-Z]/.test(selectedTable) ? selectedTable : `T${selectedTable}`;
             const [sessionsRes, newOrdersRes] = await Promise.all([
                 fetch(`${API_URL}/tables/${tableId}/sessions`),
                 fetch(`${API_URL}/tables/${tableId}/new-orders`)
@@ -241,7 +281,9 @@ export default function CustomerMenu() {
                 return 'Processing';
             };
 
-            const formattedSessions = sessionsData.map(s => ({
+            const formattedSessions = sessionsData
+                .filter(s => s.sessionId === sessionId)
+                .map(s => ({
                 id: s.id,
                 items: s.items,
                 total: s.finalTotal,
@@ -256,7 +298,9 @@ export default function CustomerMenu() {
                 return 'Pending';
             };
 
-            const formattedNew = newOrdersData.map(o => ({
+            const formattedNew = newOrdersData
+                .filter(o => o.sessionId === sessionId)
+                .map(o => ({
                 id: o.id,
                 items: o.items,
                 total: o.finalTotal,
@@ -276,29 +320,55 @@ export default function CustomerMenu() {
         let interval;
         if (view === 'orders') {
             fetchMyOrders();
-            interval = setInterval(fetchMyOrders, 10000); // Refresh every 10s
+            interval = setInterval(fetchMyOrders, 10000); // Pull backup
+            
+            const handleUpdate = () => fetchMyOrders();
+            socket.on('orderUpdated', handleUpdate);
+            socket.on('sessionUpdated', handleUpdate);
+            socket.on('tableReset', handleUpdate);
+            
+            return () => {
+                clearInterval(interval);
+                socket.off('orderUpdated', handleUpdate);
+                socket.off('sessionUpdated', handleUpdate);
+                socket.off('tableReset', handleUpdate);
+            };
         }
-        return () => clearInterval(interval);
-    }, [view]);
+    }, [view, selectedTable]);
 
     const renderTableSelection = () => (
         <div className="min-h-screen bg-[#111312] py-8 px-4 flex flex-col items-center justify-center font-sans">
             <div className="w-full max-w-[360px] bg-[#1c1e1c] rounded-2xl shadow-2xl overflow-hidden border border-[#d4af37]/20 p-8 text-center">
                 <img src="/logo-icon.png" alt="Logo" className="w-16 h-16 mx-auto mb-4 drop-shadow-md brightness-150" />
                 <h2 className="text-3xl font-serif text-[#d4af37] mb-2 leading-tight">Welcome to<br/>The Nizam's</h2>
-                <p className="text-[#a8b8b2] text-sm mb-8">Please select your table number to view the menu.</p>
+                <p className="text-[#a8b8b2] text-sm mb-6">Please select your seating unit to view the menu.</p>
                 
-                <div className="grid grid-cols-3 gap-3">
-                    {Array.from({length: 24}).map((_, i) => {
+                <div className="text-left mb-2 text-[#d4af37] text-xs font-bold uppercase tracking-widest border-b border-[#d4af37]/30 pb-1">Tables</div>
+                <div className="grid grid-cols-5 gap-2 mb-4">
+                    {Array.from({length: 15}).map((_, i) => {
                         const t = `T${String(i+1).padStart(2, '0')}`;
                         return (
-                            <button 
-                                key={t}
-                                onClick={() => handleTableSelect(t)}
-                                className="bg-[#111312] border border-[#d4af37]/30 text-[#d4af37] py-3 rounded-lg font-bold text-xl hover:bg-[#d4af37]/10 transition-colors shadow-inner"
-                            >
-                                {t}
-                            </button>
+                            <button key={t} onClick={() => handleTableSelect(t)} className="bg-[#111312] border border-[#d4af37]/30 text-[#d4af37] py-2 rounded font-bold text-sm hover:bg-[#d4af37]/10 transition-colors shadow-inner">{t}</button>
+                        );
+                    })}
+                </div>
+
+                <div className="text-left mb-2 text-[#d4af37] text-xs font-bold uppercase tracking-widest border-b border-[#d4af37]/30 pb-1">Boxes (Private)</div>
+                <div className="grid grid-cols-5 gap-2 mb-4">
+                    {Array.from({length: 5}).map((_, i) => {
+                        const b = `B${String(i+1).padStart(2, '0')}`;
+                        return (
+                            <button key={b} onClick={() => handleTableSelect(b)} className="bg-[#111312] border border-[#d4af37]/30 text-amber-500 py-2 rounded font-bold text-sm hover:bg-[#d4af37]/10 transition-colors shadow-inner">{b}</button>
+                        );
+                    })}
+                </div>
+
+                <div className="text-left mb-2 text-[#d4af37] text-xs font-bold uppercase tracking-widest border-b border-[#d4af37]/30 pb-1">Chokies</div>
+                <div className="grid grid-cols-4 gap-2">
+                    {Array.from({length: 4}).map((_, i) => {
+                        const c = `C${String(i+1).padStart(2, '0')}`;
+                        return (
+                            <button key={c} onClick={() => handleTableSelect(c)} className="bg-[#111312] border border-[#d4af37]/30 text-emerald-500 py-2 rounded font-bold text-sm hover:bg-[#d4af37]/10 transition-colors shadow-inner">{c}</button>
                         );
                     })}
                 </div>
@@ -491,13 +561,94 @@ export default function CustomerMenu() {
                 <div className={`p-1.5 rounded-lg transition-all ${isCartOpen ? 'bg-white/5' : ''} relative`}>
                     <ShoppingBag size={18} strokeWidth={isCartOpen ? 2.5 : 2} />
                     {cart.length > 0 && (
-                        <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-[#C29958] rounded-full animate-pulse shadow-[0_0_10px_#C29958]"></span>
+                        <span className="absolute top-1 right-1 w-2 h-2 bg-[#C29958] rounded-full animate-pulse shadow-[0_0_10px_#C29958] border border-[#0B3A2E]"></span>
                     )}
                 </div>
                 <span className="text-[7px] font-black uppercase tracking-[0.15em]">Cart</span>
             </button>
         </div>
     );
+
+    const ItemBadge = ({ item }) => {
+        const badges = [];
+        if (item.isPopular) badges.push({ 
+            label: 'Popular', 
+            icon: <Flame size={8} fill="currentColor" />, 
+            class: 'bg-red-500 text-white border-red-400/30' 
+        });
+        if (item.isBestSeller) badges.push({ 
+            label: 'Best Seller', 
+            icon: <Trophy size={8} fill="currentColor" />, 
+            class: 'bg-emerald-500 text-white border-emerald-400/30' 
+        });
+        if (item.isRecommended) badges.push({ 
+            label: 'Recommended', 
+            icon: <Star size={8} fill="currentColor" />, 
+            class: 'bg-[#C29958] text-[#0B3A2E] border-white/20' 
+        });
+        if (item.isNew) badges.push({ 
+            label: 'New', 
+            icon: <Sparkles size={8} fill="currentColor" />, 
+            class: 'bg-blue-500 text-white border-blue-400/30' 
+        });
+
+        // Limit to 2 badges as per rule
+        const displayBadges = badges.slice(0, 2);
+
+        if (displayBadges.length === 0) return null;
+
+        return (
+            <div className="flex flex-wrap gap-1.5 mb-1.5 animate-fade-in">
+                {displayBadges.map((badge, idx) => (
+                    <div 
+                        key={idx}
+                        className={`${badge.class} text-[8px] font-black px-2 py-0.5 rounded-[4px] shadow-sm flex items-center gap-1 border border-white/20 animate-in slide-in-from-left duration-500`}
+                        style={{ animationDelay: `${idx * 150}ms` }}
+                    >
+                        {badge.icon} {badge.label.toUpperCase()}
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
+    const ImagePreviewModal = () => {
+        if (!previewItem) return null;
+        return (
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-fade-in">
+                <div className="absolute inset-0 bg-black/95 backdrop-blur-xl" onClick={() => setPreviewItem(null)}></div>
+                <div className="relative bg-white rounded-[40px] overflow-hidden max-w-sm w-full shadow-2xl animate-zoom-in">
+                    <button 
+                        onClick={() => setPreviewItem(null)}
+                        className="absolute top-6 right-6 z-10 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center backdrop-blur-md"
+                    >
+                        <X size={20} />
+                    </button>
+                    {previewItem.image ? (
+                        <img src={previewItem.image} alt={previewItem.name} className="w-full h-72 object-cover" />
+                    ) : (
+                        <div className="w-full h-72 bg-[#F6EFE6] flex items-center justify-center">
+                            <ShoppingBag size={64} className="text-[#C29958]/20" />
+                        </div>
+                    )}
+                    <div className="p-8">
+                        <div className="flex justify-between items-start mb-2">
+                            <h3 className="text-[#0B3A2E] text-2xl font-black font-serif uppercase tracking-tight">{previewItem.name}</h3>
+                            <span className="text-2xl font-black text-[#0B3A2E]">£{previewItem.price.toFixed(2)}</span>
+                        </div>
+                        <ItemBadge item={previewItem} />
+                        <p className="text-[#6D5D4B] text-sm leading-relaxed mb-8 opacity-80 italic font-medium mt-2">"{previewItem.desc || previewItem.description}"</p>
+                        <button 
+                            onClick={() => { handleAddToCart(previewItem); setPreviewItem(null); }}
+                            className="w-full bg-[#0B3A2E] text-white py-5 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-xl active:scale-95 transition-all"
+                        >
+                            Add to Tray
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     const renderPremiumMenu = () => {
         const categories = categoriesData;
@@ -506,7 +657,7 @@ export default function CustomerMenu() {
         return (
             <div className="flex-1 overflow-y-auto pb-[90px] no-scrollbar scroll-smooth">
                 {/* Categories Bar */}
-                <div className="flex overflow-x-auto px-6 py-5 gap-8 no-scrollbar sticky top-0 bg-[#F9F6F0]/90 backdrop-blur-xl z-[45] border-b border-[#0B3A2E]/5 shadow-sm">
+                <div className="flex overflow-x-auto px-6 py-5 gap-8 no-scrollbar sticky top-0 bg-[#F9F6F0] z-[45] border-b border-[#0B3A2E]/5 shadow-sm">
                     {categories.map(cat => (
                         <button 
                             key={cat.id}
@@ -514,14 +665,55 @@ export default function CustomerMenu() {
                                 setExpandedCategory(cat.name);
                                 document.getElementById(`cat-${cat.name}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                             }}
-                            className={`whitespace-nowrap transition-all relative py-1 ${expandedCategory === cat.name ? 'text-[#0B3A2E] scale-105' : 'text-[#6D5D4B] opacity-60 hover:opacity-100'}`}
+                            className={`whitespace-nowrap transition-all relative py-1 ${expandedCategory === cat.name ? 'text-[#0B3A2E] scale-105 font-bold' : 'text-[#6D5D4B] opacity-60 hover:opacity-100'}`}
                         >
                             <span className="text-[12px] font-black uppercase tracking-[0.15em]">{cat.name}</span>
                             {expandedCategory === cat.name && (
-                                <div className="absolute -bottom-1 left-0 right-0 h-1 bg-[#0B3A2E] rounded-full shadow-[0_2px_4px_rgba(11,58,46,0.3)] anim-grow"></div>
+                                <div className="absolute -bottom-1 left-0 right-0 h-1 bg-[#C29958] rounded-full shadow-[0_2px_4px_rgba(194,153,88,0.3)] anim-grow"></div>
                             )}
                         </button>
                     ))}
+                </div>
+
+                {/* Popular Section */}
+                <div className="py-8 px-6 overflow-hidden">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-[#0B3A2E] text-2xl font-black font-serif italic">Nizam's Favorites</h3>
+                        <div className="flex gap-2">
+                             <div className="w-2 h-2 rounded-full bg-[#C29958]/20"></div>
+                             <div className="w-2 h-2 rounded-full bg-[#C29958]"></div>
+                        </div>
+                    </div>
+                    <div className="flex overflow-x-auto no-scrollbar gap-6 pb-4 -mx-2 px-2">
+                        {menu.filter(i => i.isPopular || i.isRecommended).map(item => (
+                            <div 
+                                key={`pop-${item.id}`}
+                                onClick={() => setPreviewItem(item)}
+                                className="min-w-[180px] bg-white rounded-[32px] p-3 shadow-xl border border-black/5 active:scale-95 transition-all"
+                            >
+                                <div className="relative h-32 rounded-[24px] overflow-hidden mb-3">
+                                    {item.image ? (
+                                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full bg-[#F6EFE6] flex items-center justify-center">
+                                            <ShoppingBag size={24} className="text-[#C29958]/20" />
+                                        </div>
+                                    )}
+                                </div>
+                                <h4 className="text-[#0B3A2E] font-black text-[12px] uppercase tracking-tight leading-none mb-1.5 truncate">{item.name}</h4>
+                                <ItemBadge item={item} />
+                                <div className="flex justify-between items-center mt-auto pt-1">
+                                    <span className="text-[#C29958] text-xs font-black">£{item.price.toFixed(2)}</span>
+                                    <button 
+                                        onClick={(e) => { e.stopPropagation(); handleAddToCart(item); }}
+                                        className="w-8 h-8 bg-[#0B3A2E] text-white rounded-full flex items-center justify-center shadow-lg active:rotate-12 transition-all"
+                                    >
+                                        <Plus size={14} strokeWidth={3} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Hero Feature */}
@@ -568,9 +760,12 @@ export default function CustomerMenu() {
                                         return (
                                             <div 
                                                 key={item.id} 
-                                                className={`flex gap-4 p-4 rounded-[20px] transition-all duration-300 bg-white premium-shadow border border-black/5 ${inCart ? 'ring-1 ring-[#C29958]/20 bg-gradient-to-br from-white to-[#F6EFE6]/20' : ''}`}
+                                                className={`flex gap-4 p-4 rounded-[20px] transition-all duration-300 bg-white premium-shadow border border-black/5 ${inCart ? 'ring-2 ring-[#C29958] bg-gradient-to-br from-white to-[#F6EFE6]' : ''}`}
                                             >
-                                                <div className={`relative w-24 h-24 shrink-0 rounded-[18px] overflow-hidden bg-[#F6EFE6]/30 border border-black/5 ${activeEffect?.id === item.id ? 'animate-item-pop' : ''}`}>
+                                                <div 
+                                                    onClick={() => setPreviewItem(item)}
+                                                    className={`relative w-24 h-24 shrink-0 rounded-[18px] overflow-hidden bg-[#F6EFE6]/30 border border-black/5 ${activeEffect?.id === item.id ? 'animate-item-pop' : ''}`}
+                                                >
                                                     {/* Kitchen Effects Overlays */}
                                                     {activeEffect?.id === item.id && (
                                                         <div className="absolute inset-0 z-10 pointer-events-none">
@@ -593,7 +788,12 @@ export default function CustomerMenu() {
                                                         </div>
                                                     )}
                                                     {item.image ? (
-                                                        <img src={item.image} alt={item.name} className={`w-full h-full object-cover transition-all duration-700 ${item.isAvailable ? '' : 'grayscale opacity-40'} ${inCart ? 'scale-110' : ''}`} />
+                                                        <img 
+                                                            src={item.image} 
+                                                            alt={item.name} 
+                                                            loading="lazy"
+                                                            className={`w-full h-full object-cover transition-all duration-700 ${item.isAvailable ? '' : 'grayscale opacity-40'} ${inCart ? 'scale-110' : ''}`} 
+                                                        />
                                                     ) : (
                                                         <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50/50 p-2">
                                                             <ShoppingBag size={18} className="text-gray-200" />
@@ -612,6 +812,7 @@ export default function CustomerMenu() {
                                                             <h4 className="font-extrabold text-[#0B3A2E] text-[14px] leading-tight flex-1">{item.name}</h4>
                                                             <span className="font-black text-[#0B3A2E] text-sm">£{item.price.toFixed(2)}</span>
                                                         </div>
+                                                        <ItemBadge item={item} />
                                                         <p className="text-[#6D5D4B] text-[10px] leading-relaxed line-clamp-2 font-medium opacity-70 mb-3">{item.desc}</p>
                                                     </div>
                                                     <div className="flex justify-start">
@@ -626,7 +827,7 @@ export default function CustomerMenu() {
                                                                 <span className="text-xs font-black text-white min-w-[14px] text-center tabular-nums">{inCart.qty}</span>
                                                                 <button 
                                                                     onClick={() => updateQuantity(item.id, 1)}
-                                                                    className="w-7 h-7 bg-[#C29958] rounded-full flex items-center justify-center text-[#0B3A2E] shadow-md active:scale-75 transition-all animate-button-tap"
+                                                                    className="w-7 h-7 bg-[#C29958] rounded-full flex items-center justify-center text-[#0B3A2E] shadow-lg active:scale-125 transition-all animate-button-tap"
                                                                 >
                                                                     <Plus size={12} strokeWidth={3} />
                                                                 </button>
@@ -826,14 +1027,14 @@ export default function CustomerMenu() {
                              <span className="text-[#C29958] text-[10px] font-black uppercase tracking-widest">IN PROGRESS</span>
                         </div>
                     </div>
-                    {myOrders.filter(o => o.status === 'Pending' || o.status === 'Preparing').length === 0 ? (
+                    {myOrders.filter(o => ['Pending', 'Preparing', 'Rejected ✗'].includes(o.status)).length === 0 ? (
                         <div className="bg-white/40 rounded-[40px] p-20 text-center border-2 border-dashed border-[#0B3A2E]/5 flex flex-col items-center">
                             <Clock className="w-12 h-12 text-[#0B3A2E]/10 mb-5" strokeWidth={1.5} />
                             <p className="text-[#6D5D4B] text-xs font-black uppercase tracking-widest opacity-40">No active delights</p>
                             <button onClick={() => setView('menu')} className="mt-8 bg-[#0B3A2E]/5 text-[#0B3A2E] px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#0B3A2E]/10 transition-all">Start Ordering</button>
                         </div>
                     ) : (
-                        myOrders.filter(o => o.status === 'Pending' || o.status === 'Preparing').map(order => (
+                        myOrders.filter(o => ['Pending', 'Preparing', 'Rejected ✗'].includes(o.status)).map(order => (
                             <div key={order.id} className="bg-white rounded-[45px] p-8 shadow-[0_25px_60px_rgba(0,0,0,0.06)] relative overflow-hidden mb-8 border border-white transition-all hover:shadow-[0_40px_80px_rgba(0,0,0,0.12)]">
                                 <div className="absolute -top-10 -right-10 w-48 h-48 bg-[#C29958]/5 blur-[60px] rounded-full"></div>
                                 <div className="flex justify-between items-start mb-8">
@@ -873,9 +1074,9 @@ export default function CustomerMenu() {
                         <div className="h-px flex-1 bg-gradient-to-r from-[#0B3A2E]/10 to-transparent"></div>
                     </div>
                     <div className="space-y-6">
-                        {myOrders.filter(o => o.status === 'Billed' || o.status === 'Completed').length === 0 ? (
+                        {myOrders.filter(o => ['Ready to Pay', 'Completed', 'Billed'].includes(o.status)).length === 0 ? (
                             <p className="text-center py-10 text-[#6D5D4B]/40 text-xs font-black uppercase tracking-widest italic">No past records yet</p>
-                        ) : myOrders.filter(o => o.status === 'Billed' || o.status === 'Completed').map(order => (
+                        ) : myOrders.filter(o => ['Ready to Pay', 'Completed', 'Billed'].includes(o.status)).map(order => (
                             <div key={order.id} className="bg-white rounded-[35px] p-5 flex gap-6 items-center border border-white shadow-sm hover:shadow-md transition-all active:scale-[0.98]">
                                 <div className="w-20 h-20 rounded-[28px] overflow-hidden bg-gray-50 shadow-md shrink-0 border border-white">
                                     <img src={order.items[0]?.image || '/logo-icon.png'} alt="Order" className="w-full h-full object-cover" />
@@ -905,8 +1106,28 @@ export default function CustomerMenu() {
         </div>
     );
 
+    const renderSessionError = () => (
+        <div className="min-h-screen bg-[#111312] py-8 px-4 flex flex-col items-center justify-center font-sans tracking-tight">
+            <div className="w-full max-w-[360px] bg-[#1c1e1c] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden border border-[#d4af37]/20 p-8 text-center text-white">
+                <img src="/logo-icon.png" alt="Logo" className="w-20 h-20 mx-auto mb-6 drop-shadow-md brightness-150" />
+                <AlertTriangle className="mx-auto mb-4 text-[#d4af37] w-12 h-12" />
+                <h2 className="text-2xl font-serif text-[#d4af37] mb-3 leading-tight">Table In Use</h2>
+                <p className="text-[#a8b8b2] text-sm mb-6 leading-relaxed">
+                    This table is currently in use. Please contact staff for assistance.
+                </p>
+                <button 
+                    onClick={() => { localStorage.removeItem(`session_${selectedTable}`); window.location.reload(); }}
+                    className="w-full bg-[#0B3A2E] text-[#C29958] py-4 rounded-xl font-bold uppercase tracking-widest text-[11px] shadow-lg active:scale-95 transition-all"
+                >
+                    Try Again
+                </button>
+            </div>
+        </div>
+    );
+
     const renderPremiumContent = () => {
         if (!selectedTable) return renderTableSelection();
+        if (sessionError) return renderSessionError();
         return (
             <div className="fixed inset-0 bg-[#F6EFE6] flex flex-col font-sans animate-fade-in no-scrollbar overflow-hidden select-none">
                 {renderHeader()}
@@ -914,17 +1135,90 @@ export default function CustomerMenu() {
                     {view === 'menu' && renderPremiumMenu()}
                     {view === 'orders' && renderPremiumMyOrders()}
                     {view === 'search' && (
-                        <div className="flex-1 flex flex-col items-center justify-center p-10 text-center animate-fade-in">
-                            <div className="w-24 h-24 bg-white rounded-[40px] flex items-center justify-center text-[#C29958] shadow-2xl mb-8">
-                                <Search size={40} />
+                        <div className="flex-1 flex flex-col bg-white animate-fade-in relative z-10">
+                            <div className="p-6 border-b border-black/5 bg-[#F9F6F0]">
+                                <div className="relative group">
+                                    <div className={`absolute left-5 top-1/2 -translate-y-1/2 transition-colors ${searchQuery ? 'text-[#C29958]' : 'text-[#6D5D4B]/30'}`}>
+                                        <Search size={20} strokeWidth={3} />
+                                    </div>
+                                    <input 
+                                        autoFocus
+                                        type="text" 
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder="Crave something royal?"
+                                        className="w-full bg-white rounded-[24px] py-5 px-14 text-sm font-bold text-[#0B3A2E] placeholder:text-[#6D5D4B]/20 outline-none focus:ring-4 focus:ring-[#C29958]/10 shadow-inner transition-all border border-black/5"
+                                    />
+                                    {searchQuery && (
+                                        <button 
+                                            onClick={() => setSearchQuery('')}
+                                            className="absolute right-5 top-1/2 -translate-y-1/2 w-6 h-6 bg-black/5 text-[#6D5D4B]/40 rounded-full flex items-center justify-center"
+                                        >
+                                            <X size={14} strokeWidth={3} />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
-                            <h2 className="text-[#0B3A2E] text-3xl font-black font-serif mb-3 italic">Seeking a Royal Flavor?</h2>
-                            <p className="text-[#6D5D4B] text-sm font-medium opacity-60 leading-relaxed uppercase tracking-widest">Our royal search engine is being<br/>polished for your convenience.</p>
+
+                            <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+                                {searchQuery ? (
+                                    <>
+                                        {menu.filter(i => 
+                                            i.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                            i.category.toLowerCase().includes(searchQuery.toLowerCase())
+                                        ).map(item => {
+                                            const inCart = cart.find(i => i.id === item.id);
+                                            return (
+                                                <div 
+                                                    key={item.id} 
+                                                    className="flex items-center gap-4 animate-slide-in"
+                                                    onClick={() => setPreviewItem(item)}
+                                                >
+                                                    <div className="w-16 h-16 rounded-2xl overflow-hidden shrink-0 border border-black/5">
+                                                        <img src={item.image || '/logo-icon.png'} alt={item.name} className="w-full h-full object-cover" />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <h4 className="text-[#0B3A2E] font-black text-xs uppercase tracking-tight leading-tight">{item.name}</h4>
+                                                        <p className="text-[#6D5D4B] text-[9px] font-black uppercase tracking-widest opacity-40">{item.category}</p>
+                                                    </div>
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-sm font-black text-[#0B3A2E]">£{item.price.toFixed(2)}</span>
+                                                        <button 
+                                                            onClick={(e) => { e.stopPropagation(); handleAddToCart(item); }}
+                                                            className="w-10 h-10 bg-[#0B3A2E] text-white rounded-xl flex items-center justify-center shadow-lg"
+                                                        >
+                                                            <Plus size={16} strokeWidth={3} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                        {menu.filter(i => 
+                                            i.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                            i.category.toLowerCase().includes(searchQuery.toLowerCase())
+                                        ).length === 0 && (
+                                            <div className="flex flex-col items-center justify-center py-20 opacity-30">
+                                                <ShoppingBag size={48} className="mb-4" />
+                                                <p className="font-black uppercase tracking-[0.2em] text-[10px]">No matches in our kitchen</p>
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center py-20 animate-fade-in">
+                                        <div className="w-20 h-20 bg-[#F9F6F0] rounded-[30px] flex items-center justify-center text-[#C29958] mb-6">
+                                            <Search size={32} />
+                                        </div>
+                                        <h3 className="text-[#0B3A2E] text-xl font-black font-serif italic mb-2">Search our delicacies</h3>
+                                        <p className="text-[#6D5D4B] text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Type a dish name or category</p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
                     {renderTabs()}
                 </div>
                 {renderCartSheet()}
+                <ImagePreviewModal />
                 
                 {/* Visual Feedback Overlays */}
                 {orderStatus === 'success' && (

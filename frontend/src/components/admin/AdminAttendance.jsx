@@ -284,50 +284,53 @@ export default function AdminAttendance() {
         <div className="space-y-6 animate-in fade-in duration-500 pb-12">
             <div className="flex justify-between items-start">
                 <div>
-                    <h2 className="text-3xl font-serif text-white mb-2 tracking-wide">Secure Attendance Hub</h2>
-                    <p className="text-[#a8b8b2] text-sm max-w-xl leading-relaxed">
-                        Strict multi-factor authentication. Enforce daily attendance via ML Hardware Biometrics (Facial Liveness) followed by 2FA OTP verification to permanently eliminate proxy check-ins.
+                    <h2 className="text-4xl font-serif text-white mb-2 tracking-wide uppercase">Attendance Hub</h2>
+                    <p className="text-nizam-textMuted text-sm max-w-xl leading-relaxed italic">
+                        Advanced multi-factor security. Enforce daily attendance via ML Biometrics and 2FA to ensure high-integrity staff reporting.
                     </p>
                 </div>
                 <button 
                     disabled={!modelsLoaded}
                     onClick={() => { setShowAddModal(true); setRegStep('form'); setNewStaff({name:'', phone:'', faceEmbedding: null}); }}
-                    className="bg-emerald-900 border border-emerald-600 text-emerald-400 hover:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-2.5 rounded text-[11px] font-bold uppercase tracking-widest flex items-center gap-2 transition-all shadow-md"
+                    className="bg-nizam-dark border-2 border-nizam-gold/30 text-nizam-gold hover:bg-nizam-gold hover:text-black disabled:opacity-50 disabled:cursor-not-allowed px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-2 transition-all shadow-xl"
                 >
-                    {!modelsLoaded ? <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-emerald-400"></div> : <UserPlus className="w-4 h-4" />} 
-                    {modelsLoaded ? 'Register Employee' : 'Downloading ML...'}
+                    {!modelsLoaded ? <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-nizam-gold"></div> : <UserPlus className="w-4 h-4" />} 
+                    {modelsLoaded ? 'Register Staff' : 'Initializing ML...'}
                 </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatCard title="Total Staff Present" value={totalPresent.toString().padStart(2, '0')} subvalue=" Verified Today" highlight="text-emerald-400" />
-                <StatCard title="Total Registered" value={staffList.length.toString().padStart(2, '0')} subvalue=" Active Profiles" highlight="text-white" />
-                <div className="bg-[#1c1e1c] border border-blue-900/50 p-6 rounded-xl flex items-center justify-between shadow-lg">
-                    <div>
-                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-blue-400/80 mb-2 flex items-center gap-1.5"><Lock className="w-3.5 h-3.5"/> ML BIO-SECURE ENABLED</h4>
-                        <p className="text-xs text-[#a8b8b2] leading-relaxed">Continuous facial geometry comparison with forced liveness (blink-to-capture) active on all checkpoints.</p>
+                <StatCard title="Present Today" value={totalPresent.toString().padStart(2, '0')} subvalue=" Verified" highlight="text-emerald-400" />
+                <StatCard title="Total Roster" value={staffList.length.toString().padStart(2, '0')} subvalue=" Active" highlight="text-white" />
+                <div className="bg-nizam-card border-2 border-blue-900/40 p-6 rounded-2xl flex items-center justify-between shadow-2xl relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="relative z-10">
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400 mb-2 flex items-center gap-2">
+                            <Lock className="w-3.5 h-3.5 animate-pulse"/> SECURE ENCLAVE
+                        </h4>
+                        <p className="text-[11px] text-nizam-textMuted leading-relaxed font-medium italic">Continuous facial geometry comparison with forced liveness detection enabled.</p>
                     </div>
                 </div>
             </div>
 
-            <div className="bg-nizam-card border border-nizam-border rounded-xl flex flex-col shadow-xl">
-                <div className="p-4 border-b border-nizam-border/50 flex justify-between items-center text-sm">
-                    <span className="font-bold tracking-widest text-[#a8b8b2] uppercase text-[10px]">Active Staff Roster</span>
-                    <div className="relative w-64">
-                        <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#a8b8b2]" />
-                        <input type="text" placeholder="Search roster..." className="w-full bg-[#111312] border border-nizam-border rounded px-4 pl-9 py-1.5 text-xs text-white focus:outline-none focus:border-nizam-gold/50" />
+            <div className="bg-nizam-card border-2 border-nizam-border/30 rounded-2xl flex flex-col shadow-2xl overflow-hidden">
+                <div className="p-6 border-b border-nizam-border/30 flex justify-between items-center bg-black/20">
+                    <span className="font-black tracking-[0.3em] text-nizam-textMuted uppercase text-[10px]">Staff Ledger</span>
+                    <div className="relative w-72">
+                        <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-nizam-gold" />
+                        <input type="text" placeholder="Filter staff..." className="w-full bg-nizam-dark border-2 border-nizam-border/30 rounded-xl px-5 pl-11 py-2.5 text-xs text-white focus:outline-none focus:border-nizam-gold/50 transition-all font-medium" />
                     </div>
                 </div>
 
                 <div className="overflow-x-auto w-full">
                     <table className="w-full text-left">
                         <thead>
-                            <tr className="text-[10px] font-bold uppercase tracking-widest text-[#a8b8b2] border-b border-nizam-border/50 bg-black/20">
-                                <th className="py-4 px-6">ID</th>
-                                <th className="py-4 px-6">STAFF MEMBER</th>
-                                <th className="py-4 px-6">CONTACT NO.</th>
-                                <th className="py-4 px-6">TODAY'S STATUS</th>
-                                <th className="py-4 px-6 text-right">MFA CHECK-IN</th>
+                            <tr className="text-[10px] font-black uppercase tracking-[0.3em] text-nizam-gold/60 border-b border-nizam-border/30 bg-nizam-dark/50">
+                                <th className="py-5 px-8">ID</th>
+                                <th className="py-5 px-8">Staff Member</th>
+                                <th className="py-5 px-8">Contact</th>
+                                <th className="py-5 px-8">Service Status</th>
+                                <th className="py-5 px-8 text-right">Verification Gate</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -336,46 +339,53 @@ export default function AdminAttendance() {
                             ) : staffList.map(staff => {
                                 const attended = attendanceToday.find(a => a.employeeId === staff.id);
                                 return (
-                                    <tr key={staff.id} className="border-b border-nizam-border/30 hover:bg-white/[0.02] transition-colors">
-                                        <td className="py-4 px-6 text-[#a8b8b2] font-mono text-xs">#{String(staff.id).padStart(4, '0')}</td>
-                                        <td className="py-4 px-6 font-bold text-white text-sm">{staff.name}</td>
-                                        <td className="py-4 px-6 text-[#a8b8b2] font-mono text-xs overflow-hidden max-w-[120px] text-ellipsis whitespace-nowrap">{staff.phone}</td>
-                                        <td className="py-4 px-6">
+                                    <tr key={staff.id} className="border-b border-nizam-border/30 hover:bg-white/[0.02] transition-colors group">
+                                        <td className="py-6 px-8 text-nizam-textMuted font-mono text-xs">#{String(staff.id).padStart(4, '0')}</td>
+                                        <td className="py-6 px-8">
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-white text-sm uppercase tracking-tight">{staff.name}</span>
+                                                <span className="text-[10px] text-nizam-textMuted font-bold uppercase tracking-widest mt-0.5">Staff Associate</span>
+                                            </div>
+                                        </td>
+                                        <td className="py-6 px-8 text-nizam-textMuted font-mono text-xs italic">{staff.phone}</td>
+                                        <td className="py-6 px-8">
                                             {attended ? (() => {
                                                 const checkinTime = new Date(attended.checkInTime || attended.date || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                                                 return (
-                                                <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-emerald-400 font-bold bg-emerald-900/20 px-2.5 py-1.5 rounded border border-emerald-900/50">
-                                                    <CheckCircle className="w-3.5 h-3.5" /> In at {checkinTime}
+                                                <span className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-emerald-400 font-black bg-emerald-500/10 px-3 py-2 rounded-lg border border-emerald-500/20 shadow-sm animate-in fade-in zoom-in-95">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                                                    Verified at {checkinTime}
                                                 </span>
                                             )})() : (
-                                                <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-[#a8b8b2] font-bold bg-[#1a1c1a] px-2.5 py-1.5 rounded border border-gray-700/50">
-                                                    <Clock className="w-3.5 h-3.5" /> Pending Signature
+                                                <span className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-nizam-textMuted font-black bg-nizam-dark px-3 py-2 rounded-lg border border-nizam-border/30">
+                                                    <Clock className="w-3.5 h-3.5 opacity-30" /> Off-Duty
                                                 </span>
                                             )}
                                         </td>
-                                        <td className="py-4 px-6 text-right space-x-2">
-                                            {attended ? (
-                                                <button disabled className="bg-[#1c2e26] text-emerald-600 border border-[#173a2f] px-3 py-1.5 rounded text-[10px] font-bold tracking-widest uppercase cursor-not-allowed">
-                                                    PRESENT
-                                                </button>
-                                            ) : (
+                                        <td className="py-6 px-8 text-right">
+                                            <div className="flex items-center justify-end gap-3">
+                                                {attended ? (
+                                                    <div className="bg-emerald-500/5 text-emerald-400/50 border border-emerald-500/10 px-4 py-2 rounded-xl text-[9px] font-black tracking-[0.3em] uppercase">
+                                                        SESSION ACTIVE
+                                                    </div>
+                                                ) : (
+                                                    <button 
+                                                        disabled={!modelsLoaded}
+                                                        onClick={() => handleStartBiometric(staff)}
+                                                        className="bg-nizam-dark disabled:opacity-50 text-blue-400 border-2 border-blue-900/40 hover:bg-blue-600 hover:text-white hover:border-blue-500 px-5 py-2.5 rounded-xl text-[10px] font-black tracking-[0.2em] uppercase transition-all inline-flex items-center gap-2 shadow-lg active:scale-95"
+                                                    >
+                                                        {!modelsLoaded ? <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-400"></div> : <ScanFace className="w-4 h-4" />} 
+                                                        Identify
+                                                    </button>
+                                                )}
                                                 <button 
-                                                    disabled={!modelsLoaded}
-                                                    onClick={() => handleStartBiometric(staff)}
-                                                    title={modelsLoaded ? "Face Recognition MFA Check-in" : "Loading Models..."}
-                                                    className="bg-[#111827] disabled:opacity-50 text-blue-400 border border-blue-900 hover:bg-blue-900 hover:text-white px-4 py-2 rounded text-[10px] font-bold tracking-widest uppercase transition-colors inline-flex items-center gap-2 align-middle shadow-[0_0_10px_rgba(59,130,246,0.15)]"
+                                                    onClick={() => handleDeleteStaff(staff.id)}
+                                                    className="text-red-500/20 hover:text-red-500 transition-all p-2 rounded-lg hover:bg-red-500/10"
+                                                    title="Purge Identity"
                                                 >
-                                                    {!modelsLoaded ? <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-400"></div> : <ScanFace className="w-4 h-4" />} 
-                                                    {modelsLoaded ? '2FA LOGIN' : 'LOADING'}
+                                                    <Trash2 className="w-4 h-4" />
                                                 </button>
-                                            )}
-                                            <button 
-                                                onClick={() => handleDeleteStaff(staff.id)}
-                                                className="text-red-500/60 hover:text-red-400 transition-colors inline-flex align-middle ml-2 p-1"
-                                                title="Remove Staff"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 );
@@ -386,14 +396,15 @@ export default function AdminAttendance() {
             </div>
 
 
-            {/* REGISTRATION MODAL */}
             {showAddModal && (
-                <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-                    <div className="bg-nizam-card border border-nizam-border rounded-xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-                        <div className="p-5 border-b border-nizam-border/50 text-center relative bg-black/40 flex items-center justify-center gap-2">
-                            <Lock className="w-4 h-4 text-[#a8b8b2]"/>
-                            <h3 className="text-lg font-serif text-white">Secure ML Registration</h3>
-                            <button onClick={() => { setShowAddModal(false); stopCamera(); }} className="absolute right-4 top-4 text-[#a8b8b2] hover:text-white"><X className="w-4 h-4" /></button>
+                <div className="fixed inset-0 bg-black/95 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+                    <div className="bg-nizam-card border-2 border-nizam-border/30 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-nizam-border/30 text-center relative bg-black/20">
+                            <div className="flex items-center justify-center gap-3">
+                                <Lock className="w-4 h-4 text-nizam-gold"/>
+                                <h3 className="text-xl font-serif text-white uppercase tracking-widest">ML ENROLLMENT</h3>
+                            </div>
+                            <button onClick={() => { setShowAddModal(false); stopCamera(); }} className="absolute right-6 top-6 text-nizam-textMuted hover:text-white transition-colors"><X className="w-5 h-5" /></button>
                         </div>
 
                         {regStep === 'form' && (
@@ -403,77 +414,76 @@ export default function AdminAttendance() {
                                     setRegStep('scan'); 
                                     setTimeout(() => startCamera('register'), 100);
                                 }} 
-                                className="p-6"
+                                className="p-8"
                             >
-                                <div className="space-y-4">
-                                    <div className="bg-[#1c1e1c] border border-nizam-border/50 p-4 rounded-lg mb-6 text-xs text-[#a8b8b2] flex gap-3">
+                                <div className="space-y-6">
+                                    <div className="bg-blue-950/20 border-2 border-blue-900/30 p-5 rounded-xl text-[11px] text-blue-300 flex gap-4 leading-relaxed font-medium italic">
                                         <AlertTriangle className="w-5 h-5 text-nizam-gold shrink-0"/>
-                                        <p>You are initiating a permanent cryptographic face mapping. The employee must be present to blink into the camera for liveness verification.</p>
+                                        <p>Cryptographic facial mapping initiation. Staff must be present for liveness validation. This profile is permanent.</p>
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] font-bold text-[#a8b8b2] tracking-widest uppercase mb-1.5">Full Name (Govt ID Matching)</label>
-                                        <input required type="text" value={newStaff.name} onChange={e => setNewStaff({...newStaff, name: e.target.value})} className="w-full bg-[#111312] border border-nizam-border rounded p-3 text-sm text-white focus:outline-none focus:border-nizam-gold" placeholder="e.g. John Doe" />
+                                        <label className="block text-[10px] font-black text-nizam-textMuted tracking-[0.3em] uppercase mb-2">Legal Identity Name</label>
+                                        <input required type="text" value={newStaff.name} onChange={e => setNewStaff({...newStaff, name: e.target.value})} className="w-full bg-nizam-dark border-2 border-nizam-border/30 rounded-xl p-4 text-sm text-white focus:outline-none focus:border-nizam-gold/50 transition-all font-medium" placeholder="Full Name" />
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] font-bold text-[#a8b8b2] tracking-widest uppercase mb-1.5">Mobile Number (For 2FA OTP)</label>
-                                        <input required type="tel" value={newStaff.phone} onChange={e => setNewStaff({...newStaff, phone: e.target.value})} className="w-full bg-[#111312] border border-nizam-border rounded p-3 text-sm text-white focus:outline-none focus:border-nizam-gold" placeholder="+44 7700 900077" />
+                                        <label className="block text-[10px] font-black text-nizam-textMuted tracking-[0.3em] uppercase mb-2">Secure Mobile Line</label>
+                                        <input required type="tel" value={newStaff.phone} onChange={e => setNewStaff({...newStaff, phone: e.target.value})} className="w-full bg-nizam-dark border-2 border-nizam-border/30 rounded-xl p-4 text-sm text-white focus:outline-none focus:border-nizam-gold/50 transition-all font-medium" placeholder="+44 ..." />
                                     </div>
                                 </div>
-                                <button type="submit" className="w-full mt-6 py-4 bg-emerald-900 border border-emerald-600 hover:bg-emerald-800 text-white font-bold rounded text-[11px] uppercase tracking-widest transition-colors flex justify-center items-center gap-2">
-                                    <Camera className="w-4 h-4"/> Next: Capture ML Face Geometry
+                                <button type="submit" className="w-full mt-8 py-5 bg-nizam-gold text-black font-black rounded-xl text-[11px] uppercase tracking-[0.3em] transition-all hover:bg-white shadow-xl active:scale-[0.98] flex justify-center items-center gap-3">
+                                    <Camera className="w-5 h-5"/> Initialize Biometrics
                                 </button>
                             </form>
                         )}
 
                         {regStep === 'scan' && (
-                            <div className="p-8 text-center">
-                                <h4 className="text-white font-serif text-xl mb-4">Capturing Face ID</h4>
-                                <div className="w-56 h-56 mx-auto rounded-full overflow-hidden border-4 border-[#3b82f6] shadow-[0_0_30px_rgba(59,130,246,0.2)] relative mb-6">
-                                    <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-                                    <div className="absolute inset-4 border border-blue-400/50 rounded-lg animate-pulse z-40 pointer-events-none">
-                                        <div className="absolute top-0 left-0 w-3 h-3 border-t-4 border-l-4 border-blue-400 rounded-tl"></div>
-                                        <div className="absolute top-0 right-0 w-3 h-3 border-t-4 border-r-4 border-blue-400 rounded-tr"></div>
-                                        <div className="absolute bottom-0 left-0 w-3 h-3 border-b-4 border-l-4 border-blue-400 rounded-bl"></div>
-                                        <div className="absolute bottom-0 right-0 w-3 h-3 border-b-4 border-r-4 border-blue-400 rounded-br"></div>
+                            <div className="p-10 text-center">
+                                <h4 className="text-white font-serif text-2xl mb-6">Scanning Geometry</h4>
+                                <div className="w-64 h-64 mx-auto rounded-full overflow-hidden border-4 border-nizam-gold/50 shadow-[0_0_50px_rgba(182,156,114,0.2)] relative mb-8">
+                                    <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-110" />
+                                    <div className="absolute inset-8 border-2 border-nizam-gold/30 rounded-2xl animate-pulse z-40 pointer-events-none">
+                                        <div className="absolute top-0 left-0 w-4 h-4 border-t-4 border-l-4 border-nizam-gold rounded-tl"></div>
+                                        <div className="absolute top-0 right-0 w-4 h-4 border-t-4 border-r-4 border-nizam-gold rounded-tr"></div>
+                                        <div className="absolute bottom-0 left-0 w-4 h-4 border-b-4 border-l-4 border-nizam-gold rounded-bl"></div>
+                                        <div className="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-nizam-gold rounded-br"></div>
                                     </div>
                                 </div>
-                                <p className="text-cyan-400 font-mono tracking-widest text-sm font-bold uppercase animate-pulse mb-2">
+                                <p className="text-nizam-gold font-mono tracking-[0.3em] text-sm font-black uppercase animate-pulse mb-3">
                                     {scanMessage}
                                 </p>
-                                <p className="text-[#a8b8b2] text-[10px] uppercase">Please position your face clearly in the circle and blink to combat photo-spoofing.</p>
+                                <p className="text-nizam-textMuted text-[10px] uppercase font-black tracking-widest italic">Position face within the golden aperture</p>
                             </div>
                         )}
                     </div>
                 </div>
             )}
 
-            {/* LOGIN / ATTENDANCE MODAL */}
             {bioModal.isOpen && (
-                <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-                    <div className="bg-[#111312] border border-nizam-border rounded-xl w-full max-w-md overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)] animate-in zoom-in-95 duration-200">
+                <div className="fixed inset-0 bg-black/95 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+                    <div className="bg-nizam-dark border-2 border-nizam-border/30 rounded-2xl w-full max-w-md overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.9)] animate-in zoom-in-95 duration-200 relative">
                         {bioModal.step !== 'success' && (
-                            <button onClick={() => { setBioModal({ isOpen: false, staff: null, step: 'camera', errorMessage: '' }); stopCamera(); }} className="absolute right-4 top-4 text-white/50 hover:text-white z-50">
+                            <button onClick={() => { setBioModal({ isOpen: false, staff: null, step: 'camera', errorMessage: '' }); stopCamera(); }} className="absolute right-6 top-6 text-nizam-textMuted hover:text-white z-50">
                                 <X className="w-6 h-6" />
                             </button>
                         )}
                         
-                        <div className="text-center p-8 bg-gradient-to-b from-[#1c1e1c] to-[#111312] border-b border-white/5">
-                            <h3 className="text-2xl font-serif text-white mb-2 tracking-wider">MFA Security Gate</h3>
-                            <p className="text-[#a8b8b2] text-sm">Target Identity: <span className="text-white font-bold">{bioModal.staff?.name}</span></p>
+                        <div className="text-center p-10 bg-black/40 border-b border-nizam-border/30">
+                            <h3 className="text-3xl font-serif text-white mb-2 tracking-[0.2em] uppercase">Security Gate</h3>
+                            <p className="text-[10px] text-nizam-gold font-black tracking-[0.3em] uppercase">Target: {bioModal.staff?.name}</p>
                         </div>
 
                         {/* STEP 1: Face Liveness Scanner */}
                         {bioModal.step === 'camera' && (
-                            <div className="p-8 pb-12 flex flex-col items-center">
-                                <div className="relative mb-8 flex justify-center items-center w-56 h-56 rounded-full border border-blue-900/50 bg-[#0a0a0a] shadow-[0_0_40px_rgba(59,130,246,0.1)] overflow-hidden">
-                                    <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover z-10" />
+                            <div className="p-10 pb-14 flex flex-col items-center">
+                                <div className="relative mb-8 flex justify-center items-center w-64 h-64 rounded-full border-4 border-blue-900/30 bg-black shadow-[0_0_60px_rgba(59,130,246,0.15)] overflow-hidden scale-110">
+                                    <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover z-10 brightness-110" />
                                     
                                     {/* Scanning Overlays */}
-                                    <div className="absolute inset-0 rounded-full border-t-2 border-l-2 border-[#3b82f6] animate-spin z-20 pointer-events-none" style={{ animationDuration: '3s' }}></div>
-                                    <div className="absolute inset-2 rounded-full border-b-2 border-r-2 border-nizam-gold animate-spin z-20 pointer-events-none" style={{ animationDirection: 'reverse', animationDuration: '2s' }}></div>
-                                    <div className="absolute w-full h-[2px] bg-cyan-400/80 shadow-[0_0_15px_#22d3ee] animate-pulse z-30 pointer-events-none top-1/2"></div>
+                                    <div className="absolute inset-0 rounded-full border-t-2 border-l-2 border-blue-500 animate-spin z-20 pointer-events-none" style={{ animationDuration: '3s' }}></div>
+                                    <div className="absolute inset-3 rounded-full border-b-2 border-r-2 border-nizam-gold animate-spin z-20 pointer-events-none opacity-50" style={{ animationDirection: 'reverse', animationDuration: '2s' }}></div>
+                                    <div className="absolute w-full h-[1px] bg-blue-400 shadow-[0_0_20px_#3b82f6] animate-pulse z-30 pointer-events-none top-1/2"></div>
                                 </div>
-                                <p className="text-cyan-400 font-mono tracking-widest text-[11px] font-bold animate-pulse text-center leading-relaxed">
+                                <p className="text-blue-400 font-mono tracking-[0.2em] text-[11px] font-black animate-pulse text-center leading-relaxed uppercase mt-4">
                                     {scanMessage}
                                 </p>
                             </div>
@@ -481,63 +491,65 @@ export default function AdminAttendance() {
 
                         {/* STEP 2: OTP Verification */}
                         {bioModal.step === 'otp' && (
-                            <div className="p-8 animate-in slide-in-from-right-8 fade-in">
-                                <div className="text-center mb-6">
-                                    <div className="w-16 h-16 bg-[#181a17] border border-[#2a302a] rounded-full mx-auto flex items-center justify-center mb-4 text-white">
-                                        <Smartphone className="w-8 h-8" />
+                            <div className="p-10 animate-in slide-in-from-right-8 fade-in">
+                                <div className="text-center mb-8">
+                                    <div className="w-20 h-20 bg-nizam-dark border-2 border-nizam-border/30 rounded-2xl mx-auto flex items-center justify-center mb-6 text-nizam-gold shadow-xl">
+                                        <Smartphone className="w-10 h-10" />
                                     </div>
-                                    <h4 className="text-xl font-bold text-white tracking-wide">Enter 2FA Code</h4>
-                                    <p className="text-[10px] uppercase font-bold text-[#a8b8b2] mt-2 tracking-widest">Sent via SMS to {bioModal.staff?.phone}</p>
+                                    <h4 className="text-2xl font-serif text-white tracking-widest uppercase">MFA Sentinel</h4>
+                                    <p className="text-[9px] uppercase font-black text-nizam-textMuted mt-3 tracking-[0.3em]">Code dispatched to +{bioModal.staff?.phone?.slice(-4)}</p>
                                 </div>
                                 
                                 {bioModal.errorMessage && (
-                                    <div className="bg-red-900/30 border border-red-500/50 p-2 rounded mb-4 text-center">
-                                        <p className="text-red-400 font-bold text-[10px] uppercase tracking-widest">{bioModal.errorMessage}</p>
+                                    <div className="bg-red-500/10 border-2 border-red-500/20 p-3 rounded-xl mb-6 text-center animate-shake">
+                                        <p className="text-red-400 font-black text-[9px] uppercase tracking-[0.2em]">{bioModal.errorMessage}</p>
                                     </div>
                                 )}
 
                                 {bioModal.devOtp && (
-                                    <div className="bg-blue-900/40 border border-blue-500/50 p-3 rounded mb-6 flex flex-col items-center">
-                                        <span className="text-blue-400 font-bold text-[10px] uppercase tracking-widest mb-1">[DEV SMS SIMULATOR]</span>
-                                        <span className="text-white text-lg font-mono tracking-widest font-bold">{bioModal.devOtp}</span>
+                                    <div className="bg-blue-500/10 border-2 border-blue-500/20 p-5 rounded-2xl mb-8 flex flex-col items-center">
+                                        <span className="text-blue-400 font-black text-[9px] uppercase tracking-[0.3em] mb-2 opacity-50">Debug Virtual SMS</span>
+                                        <span className="text-white text-3xl font-mono tracking-[0.5em] font-black tabular-nums">{bioModal.devOtp}</span>
                                     </div>
                                 )}
 
-                                <form onSubmit={handleVerifyLoginAPI} className="space-y-6">
+                                <form onSubmit={handleVerifyLoginAPI} className="space-y-8">
                                     <input 
                                         type="text" 
                                         maxLength={4}
                                         autoFocus
                                         value={otpInput}
                                         onChange={e => setOtpInput(e.target.value)}
-                                        className="w-full bg-[#1c1e1c] border-2 border-blue-900/50 rounded-xl p-4 text-center text-3xl font-mono text-white tracking-[1em] focus:outline-none focus:border-blue-500/50 shadow-inner" 
-                                        placeholder="0000" 
+                                        className="w-full bg-black border-2 border-nizam-border/30 rounded-2xl p-6 text-center text-4xl font-mono text-white tracking-[0.8em] focus:outline-none focus:border-nizam-gold/50 shadow-inner transition-all font-black" 
+                                        placeholder="----" 
                                     />
-                                    <button type="submit" disabled={otpInput.length < 4} className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold tracking-widest uppercase text-xs rounded-lg transition-colors shadow-[0_0_15px_rgba(37,99,235,0.3)] disabled:opacity-50">
-                                        Verify & Mark Attendance
+                                    <button type="submit" disabled={otpInput.length < 4} className="w-full py-6 bg-nizam-gold text-black font-black tracking-[0.4em] uppercase text-xs rounded-xl transition-all shadow-2xl hover:bg-white active:scale-[0.98] disabled:opacity-30">
+                                        Authorize Signature
                                     </button>
                                 </form>
                             </div>
                         )}
 
-                        {/* ERROR CATCH (if ML fails entirely) */}
+                        {/* ERROR CATCH */}
                         {bioModal.step === 'error' && (
-                            <div className="p-8 text-center">
-                                <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                                <h4 className="text-xl font-bold text-red-500 tracking-wide mb-2">Access Denied</h4>
-                                <p className="text-sm text-red-400/80 mb-6">{bioModal.errorMessage}</p>
-                                <button onClick={() => setBioModal({ ...bioModal, step: 'camera', errorMessage: '' })} className="py-2 px-6 border border-red-900/50 text-red-400 rounded font-bold uppercase tracking-widest text-[10px] hover:bg-red-900/20">Try Again</button>
+                            <div className="p-12 text-center animate-in zoom-in-95">
+                                <div className="w-24 h-24 bg-red-500/10 border-2 border-red-500 mx-auto rounded-full flex items-center justify-center mb-8">
+                                    <AlertTriangle className="w-12 h-12 text-red-500" />
+                                </div>
+                                <h4 className="text-3xl font-serif text-red-500 tracking-widest uppercase mb-4">Breach Detected</h4>
+                                <p className="text-sm text-red-400 font-medium italic mb-10 leading-relaxed px-4">{bioModal.errorMessage}</p>
+                                <button onClick={() => setBioModal({ ...bioModal, step: 'camera', errorMessage: '' })} className="py-4 px-10 bg-nizam-dark border-2 border-nizam-border/50 text-white rounded-xl font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white hover:text-black transition-all">Manual Override</button>
                             </div>
                         )}
 
                         {/* SUCCESS */}
                         {bioModal.step === 'success' && (
-                            <div className="p-8 text-center animate-in zoom-in duration-300">
-                                <div className="w-20 h-20 bg-emerald-900/20 border-2 border-emerald-500 rounded-full mx-auto flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(16,185,129,0.2)]">
-                                    <CheckCircle className="w-10 h-10 text-emerald-400" />
+                            <div className="p-12 text-center animate-in zoom-in-95 duration-500">
+                                <div className="w-24 h-24 bg-emerald-500/10 border-4 border-emerald-500 rounded-full mx-auto flex items-center justify-center mb-8 shadow-[0_0_50px_rgba(16,185,129,0.3)]">
+                                    <CheckCircle className="w-14 h-14 text-emerald-400 animate-bounce" />
                                 </div>
-                                <h4 className="text-xl font-bold text-emerald-400 tracking-wide mb-1">Access Granted</h4>
-                                <p className="text-xs text-[#a8b8b2] uppercase tracking-widest font-bold">Attendance Logged Successfully</p>
+                                <h4 className="text-3xl font-serif text-emerald-400 tracking-[0.2em] uppercase mb-2">Gate Open</h4>
+                                <p className="text-[10px] text-nizam-textMuted uppercase tracking-[0.4em] font-black italic">Identity Verified • Session Logged</p>
                             </div>
                         )}
                     </div>
@@ -549,11 +561,12 @@ export default function AdminAttendance() {
 
 function StatCard({ title, value, subvalue, highlight = 'text-white' }) {
     return (
-        <div className="bg-[#1c1e1c] border border-nizam-border p-6 rounded-xl relative shadow-lg">
-            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#a8b8b2] mb-3">{title}</h4>
-            <div className="flex items-baseline gap-1">
-                <span className={`text-3xl font-serif tracking-wide ${highlight}`}>{value}</span>
-                <span className="text-[10px] font-bold text-[#a8b8b2] tracking-widest uppercase">{subvalue}</span>
+        <div className="bg-nizam-card border-2 border-nizam-border/30 p-8 rounded-2xl relative shadow-2xl group hover:border-nizam-gold/20 transition-all">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-nizam-gold/5 blur-3xl -mr-12 -mt-12 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-nizam-textMuted mb-4 relative z-10">{title}</h4>
+            <div className="flex items-baseline gap-2 relative z-10">
+                <span className={`text-4xl font-serif tracking-tight font-bold ${highlight}`}>{value}</span>
+                <span className="text-[10px] font-black text-nizam-gold/40 tracking-[0.2em] uppercase italic">{subvalue}</span>
             </div>
         </div>
     );

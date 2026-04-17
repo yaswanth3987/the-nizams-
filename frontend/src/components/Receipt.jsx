@@ -17,7 +17,15 @@ export default function Receipt({ order: session }) {
                 </div>
                 
                 <div className="mt-1 pt-1 border-t border-dashed border-black">
-                    <p className="font-bold text-sm">TABLE: {session.tableId}</p>
+                    {session.orderType === 'takeaway' || session.tableId === 'TAKEAWAY' ? (
+                        <>
+                            <p className="font-bold text-sm">TAKEAWAY</p>
+                            <p className="text-[10px] uppercase font-bold mt-0.5">Name: {session.customerName || 'N/A'}</p>
+                            <p className="text-[10px] uppercase font-bold mb-0.5">Mobile: {session.phone || 'N/A'}</p>
+                        </>
+                    ) : (
+                        <p className="font-bold text-sm">TABLE: {session.tableId}</p>
+                    )}
                     <p className="text-[10px]">{new Date(session.createdAt).toLocaleString('en-GB')}</p>
                     <p className="text-[10px] italic">{session.ids && session.ids.length > 1 ? 'Unified Bill' : `Receipt #${session.id}`}</p>
                 </div>

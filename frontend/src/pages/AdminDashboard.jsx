@@ -11,6 +11,8 @@ import AdminCompletedView from '../components/admin/AdminCompletedView';
 import AdminAttendance from '../components/admin/AdminAttendance';
 import AdminMenuManagement from '../components/admin/AdminMenuManagement';
 import AdminTableOverview from '../components/admin/AdminTableOverview';
+import AdminTakeawayPOS from '../components/admin/AdminTakeawayPOS';
+import AdminTakeawayManager from '../components/admin/AdminTakeawayManager';
 
 const API_URL = import.meta.env.DEV 
     ? `http://${window.location.hostname}:3001/api` 
@@ -248,6 +250,8 @@ export default function AdminDashboard() {
 
     const getHeaderConfig = () => {
         switch(activeView) {
+            case 'pos': return { title: 'Takeaway POS', active: 'pos', tabs: [] };
+            case 'takeaway-manager': return { title: 'Takeaway Management', active: 'tm', tabs: [] };
             case 'inventory': return { title: 'The Great Nizam', active: 'inv', tabs: [{id:'dashboard', label:'DASHBOARD'}, {id:'inv', label:'INVENTORY'}, {id:'reports', label:'REPORTS'}] };
             case 'assistance': return { title: 'The Great Nizam', active: 'ast', tabs: [{id:'live', label:'LIVE VIEW'}, {id:'reports', label:'REPORTS'}, {id:'ast', label:'ASSISTANCE'}] };
             case 'tables': return { title: 'The Great Nizam', active: 'grid', tabs: [{id:'grid', label:'TABLE OVERVIEW'}] };
@@ -285,10 +289,11 @@ export default function AdminDashboard() {
     }
 
     const categoryCounts = {
-        orders: newOrders.filter(o => o.status === 'new' || o.status === 'pending').length,
-        confirmed: sessions.filter(s => s.status === 'confirmed').length,
-        billed: sessions.filter(s => s.status === 'billed').length,
-        completed: sessions.filter(s => s.status === 'completed').length,
+        orders: newOrders.filter(o => (o.status === 'new' || o.status === 'pending') && o.orderType !== 'takeaway').length,
+        confirmed: sessions.filter(s => s.status === 'confirmed' && s.orderType !== 'takeaway').length,
+        billed: sessions.filter(s => s.status === 'billed' && s.orderType !== 'takeaway').length,
+        completed: sessions.filter(s => s.status === 'completed' && s.orderType !== 'takeaway').length,
+        'takeaway-manager': sessions.filter(s => s.orderType === 'takeaway' && s.status !== 'completed').length,
         assistance: assistanceRequests.length
     };
 
@@ -306,6 +311,20 @@ export default function AdminDashboard() {
                 onClearAlerts={() => setUnreadAlerts(0)}
                 counts={categoryCounts}
             >
+                {activeView === 'pos' && (
+                    <div className="h-[calc(100vh-140px)] -mt-4 -ml-4 -mr-4 md:-ml-8 md:-mr-8 md:-mb-8 pr-4">
+                        <AdminTakeawayPOS />
+                    </div>
+                )}
+
+                {activeView === 'takeaway-manager' && (
+                    <AdminTakeawayManager 
+                        orders={sessions}
+                        updateStatus={updateStatus}
+                        printReceipt={printReceipt}
+                    />
+                )}
+
                 {activeView === 'inventory' && (
                     <AdminOverview 
                         analyticsDaily={analyticsDaily} 

@@ -23,18 +23,18 @@ export const categoriesData = [
 
 export const menuData = [
     // Non Veg Starters
-    { id: 'nvs1', name: 'CHICKEN 65', price: 9.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/chicken-65.webp' },
+    { id: 'nvs1', name: 'CHICKEN 65', price: 9.99, category: 'Non Veg Starters', spice: 2, veg: false, isPopular: true, image: '/chicken-65.webp' },
     { id: 'nvs2', name: 'CHILLI CHICKEN', price: 9.99, category: 'Non Veg Starters', spice: 3, veg: false, image: '/chilli-chicken.webp' },
     { id: 'nvs3', name: 'CHICKEN MAJESTIC', price: 11.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/majestic-chicken.webp' },
     { id: 'nvs4', name: 'CHICKEN TIKKA KEBAB (4 PCS)', price: 11.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/chicken-tikka-kebab.webp' },
     { id: 'nvs5', name: 'CHICKEN SEEKH KEBAB (4 PCS)', price: 10.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/chicken-seekh-kebab.webp' },
     { id: 'nvs6', name: 'PEPPER CHICKEN', price: 11.99, category: 'Non Veg Starters', spice: 3, veg: false },
-    { id: 'nvs7', name: 'CHICKEN TANDOORI FULL', price: 14.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/chicken-tandoori-full.webp' },
+    { id: 'nvs7', name: 'CHICKEN TANDOORI FULL', price: 14.99, category: 'Non Veg Starters', spice: 2, veg: false, isRecommended: true, image: '/chicken-tandoori-full.webp' },
     { id: 'nvs8', name: 'CHICKEN TANDOORI HALF', price: 9.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/chicken-tandoori-half.webp' },
     { id: 'nvs9', name: 'CHICKEN TANGDI (4 PCS)', price: 9.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/chicken-tangdi.webp' },
     { id: 'nvs10', name: 'LAMB SEEKH KEBAB (4 PCS)', price: 11.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/lamb-seekh-kebab.webp' },
     { id: 'nvs11', name: 'LAMB CHOPS (4 PCS)', price: 12.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/lamb-chops.webp' },
-    { id: 'nvs12', name: 'MUTTON HALEEM', price: 14.99, category: 'Non Veg Starters', spice: 1, veg: false, image: '/mutton-haleem.webp' },
+    { id: 'nvs12', name: 'MUTTON HALEEM', price: 14.99, category: 'Non Veg Starters', spice: 1, veg: false, isPopular: true, image: '/mutton-haleem.webp' },
     { id: 'nvs13', name: 'MUTTON MARAG', price: 14.99, category: 'Non Veg Starters', spice: 1, veg: false },
 
     // Sea Food
@@ -49,7 +49,7 @@ export const menuData = [
 
     // Biryani
     { id: 'b1', name: 'VEG DUM BIRYANI (SINGLE)', price: 7.99, category: 'Biryani', spice: 2, veg: true },
-    { id: 'b2', name: 'CHICKEN BIRYANI (SINGLE)', price: 8.99, category: 'Biryani', spice: 2, veg: false },
+    { id: 'b2', name: 'CHICKEN BIRYANI (SINGLE)', price: 8.99, category: 'Biryani', spice: 2, veg: false, isPopular: true },
     { id: 'b3', name: 'CHICKEN BIRYANI (DOUBLE)', price: 16.99, category: 'Biryani', spice: 2, veg: false, group: 2 },
     { id: 'b4', name: 'CHICKEN BIRYANI (FAMILY)', price: 22.99, category: 'Biryani', spice: 2, veg: false, group: 4 },
     { id: 'b5', name: 'CHICKEN BIRYANI (JUMBO)', price: 29.99, category: 'Biryani', spice: 2, veg: false, group: 6 },
@@ -59,20 +59,20 @@ export const menuData = [
     { id: 'b9', name: 'LAMB BIRYANI (JUMBO)', price: 39.99, category: 'Biryani', spice: 2, veg: false, group: 6 },
 
     // Biryani Thaali
-    { id: 'bt1', name: 'THAALI FOR 2 (LAMB)', price: 29.99, category: 'Biryani Thaali', desc: '1 Double Biryani, Chicken 65, Chilli Chicken, 1 Pc Tandoori, 1 Naan, 1 Rumali, 2 Drinks', spice: 2, veg: false, group: 2, image: '/lamb-biryani-thaali-for-2-people.webp' },
+    { id: 'bt1', name: 'THAALI FOR 2 (LAMB)', price: 29.99, category: 'Biryani Thaali', desc: '1 Double Biryani, Chicken 65, Chilli Chicken, 1 Pc Tandoori, 1 Naan, 1 Rumali, 2 Drinks', spice: 2, veg: false, group: 2, isRecommended: true, image: '/lamb-biryani-thaali-for-2-people.webp' },
     { id: 'bt2', name: 'THAALI FOR 2 (CHICKEN)', price: 25.99, category: 'Biryani Thaali', desc: '1 Double Biryani, Chicken 65, Chilli Chicken, 1 Pc Tandoori, 1 Naan, 1 Rumali, 2 Drinks', spice: 2, veg: false, group: 2, image: '/chicken-biryani-thaali-for-2-people.webp' },
     { id: 'bt3', name: 'THAALI FOR 4 (LAMB)', price: 59.99, category: 'Biryani Thaali', desc: '2 Double Biryani, 2 Pc Tandoori, 2 Naan, 2 Rumali, 4 Drinks', spice: 2, veg: false, group: 4, image: '/lamb-biryani-thaali-for-4-people.webp' },
     { id: 'bt4', name: 'THAALI FOR 4 (CHICKEN)', price: 54.99, category: 'Biryani Thaali', desc: '2 Double Biryani, 2 Pc Tandoori, 2 Naan, 2 Rumali, 4 Drinks', spice: 2, veg: false, group: 4, image: '/chicken-biryani-thaali-for-4-people.webp' },
 
     // Chicken Main Course
     { id: 'cmc1', name: 'DUM KA CHICKEN', price: 12.99, category: 'Chicken Main Course', spice: 2, veg: false },
-    { id: 'cmc2', name: 'BUTTER CHICKEN', price: 12.99, category: 'Chicken Main Course', spice: 1, veg: false },
+    { id: 'cmc2', name: 'BUTTER CHICKEN', price: 12.99, category: 'Chicken Main Course', spice: 1, veg: false, isPopular: true },
 
     // Mutton Main Course
     { id: 'mmc1', name: 'BHEJA FRY MASALA', price: 14.99, category: 'Mutton Main Course', spice: 2, veg: false },
     { id: 'mmc2', name: 'GURDA FRY MASALA', price: 14.99, category: 'Mutton Main Course', spice: 2, veg: false },
     { id: 'mmc3', name: 'KALEJI FRY MASALA', price: 14.99, category: 'Mutton Main Course', spice: 2, veg: false },
-    { id: 'mmc4', name: 'TALAWA GOSHT', price: 16.99, category: 'Mutton Main Course', spice: 2, veg: false },
+    { id: 'mmc4', name: 'TALAWA GOSHT', price: 16.99, category: 'Mutton Main Course', spice: 2, veg: false, isRecommended: true },
     { id: 'mmc5', name: 'MUTTON MASALA', price: 16.99, category: 'Mutton Main Course', spice: 2, veg: false },
 
     // Rice
@@ -133,7 +133,7 @@ export const menuData = [
     { id: 'd4', name: 'QUBANI KA MEETHA', price: 6.99, category: 'Desserts', spice: 0, veg: true },
     { id: 'd5', name: 'QUBANI KA MEETHA WITH ICE CREAM', price: 8.99, category: 'Desserts', spice: 0, veg: true },
     { id: 'd6', name: 'GAJAR KA HALWA', price: 7.99, category: 'Desserts', spice: 0, veg: true },
-    { id: 'd7', name: 'SUNRISE DELIGHT (REGULAR)', price: 8.99, category: 'Desserts', spice: 0, veg: true },
+    { id: 'd7', name: 'SUNRISE DELIGHT (REGULAR)', price: 8.99, category: 'Desserts', spice: 0, veg: true, isNew: true },
     { id: 'd8', name: 'SUNRISE DELIGHT (LARGE)', price: 18.99, category: 'Desserts', spice: 0, veg: true },
 
     // Lassi

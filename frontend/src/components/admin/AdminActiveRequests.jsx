@@ -1,9 +1,9 @@
 import React from 'react';
-import { Hourglass, AlertTriangle, CheckCircle, X, Layers } from 'lucide-react';
+import { Hourglass, AlertTriangle, CheckCircle, X, Layers, BellRing } from 'lucide-react';
 
 export default function AdminActiveRequests({ assistanceRequests = [], updateAssistance, deleteAssistance }) {
     // Process real requests
-    const activeRequests = assistanceRequests.map(r => {
+    const activeRequests = (assistanceRequests || []).map(r => {
         const isAttended = r.status === 'attended';
         const createdTime = new Date(r.createdAt);
         const diffMins = Math.floor((new Date() - createdTime) / 60000);
@@ -28,27 +28,35 @@ export default function AdminActiveRequests({ assistanceRequests = [], updateAss
         };
     });
 
+    const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="space-y-8 animate-in fade-in duration-500 pb-12">
             <div className="flex justify-between items-start">
                 <div>
-                    <h2 className="text-4xl font-serif text-white mb-2 tracking-wide">Active Requests</h2>
-                    <p className="text-nizam-textMuted max-w-lg leading-relaxed">Immediate digital concierge calls from guest tables requiring floor attention.</p>
+                    <h2 className="text-4xl font-serif text-white mb-2 tracking-wide uppercase">Active Requests</h2>
+                    <p className="text-nizam-textMuted max-w-lg leading-relaxed text-sm italic">
+                        Immediate digital concierge calls from guest tables requiring floor attention.
+                    </p>
                 </div>
-                <div className="text-right">
-                    <h2 className="text-4xl font-mono text-emerald-400 tracking-wider">
-                        14:02
-                    </h2>
-                    <p className="text-[10px] font-bold text-nizam-textMuted tracking-widest uppercase mt-1">CURRENT SERVER TIME</p>
+                <div className="text-right flex flex-col items-end">
+                    <div className="bg-nizam-card/50 border border-nizam-border/30 px-6 py-2 rounded-xl shadow-lg">
+                        <h2 className="text-4xl font-mono text-nizam-gold tracking-widest">
+                            {currentTime}
+                        </h2>
+                        <p className="text-[9px] font-bold text-nizam-textMuted tracking-widest uppercase mt-1 text-center">FLOOR CLOCK</p>
+                    </div>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {activeRequests.length === 0 && (
-                    <div className="bg-nizam-card/50 border border-nizam-border rounded-xl flex flex-col justify-center items-center min-h-[320px] text-nizam-textMuted p-6 text-center">
-                        <CheckCircle className="w-10 h-10 mb-4 opacity-30 text-emerald-500" />
-                        <p className="font-serif text-xl text-white mb-2">No Active Requests</p>
-                        <p className="text-sm">The floor is quiet and all tables are satisfied.</p>
+                    <div className="bg-nizam-card/30 border-2 border-dashed border-nizam-border/30 rounded-2xl flex flex-col justify-center items-center min-h-[320px] text-nizam-textMuted p-12 text-center shadow-inner">
+                        <div className="w-20 h-20 bg-nizam-card rounded-full flex items-center justify-center mb-6 border border-nizam-border/50">
+                            <CheckCircle className="w-10 h-10 opacity-10 text-emerald-500" />
+                        </div>
+                        <p className="font-serif text-2xl text-white/50 mb-2 italic">Peaceful Floor</p>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-nizam-gold/20">All guests are satisfied</p>
                     </div>
                 )}
                 
@@ -61,41 +69,44 @@ export default function AdminActiveRequests({ assistanceRequests = [], updateAss
                     />
                 ))}
 
-                {/* Empty State / Standby Slot */}
-                <div className="bg-transparent border border-dashed border-white/5 rounded-xl flex flex-col justify-center items-center min-h-[320px] text-nizam-textMuted hover:border-white/10 transition-colors">
-                    <Layers className="w-8 h-8 mb-4 opacity-20" />
-                    <p className="font-serif italic text-lg opacity-50 mb-1">Next Available Slot</p>
-                    <p className="text-[10px] uppercase font-bold tracking-widest opacity-40">STANDBY MODE</p>
-                </div>
-
                 {/* Concierge Pulse Widget */}
-                <div className="bg-nizam-card border border-nizam-border rounded-xl p-8 flex flex-col xl:col-span-1">
-                    <h3 className="text-xl font-serif text-white mb-8 tracking-wide">Concierge Pulse</h3>
-                    
-                    <div className="space-y-6">
-                        <div>
-                            <div className="flex justify-between items-end mb-3">
-                                <span className="text-sm text-nizam-textMuted font-medium">Avg. Response Time</span>
-                                <span className="text-white font-bold">2m 45s</span>
+                {activeRequests.length > 0 && (
+                    <div className="bg-nizam-card border border-nizam-border rounded-2xl p-8 flex flex-col shadow-2xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-nizam-gold/5 blur-3xl -mr-16 -mt-16 rounded-full group-hover:bg-nizam-gold/10 transition-all"></div>
+                        <h3 className="text-xs font-bold text-nizam-gold uppercase tracking-[0.3em] mb-8 flex items-center gap-2">
+                            <BellRing className="w-4 h-4" /> Concierge Pulse
+                        </h3>
+                        
+                        <div className="space-y-8">
+                            <div>
+                                <div className="flex justify-between items-end mb-3">
+                                    <span className="text-[10px] text-nizam-textMuted font-bold uppercase tracking-widest">Avg. Response Time</span>
+                                    <span className="text-white font-mono font-bold">2m 45s</span>
+                                </div>
+                                <div className="h-1.5 w-full bg-nizam-dark border border-nizam-border/30 rounded-full overflow-hidden shadow-inner">
+                                    <div className="h-full bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.4)]" style={{ width: '85%' }}></div>
+                                </div>
                             </div>
-                            <div className="h-1 w-full bg-[#111312] border border-nizam-border rounded-full overflow-hidden">
-                                <div className="h-full bg-emerald-500 rounded-full" style={{ width: '85%' }}></div>
+
+                            <div className="pt-2">
+                                <div className="flex justify-between items-end mb-3">
+                                    <span className="text-[10px] text-nizam-textMuted font-bold uppercase tracking-widest">Success Rate</span>
+                                    <span className="text-emerald-500 font-mono font-bold">98.2%</span>
+                                </div>
+                                <div className="flex gap-1">
+                                    {[1,2,3,4,5,6,7,8,9,10].map(i => (
+                                        <div key={i} className={`h-1 flex-1 rounded-full ${i < 10 ? 'bg-emerald-500/40' : 'bg-nizam-border/20'}`}></div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
-                        <div className="pt-2">
-                            <div className="flex justify-between items-end mb-3">
-                                <span className="text-sm text-nizam-textMuted font-medium">Success Rate</span>
-                                <span className="text-white font-bold">98.2%</span>
-                            </div>
+                        <div className="mt-auto pt-8 flex items-center gap-3">
+                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_12px_rgba(52,211,153,0.6)]"></span>
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-nizam-textMuted">Nizam Real-time Relay Active</span>
                         </div>
                     </div>
-
-                    <div className="mt-auto pt-8 flex items-center gap-3">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#a8b8b2]">SYSTEM ONLINE</span>
-                    </div>
-                </div>
+                )}
             </div>
         </div>
     );
@@ -104,46 +115,48 @@ export default function AdminActiveRequests({ assistanceRequests = [], updateAss
 function RequestCard({ req, onAttend, onClear }) {
     const isAttended = req.state === 'attended';
     return (
-        <div className={`bg-nizam-card rounded-xl border relative flex flex-col p-6 transition-all shadow-xl shadow-black/20 ${
-            req.state === 'critical' ? 'border-red-900/50 shadow-red-900/10' :
-            req.state === 'urgent' ? 'border-nizam-gold/50 shadow-nizam-gold/10' :
-            isAttended ? 'border-nizam-green/30 opacity-80' : 'border-nizam-gold/30'
+        <div className={`bg-nizam-card rounded-2xl border-2 relative flex flex-col p-8 transition-all shadow-2xl group ${
+            req.state === 'critical' ? 'border-red-900/40 bg-gradient-to-br from-nizam-card to-red-950/20' :
+            req.state === 'urgent' ? 'border-nizam-gold/40 bg-gradient-to-br from-nizam-card to-nizam-gold/5' :
+            isAttended ? 'border-emerald-900/40 opacity-80' : 'border-nizam-border/30'
         }`}>
-            {/* Left Colored Accent Bar */}
-            <div className={`absolute top-0 left-0 w-1.5 h-full rounded-l-xl ${
-                req.state === 'critical' ? 'bg-[#991b1b]' :
-                req.state === 'urgent' || req.state === 'new' ? 'bg-[#c6a87c]' :
-                'bg-[#059669]'
-            }`} />
+            {/* Top Indicator */}
+            <div className={`absolute top-4 right-8 flex items-center gap-2`}>
+                <span className={`w-2 h-2 rounded-full ${
+                    req.state === 'critical' ? 'bg-red-500 animate-ping' :
+                    req.state === 'urgent' ? 'bg-nizam-gold animate-pulse' :
+                    isAttended ? 'bg-emerald-500' : 'bg-nizam-gold/50'
+                }`}></span>
+            </div>
 
-            <div className="flex justify-between items-start mb-6">
-                <span className={`text-[10px] font-black tracking-widest uppercase px-3 py-1 rounded shadow-sm ${
-                    req.state === 'critical' ? 'bg-[#7f1d1d] text-white shadow-red-900/20' :
-                    req.state === 'urgent' || req.state === 'new' ? 'bg-[#7a5c29] text-white shadow-nizam-gold/10' :
-                    'bg-[#064e3b] text-[#34d399] shadow-nizam-green/10'
+            <div className="flex justify-between items-start mb-8">
+                <span className={`text-[9px] font-black tracking-[0.2em] uppercase px-3 py-1.5 rounded-lg border shadow-lg ${
+                    req.state === 'critical' ? 'bg-red-900/30 text-red-100 border-red-500/30' :
+                    req.state === 'urgent' || req.state === 'new' ? 'bg-nizam-gold/10 text-nizam-gold border-nizam-gold/20' :
+                    'bg-emerald-900/30 text-emerald-100 border-emerald-500/20'
                 }`}>
                     {req.label}
                 </span>
                 <div className="text-right">
-                    <p className="text-[8px] font-bold uppercase tracking-widest text-[#a8b8b2] mb-0.5">
+                    <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-nizam-textMuted mb-1">
                         {req.timeLabel}
                     </p>
-                    <p className="font-mono text-sm text-white">{req.time}</p>
+                    <p className="font-mono text-sm text-white/80">{req.time}</p>
                 </div>
             </div>
 
-            <h3 className="text-4xl font-serif text-white mb-6">Table {req.table}</h3>
+            <h3 className="text-5xl font-serif text-white mb-8 tracking-tight">Table {req.table}</h3>
 
-            <div className={`py-4 px-4 rounded flex items-center gap-4 mb-6 ${
-                req.state === 'critical' ? 'bg-[#2a1313] border border-[#5c1c1c] text-[#fca5a5]' :
-                isAttended ? 'bg-[#0f2a20] border border-[#14402e] text-[#6ee7b7]' :
-                'bg-[#1a1813] border border-[#3d321c] text-nizam-gold'
+            <div className={`py-5 px-6 rounded-xl flex items-center gap-4 mb-8 shadow-inner ${
+                req.state === 'critical' ? 'bg-red-950/40 border border-red-900/30 text-red-200' :
+                isAttended ? 'bg-emerald-950/40 border border-emerald-900/30 text-emerald-200' :
+                'bg-nizam-dark/50 border border-nizam-border/30 text-nizam-gold'
             }`}>
-                {req.state === 'critical' ? <AlertTriangle className="w-5 h-5 flex-shrink-0" /> :
-                 isAttended ? <CheckCircle className="w-5 h-5 flex-shrink-0" /> :
-                 <Hourglass className="w-5 h-5 flex-shrink-0" />}
+                {req.state === 'critical' ? <AlertTriangle className="w-6 h-6 flex-shrink-0" /> :
+                 isAttended ? <CheckCircle className="w-6 h-6 flex-shrink-0" /> :
+                 <Hourglass className="w-6 h-6 flex-shrink-0" />}
                  
-                <span className="font-medium text-sm">
+                <span className="font-bold text-[11px] uppercase tracking-widest">
                     {req.pending}
                 </span>
             </div>
@@ -153,24 +166,24 @@ function RequestCard({ req, onAttend, onClear }) {
                     <>
                         <button 
                             onClick={onAttend}
-                            className={`flex-1 py-3 px-4 rounded font-bold text-sm tracking-wide transition-colors ${
+                            className={`flex-1 py-4 px-6 rounded-xl font-black text-[11px] tracking-[0.2em] transition-all uppercase shadow-xl ${
                             req.state === 'critical' 
-                                ? 'bg-[#991b1b] hover:bg-red-700 text-white shadow-lg shadow-red-900/30' 
-                                : 'bg-gradient-to-r from-[#173a2f] to-[#122e25] border border-[#1f4a38] text-[#a8b8b2] hover:text-white transition-all'
+                                ? 'bg-red-600 text-white hover:bg-red-500 shadow-red-900/20' 
+                                : 'bg-nizam-gold text-black hover:bg-white transition-all shadow-nizam-gold/20'
                         }`}>
                             {req.buttonLeft}
                         </button>
-                        <button onClick={onClear} className="w-12 flex justify-center items-center bg-white/5 hover:bg-white/10 text-[#a8b8b2] hover:text-white rounded border border-white/10 transition-colors">
-                            <X className="w-5 h-5" />
+                        <button onClick={onClear} className="w-14 flex justify-center items-center bg-nizam-dark border border-nizam-border/30 hover:border-nizam-gold/50 text-nizam-textMuted hover:text-white rounded-xl transition-all group/clear">
+                            <X className="w-5 h-5 group-hover/clear:rotate-90 transition-transform" />
                         </button>
                     </>
                 ) : (
                     <>
-                        <button disabled className="flex-1 py-3 px-4 rounded font-bold text-sm tracking-wide bg-white/5 text-[#a8b8b2] border border-white/5 cursor-not-allowed">
-                            {req.buttonLeft}
-                        </button>
-                        <button onClick={onClear} className="flex-1 py-3 px-4 rounded font-bold text-sm tracking-wide bg-[#0a1f18] border border-[#14402e] text-[#34d399] hover:bg-[#0f2a20] transition-all shadow-inner">
-                            {req.buttonRight}
+                        <div className="flex-1 py-4 px-6 rounded-xl font-bold text-[11px] tracking-[0.2em] bg-nizam-dark/50 text-nizam-textMuted border border-nizam-border/20 text-center uppercase">
+                            Attended
+                        </div>
+                        <button onClick={onClear} className="flex-1 py-4 px-6 rounded-xl font-black text-[11px] tracking-[0.2em] bg-emerald-600 text-white hover:bg-emerald-500 transition-all uppercase shadow-xl shadow-emerald-900/20">
+                            Clear Call
                         </button>
                     </>
                 )}

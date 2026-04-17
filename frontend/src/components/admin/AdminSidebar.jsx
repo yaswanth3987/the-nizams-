@@ -1,8 +1,10 @@
 import React from 'react';
-import { FileText, CheckCircle, PoundSterling, CheckSquare, Package, HelpCircle, CalendarDays, LogOut, Utensils, LayoutGrid } from 'lucide-react';
+import { FileText, CheckCircle, PoundSterling, CheckSquare, Package, HelpCircle, CalendarDays, LogOut, Utensils, LayoutGrid, ShoppingBag, Columns } from 'lucide-react';
 
 export default function AdminSidebar({ activeView, onViewChange, onRefresh, counts = {} }) {
     const navItems = [
+        { id: 'pos', label: 'TAKEAWAY POS', icon: ShoppingBag },
+        { id: 'takeaway-manager', label: 'TAKEAWAY ORDERS', icon: Columns },
         { id: 'assistance', label: 'ASSISTANCE', icon: HelpCircle },
         { id: 'orders', label: 'ORDERS', icon: FileText },
         { id: 'confirmed', label: 'CONFIRMED', icon: CheckCircle },
@@ -10,23 +12,18 @@ export default function AdminSidebar({ activeView, onViewChange, onRefresh, coun
         { id: 'completed', label: 'COMPLETED', icon: CheckSquare },
         { id: 'tables', label: 'TABLES', icon: LayoutGrid },
         { id: 'menu', label: 'MENU', icon: Utensils },
-        { id: 'attendance', label: 'ATTENDANCE', icon: CalendarDays },
-        { id: 'inventory', label: 'INVENTORY', icon: Package }
+        { id: 'inventory', label: 'INVENTORY', icon: Package },
+        { id: 'attendance', label: 'ATTENDANCE', icon: CalendarDays }
     ];
 
     return (
-        <aside className="w-64 bg-nizam-sidebar hidden md:flex flex-col border-r border-nizam-border pb-6 h-screen overflow-y-auto">
-            <div className="p-8 pb-4 mb-4 border-b border-nizam-border/30">
-                <div className="flex flex-col items-center gap-4 text-center">
-                    <div className="relative group">
-                        <div className="absolute -inset-1 bg-nizam-gold/20 rounded-full blur opacity-25 group-hover:opacity-50 transition-opacity"></div>
-                        <img src="/logo-icon.png" alt="Logo" className="w-16 h-16 object-contain relative drop-shadow-2xl brightness-110" />
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-black tracking-[0.3em] text-nizam-gold mt-2 uppercase leading-none opacity-80">Royal Admin</p>
-                        <p className="text-[8px] font-bold tracking-[0.2em] text-nizam-textMuted mt-2 uppercase opacity-40">Digital Concierge</p>
-                    </div>
+        <aside className="w-64 bg-nizam-sidebar hidden md:flex flex-col border-r border-nizam-border pb-6 h-screen overflow-y-auto relative active:outline-none">
+            <div className="p-6 pb-2 mb-6 border-b border-nizam-border/50">
+                <div className="flex items-center gap-3 mb-2">
+                    <img src="/logo-icon.png" alt="Logo" className="w-10 h-10 object-contain drop-shadow-md brightness-150" />
+                    <h2 className="text-xl font-serif text-nizam-gold leading-tight">The Great Nizam</h2>
                 </div>
+                <p className="text-[10px] font-bold tracking-widest text-nizam-textMuted mt-1 uppercase">Digital Concierge</p>
             </div>
 
             <nav className="flex-1 px-4 space-y-2">
@@ -65,13 +62,14 @@ export default function AdminSidebar({ activeView, onViewChange, onRefresh, coun
                 {/* Admin Management Section */}
             </div>
 
-            <div className="px-6 py-4 flex items-center gap-3 border-t border-nizam-border/50">
-                <div className="w-10 h-10 rounded-full bg-nizam-green flex items-center justify-center text-nizam-gold font-serif text-lg border border-nizam-gold/20 shadow-sm">
+            <div className="px-4 mx-4 py-4 flex items-center gap-3 border-t border-nizam-border/50 bg-nizam-card/30 rounded-xl">
+                <div className="w-10 h-10 rounded-full bg-nizam-green flex items-center justify-center text-nizam-gold font-serif text-lg border border-nizam-gold/20 shadow-sm relative overflow-hidden">
+                    <div className="absolute inset-0 bg-nizam-gold/10"></div>
                     A
                 </div>
                 <div>
-                    <p className="text-sm font-bold text-nizam-text">Admin Profile</p>
-                    <p className="text-[10px] text-nizam-textMuted uppercase tracking-wider">System Manager</p>
+                    <p className="text-sm font-bold text-nizam-text">System Manager</p>
+                    <p className="text-[10px] text-nizam-gold/60 uppercase tracking-widest mt-0.5 font-bold">Connected</p>
                 </div>
             </div>
         </aside>

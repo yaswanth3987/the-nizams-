@@ -2,7 +2,8 @@ import React from 'react';
 import { Check, X, Clock, Receipt } from 'lucide-react';
 
 export default function AdminNewOrders({ orders, updateStatus, cancelOrder }) {
-    const activeOrders = orders.filter(o => o.status === 'new' || o.status === 'pending');
+    // Filter only standard dine-in 'new' or 'pending' orders
+    const activeOrders = orders.filter(o => (o.status === 'new' || o.status === 'pending') && o.orderType !== 'takeaway');
     
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -21,7 +22,7 @@ export default function AdminNewOrders({ orders, updateStatus, cancelOrder }) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {activeOrders.map((order) => (
-                    <div key={order.id} className="bg-[#0d0f0e] rounded-xl border border-white/5 p-6 flex flex-col shadow-2xl hover:border-nizam-gold/20 transition-all border-l-4 border-l-nizam-gold">
+                    <div key={order.id} className="bg-nizam-card rounded-xl border border-nizam-border/50 p-6 flex flex-col shadow-2xl hover:border-nizam-gold/20 transition-all border-l-4 border-l-nizam-gold">
                         <div className="flex justify-between items-start mb-6">
                             <span className="text-[10px] font-bold uppercase tracking-widest text-nizam-gold bg-nizam-gold/10 px-3 py-1 rounded-full border border-nizam-gold/20 flex items-center gap-2">
                                 <Clock className="w-3 h-3" /> NEW ORDER
@@ -32,15 +33,27 @@ export default function AdminNewOrders({ orders, updateStatus, cancelOrder }) {
                             </div>
                         </div>
                         
-                        <div className="flex items-baseline gap-2 mb-6">
-                            <h3 className="text-3xl font-serif text-white">Table {order.tableId}</h3>
+                        <div className="flex items-baseline gap-2 mb-2">
+                            <h3 className="text-3xl font-serif text-white">{order.orderType === 'takeaway' || order.tableId === 'TAKEAWAY' ? 'Takeaway' : `Table ${order.tableId}`}</h3>
                             <span className="text-nizam-textMuted text-[10px] uppercase font-bold tracking-tighter">#{order.id}</span>
                         </div>
+                        {order.orderType === 'takeaway' || order.tableId === 'TAKEAWAY' ? (
+                            <div className="mb-6 flex gap-3 text-xs bg-nizam-dark/50 rounded-lg p-3 border border-nizam-border/30">
+                                <div>
+                                    <span className="block text-[9px] uppercase tracking-wider text-nizam-gold/70">Name</span>
+                                    <span className="font-bold text-white/90">{order.customerName || 'N/A'}</span>
+                                </div>
+                                <div className="border-l border-nizam-border/30 pl-3">
+                                    <span className="block text-[9px] uppercase tracking-wider text-nizam-gold/70">Phone</span>
+                                    <span className="font-mono text-white/90">{order.phone || 'N/A'}</span>
+                                </div>
+                            </div>
+                        ) : <div className="mb-6"></div>}
 
-                        <div className="flex-1 space-y-3 mb-8 bg-black/40 p-5 rounded-lg border border-white/5 shadow-inner max-h-64 overflow-y-auto scrollbar-hide">
+                        <div className="flex-1 space-y-3 mb-8 bg-nizam-dark/40 p-5 rounded-lg border border-nizam-border/20 shadow-inner max-h-64 overflow-y-auto scrollbar-hide">
                             <p className="text-[9px] font-black text-nizam-gold/50 uppercase tracking-[0.2em] mb-4 border-b border-nizam-gold/10 pb-2">Order Items</p>
                             {order.items.map((item, i) => (
-                                <div key={i} className="flex justify-between items-start text-xs border-b border-white/5 pb-2 last:border-0 text-nizam-textMuted">
+                                <div key={i} className="flex justify-between items-start text-xs border-b border-nizam-border/10 pb-2 last:border-0 text-nizam-textMuted text-sm">
                                     <span className="font-medium text-white/90 pr-4">{item.name}</span>
                                     <span className="font-bold text-nizam-gold bg-nizam-gold/5 px-2 py-0.5 rounded">x{item.qty}</span>
                                 </div>
@@ -48,14 +61,14 @@ export default function AdminNewOrders({ orders, updateStatus, cancelOrder }) {
                         </div>
 
                         <div className="space-y-4">
-                            <div className="flex justify-between items-end border-t border-white/5 pt-4">
+                            <div className="flex justify-between items-end border-t border-nizam-border/20 pt-4">
                                 <div>
                                     <p className="text-[9px] font-bold uppercase tracking-widest text-nizam-textMuted mb-1">FINAL TOTAL FOR THIS ORDER</p>
-                                    <p className="text-2xl font-bold text-white tracking-tight">£{order.finalTotal.toFixed(2)}</p>
+                                    <p className="text-2xl font-bold text-white tracking-tight">£{Number(order.finalTotal || 0).toFixed(2)}</p>
                                 </div>
                                 <div className="text-right text-[10px] text-nizam-textMuted font-mono">
-                                    <p>Service Charge: £{(order.serviceCharge || 0).toFixed(2)}</p>
-                                    <p>Subtotal: £{(order.subtotal || 0).toFixed(2)}</p>
+                                    <p>Service Charge: £{Number(order.serviceCharge || 0).toFixed(2)}</p>
+                                    <p>Subtotal: £{Number(order.subtotal || 0).toFixed(2)}</p>
                                 </div>
                             </div>
 
@@ -78,10 +91,10 @@ export default function AdminNewOrders({ orders, updateStatus, cancelOrder }) {
                 ))}
 
                 {activeOrders.length === 0 && (
-                     <div className="col-span-full py-32 text-center border-2 border-dashed border-white/5 rounded-2xl bg-black/20">
-                        <Receipt className="w-12 h-12 text-white/10 mx-auto mb-6 opacity-30" />
+                     <div className="col-span-full py-32 text-center border-2 border-dashed border-nizam-border/30 rounded-2xl bg-nizam-card/30">
+                        <Receipt className="w-12 h-12 text-nizam-gold/10 mx-auto mb-6 opacity-30" />
                         <p className="text-nizam-textMuted font-serif italic text-2xl">No new orders.</p>
-                        <p className="text-[10px] font-bold tracking-[0.3em] text-white/20 uppercase mt-4">WAITING FOR CUSTOMERS</p>
+                        <p className="text-[10px] font-bold tracking-[0.3em] text-nizam-gold/20 uppercase mt-4">WAITING FOR CUSTOMERS</p>
                     </div>
                 )}
             </div>

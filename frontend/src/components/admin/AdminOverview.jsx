@@ -128,35 +128,43 @@ export default function AdminOverview({ analyticsDaily, itemAnalytics = [], sale
             </div>
 
             {/* Graphical Analytics Component */}
-            <div className="bg-nizam-card border border-nizam-border rounded-xl p-6 shadow-xl shadow-black/20">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-serif text-white tracking-wide flex items-center gap-3">
-                        <TrendingUp className="w-5 h-5 text-nizam-gold" /> 
-                        Sales & Order Analytics
+            <div className="bg-nizam-card border border-nizam-border/30 rounded-2xl p-8 shadow-2xl shadow-black/40">
+                <div className="flex justify-between items-center mb-10">
+                    <h3 className="text-xl font-serif text-white tracking-wide flex items-center gap-4">
+                        <TrendingUp className="w-6 h-6 text-nizam-gold shadow-gold/20" /> 
+                        Financial Performance
                     </h3>
-                    <span className="text-[10px] font-bold text-[#a8b8b2] uppercase tracking-widest border border-nizam-border/50 px-3 py-1 bg-[#111312] rounded">
-                        {datePreset === 'all' ? 'LIFETIME OVERVIEW' : `FILTERED: ${datePreset.toUpperCase()}`}
-                    </span>
+                    <div className="flex items-center gap-3">
+                        <span className="text-[9px] font-black text-nizam-gold/60 uppercase tracking-[0.2em] border border-nizam-gold/20 px-4 py-1.5 bg-nizam-gold/5 rounded-full backdrop-blur-sm">
+                            {datePreset === 'all' ? 'LIFETIME OVERVIEW' : `TIME-FILTER: ${datePreset.toUpperCase()}`}
+                        </span>
+                    </div>
                 </div>
                 
                 {generatedChartData.length === 0 ? (
-                    <div className="h-64 flex items-center justify-center text-[#a8b8b2] text-sm">No analytics data available for this range.</div>
+                    <div className="h-80 flex flex-col items-center justify-center text-nizam-textMuted text-sm font-serif italic border border-nizam-border/10 rounded-xl bg-black/5">
+                        <div className="w-16 h-16 rounded-full bg-nizam-card flex items-center justify-center mb-4 text-nizam-gold/20">
+                            <TrendingUp className="w-8 h-8" />
+                        </div>
+                        No analytics data available for this range.
+                    </div>
                 ) : (
-                    <div className="h-72 w-full">
+                    <div className="h-80 w-full px-2">
                         <ResponsiveContainer width="100%" height="100%">
                             <ComposedChart data={generatedChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1f2937" />
-                                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6b7280' }} dy={10} />
-                                <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6b7280' }} tickFormatter={v => `£${v}`} />
-                                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6b7280' }} />
+                                <CartesianGrid strokeDasharray="6 6" vertical={false} stroke="#2a2d28" opacity={0.3} />
+                                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#9ca3af', fontWeight: 'bold' }} dy={15} />
+                                <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#c6a87c', fontWeight: 'bold' }} tickFormatter={v => `£${v}`} />
+                                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#60a5fa', fontWeight: 'bold' }} />
                                 <Tooltip 
-                                    cursor={{ fill: 'rgba(255,255,255,0.05)' }} 
-                                    contentStyle={{ backgroundColor: '#111312', borderColor: '#374151', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
-                                    itemStyle={{ color: '#d4af37' }}
+                                    cursor={{ stroke: '#c6a87c', strokeWidth: 1, strokeDasharray: '4 4' }} 
+                                    contentStyle={{ backgroundColor: '#111312', borderColor: '#2a2d28', borderRadius: '12px', color: '#fff', fontSize: '11px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)', padding: '12px' }}
+                                    itemStyle={{ padding: '2px 0' }}
+                                    labelStyle={{ fontWeight: 'black', marginBottom: '8px', color: '#c6a87c', textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: '10px' }}
                                 />
-                                <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '11px', color: '#a8b8b2' }} />
-                                <Bar yAxisId="left" dataKey="revenue" name="Total Revenue (£)" fill="#d4af37" radius={[4, 4, 0, 0]} maxBarSize={50} />
-                                <Line yAxisId="right" type="monotone" dataKey="orders" name="Order Volumes" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#3b82f6' }} activeDot={{ r: 6 }} />
+                                <Legend wrapperStyle={{ paddingTop: '30px', fontSize: '10px', fontWeight: 'bold', color: '#9ca3af', letterSpacing: '0.05em' }} />
+                                <Bar yAxisId="left" dataKey="revenue" name="TOTAL REVENUE (£)" fill="#c6a87c" radius={[6, 6, 0, 0]} maxBarSize={40} className="hover:opacity-80 transition-opacity" />
+                                <Line yAxisId="right" type="monotone" dataKey="orders" name="ORDER VOLUME" stroke="#60a5fa" strokeWidth={3} dot={{ r: 4, fill: '#111312', stroke: '#60a5fa', strokeWidth: 2 }} activeDot={{ r: 7, fill: '#60a5fa', stroke: '#fff', strokeWidth: 2 }} />
                             </ComposedChart>
                         </ResponsiveContainer>
                     </div>
@@ -173,29 +181,30 @@ export default function AdminOverview({ analyticsDaily, itemAnalytics = [], sale
                         </button>
                     </div>
                     
-                    <div className="bg-nizam-card border border-nizam-border rounded-xl flex flex-col overflow-hidden shadow-xl shadow-black/20 max-h-[400px]">
-                        <div className="grid grid-cols-5 text-[10px] font-bold uppercase tracking-widest text-[#a8b8b2] border-b border-nizam-border/50 px-6 py-4 bg-black/20 sticky top-0">
+                    <div className="bg-nizam-card border border-nizam-border/30 rounded-2xl flex flex-col overflow-hidden shadow-2xl shadow-black/40 max-h-[500px]">
+                        <div className="grid grid-cols-5 text-[10px] font-black uppercase tracking-[0.2em] text-nizam-textMuted border-b border-nizam-border/20 px-8 py-5 bg-nizam-sidebar/40 sticky top-0 backdrop-blur-md z-10">
                             <div>ORDER ID</div>
                             <div>DATE & TIME</div>
                             <div>TABLE</div>
                             <div>AMOUNT</div>
                             <div className="text-right">STATUS</div>
                         </div>
-                        <div className="flex flex-col overflow-y-auto">
+                        <div className="flex flex-col overflow-y-auto divide-y divide-nizam-border/10">
                             {filteredSalesList.length === 0 && (
-                                <div className="p-8 text-center text-[#a8b8b2] text-sm">No orders found for this timeframe.</div>
+                                <div className="p-12 text-center text-nizam-textMuted text-sm italic font-serif">No royal orders found for this selection.</div>
                             )}
                             {filteredSalesList.map((row, idx) => (
-                                <div key={row.id || idx} className="grid grid-cols-5 px-6 py-5 border-b border-nizam-border/30 hover:bg-nizam-border/10 transition-colors items-center">
-                                    <div className="font-bold text-nizam-gold text-sm">#NZ-{row.id.toString().padStart(4, '0')}</div>
-                                    <div className="text-[#a8b8b2] text-[11px] font-mono">
-                                        {new Date(row.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })} <br/>
-                                        <span className="text-white/50">{new Date(row.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                <div key={row.id || idx} className="grid grid-cols-5 px-8 py-6 hover:bg-nizam-gold/5 transition-all duration-300 items-center group relative">
+                                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-nizam-gold opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                    <div className="font-black text-nizam-gold text-sm tracking-tighter">#NZ-{row.id.toString().padStart(4, '0')}</div>
+                                    <div className="text-nizam-textMuted text-[11px] font-mono leading-relaxed">
+                                        <span className="text-white/80">{new Date(row.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span> <br/>
+                                        <span className="text-nizam-gold/40">{new Date(row.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                                     </div>
-                                    <div className="text-white text-sm font-medium">{row.tableId}</div>
-                                    <div className="text-emerald-400 font-bold text-sm tracking-wide">£{(row.finalTotal || 0).toFixed(2)}</div>
+                                    <div className="text-white text-sm font-bold tracking-wide">{row.tableId}</div>
+                                    <div className="text-emerald-400 font-black text-sm tracking-[0.1em]">£{(row.finalTotal || 0).toFixed(2)}</div>
                                     <div className="text-right">
-                                        <span className="inline-block bg-[#112a20] border border-[#1f4a38] text-[#4ade80] text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded">
+                                        <span className="inline-block bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] font-black tracking-[0.2em] px-3 py-1 rounded-full shadow-sm shadow-emerald-500/5">
                                             {row.status === 'completed' ? 'SETTLED' : row.status.toUpperCase()}
                                         </span>
                                     </div>
@@ -287,23 +296,30 @@ export default function AdminOverview({ analyticsDaily, itemAnalytics = [], sale
 function MetricCard({ title, value, subvalue, subIcon, delay = 0, golden = false, accentClass }) {
     return (
         <div 
-            className={`p-6 rounded-xl border relative overflow-hidden transition-all duration-300 shadow-lg ${
+            className={`p-6 rounded-2xl border relative overflow-hidden transition-all duration-500 hover:scale-[1.02] group shadow-2xl ${
                 golden 
-                    ? 'bg-[#181a17] border-nizam-gold/40 shadow-[0_0_15px_rgba(212,175,55,0.1)]' 
-                    : 'bg-[#141614] border-nizam-border shadow-black/20'
+                    ? 'bg-gradient-to-br from-[#1c1e1c] to-[#141614] border-nizam-gold/30 shadow-[0_10px_30px_-10px_rgba(198,168,124,0.15)]' 
+                    : 'bg-[#141614] border-nizam-border/50 shadow-black/40'
             }`}
             style={{ animationDelay: `${delay}ms` }}
         >
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[#a8b8b2] mb-3 relative z-10">{title}</p>
+            <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity duration-500">
+                {subIcon}
+            </div>
+            
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-nizam-textMuted mb-4 relative z-10 group-hover:text-nizam-gold transition-colors duration-300">{title}</p>
             <h3 className={`text-3xl font-serif tracking-wide mb-6 relative z-10 ${golden ? 'text-nizam-gold' : 'text-white'}`}>{value}</h3>
             
-            <div className={`flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase relative z-10 ${golden ? 'text-nizam-gold' : 'text-[#a8b8b2]'}`}>
-                {subIcon}
+            <div className={`flex items-center gap-2 text-[10px] font-black tracking-widest uppercase relative z-10 ${golden ? 'text-nizam-gold/80' : 'text-nizam-textMuted'}`}>
+                <span className="opacity-70">{subIcon}</span>
                 <span>{subvalue}</span>
             </div>
             
-            {golden && <div className="absolute top-0 left-0 w-1 h-full bg-nizam-gold"></div>}
-            {!golden && <div className={`absolute top-0 left-0 w-1 h-full ${accentClass}`}></div>}
+            {golden && <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-nizam-gold to-nizam-goldDark shadow-[0_0_15px_rgba(198,168,124,0.5)]"></div>}
+            {!golden && <div className={`absolute top-0 left-0 w-1.5 h-full ${accentClass} opacity-60 group-hover:opacity-100 transition-opacity`}></div>}
+            
+            {/* Subtle gloss effect */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
         </div>
     );
 }

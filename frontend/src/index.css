@@ -1,20 +1,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 
 :root {
-  --primary-green: #0B3A2E;
-  --accent-gold: #C29958;
-  --bg-cream: #F6EFE6;
-  --text-primary: #0B3A2E;
-  --text-secondary: #6D5D4B;
+  --primary-green: #064e3b;
+  --accent-gold: #c6a87c;
+  --bg-dark: #111312;
+  --card-dark: #1c1e1c;
+  --text-primary: #f3f4f6;
+  --text-muted: #9ca3af;
 }
 
 @layer base {
   body {
-    background-color: var(--bg-cream);
+    background-color: var(--bg-dark);
     color: var(--text-primary);
     font-family: 'Inter', system-ui, sans-serif;
     -webkit-tap-highlight-color: transparent;
@@ -61,6 +62,24 @@
   to { opacity: 1; }
 }
 
+@keyframes zoom-in {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes shake {
+  0% { transform: rotate(0); }
+  25% { transform: rotate(-10deg); }
+  50% { transform: rotate(10deg); }
+  75% { transform: rotate(-5deg); }
+  100% { transform: rotate(0); }
+}
+
+@keyframes anim-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
 @keyframes skeleton-loading {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
@@ -92,6 +111,27 @@
 
 .animate-fade-in {
   animation: fade-in 0.4s ease-out forwards;
+}
+
+.animate-zoom-in {
+  animation: zoom-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.anim-grow {
+  transform-origin: left;
+  animation: anim-grow 0.4s ease-out forwards;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 
