@@ -52,6 +52,8 @@ export default function CustomerMenu() {
     const [cartPulse, setCartPulse] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [previewItem, setPreviewItem] = useState(null);
+    const [specialRequest, setSpecialRequest] = useState('');
+    const [spiceLevel, setSpiceLevel] = useState('');
 
     const KITCHEN_EFFECTS = ['steam', 'spice', 'flame'];
 
@@ -222,13 +224,17 @@ export default function CustomerMenu() {
         setOrderStatus('submitting');
         
         const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-        const serviceCharge = Number((subtotal * 0.10).toFixed(2));
-        const finalTotal = Number((subtotal + serviceCharge).toFixed(2));
         
         const formattedTable = /^[A-Z]/.test(selectedTable) ? selectedTable : `T${selectedTable}`;
+        const itemsList = cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty }));
+        if (specialRequest || spiceLevel) {
+            const noteText = [spiceLevel ? `[${spiceLevel}]` : '', specialRequest].filter(Boolean).join(' ');
+            itemsList.push({ id: `note_${Date.now()}`, name: `Note: ${noteText}`, price: 0, qty: 1 });
+        }
+        
         const orderData = {
             tableId: formattedTable,
-            items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
+            items: itemsList,
             finalTotal,
             subtotal,
             serviceCharge,
@@ -689,7 +695,7 @@ export default function CustomerMenu() {
                             <div 
                                 key={`pop-${item.id}`}
                                 onClick={() => setPreviewItem(item)}
-                                className="min-w-[180px] bg-white rounded-[32px] p-3 shadow-xl border border-black/5 active:scale-95 transition-all"
+                                className="min-w-[180px] bg-white rounded-[32px] p-3 shadow-xl border border-black/5 hover:-translate-y-2 hover:shadow-[0_25px_50px_-10px_rgba(11,58,46,0.2)] active:scale-95 transition-all duration-500"
                             >
                                 <div className="relative h-32 rounded-[24px] overflow-hidden mb-3">
                                     {item.image ? (
@@ -760,7 +766,7 @@ export default function CustomerMenu() {
                                         return (
                                             <div 
                                                 key={item.id} 
-                                                className={`flex gap-4 p-4 rounded-[20px] transition-all duration-300 bg-white premium-shadow border border-black/5 ${inCart ? 'ring-2 ring-[#C29958] bg-gradient-to-br from-white to-[#F6EFE6]' : ''}`}
+                                                className={`flex gap-4 p-4 rounded-[20px] transition-all duration-500 bg-white premium-shadow border border-black/5 hover:-translate-y-1 hover:shadow-[0_20px_40px_-15px_rgba(11,58,46,0.15)] ${inCart ? 'ring-2 ring-[#C29958] bg-gradient-to-br from-white to-[#F6EFE6]' : ''}`}
                                             >
                                                 <div 
                                                     onClick={() => setPreviewItem(item)}
@@ -961,9 +967,27 @@ export default function CustomerMenu() {
                                 <p className="text-[#0B3A2E]/40 text-[10px] font-black uppercase tracking-[0.25em]">Special Requests</p>
                                 <div className="h-px bg-[#0B3A2E]/10 flex-1"></div>
                              </div>
+                             
+                             <div className="flex gap-3 mb-4">
+                                 <button 
+                                     onClick={() => setSpiceLevel(spiceLevel === 'MILD' ? '' : 'MILD')}
+                                     className={`flex-1 py-3 rounded-2xl border text-xs font-black tracking-widest uppercase transition-all duration-300 ${spiceLevel === 'MILD' ? 'bg-[#F5EFE3] text-[#0B3A2E] border-[#C29958] shadow-[0_0_15px_rgba(194,153,88,0.2)]' : 'bg-white text-[#6D5D4B]/50 border-black/5'}`}
+                                 >
+                                     Mild
+                                 </button>
+                                 <button 
+                                     onClick={() => setSpiceLevel(spiceLevel === 'SPICY' ? '' : 'SPICY')}
+                                     className={`flex-1 py-3 rounded-2xl border text-xs font-black tracking-widest uppercase transition-all duration-300 ${spiceLevel === 'SPICY' ? 'bg-red-50 text-red-600 border-red-200 shadow-[0_0_15px_rgba(220,38,38,0.15)]' : 'bg-white text-[#6D5D4B]/50 border-black/5'}`}
+                                 >
+                                     Spicy
+                                 </button>
+                             </div>
+
                              <textarea 
+                                value={specialRequest}
+                                onChange={(e) => setSpecialRequest(e.target.value)}
                                 className="w-full bg-white border border-[#0B3A2E]/5 rounded-[28px] p-6 text-[13px] font-medium text-[#0B3A2E] focus:ring-2 focus:ring-[#C29958]/20 transition-all outline-none shadow-inner placeholder:opacity-30"
-                                placeholder="e.g. Extra spicy, no coriander, allergies..."
+                                placeholder="e.g. No coriander, allergies..."
                                 rows="3"
                              ></textarea>
                         </div>
@@ -971,18 +995,10 @@ export default function CustomerMenu() {
 
                     <div className="p-10 bg-white shadow-[0_-20px_50px_rgba(0,0,0,0.05)] rounded-t-[50px] space-y-6 border-t border-black/5">
                         <div className="space-y-3">
-                            <div className="flex justify-between items-center text-xs text-[#6D5D4B] font-bold uppercase tracking-widest opacity-60">
-                                <span>Subtotal</span>
-                                <span className="tabular-nums">£{subtotal.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-xs text-[#6D5D4B] font-bold uppercase tracking-widest opacity-60">
-                                <span>Royal Service Fee (10%)</span>
-                                <span className="tabular-nums">£{serviceCharge.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between items-end pt-5 mt-2 border-t border-[#0B3A2E]/5">
+                            <div className="flex justify-between items-end pt-5 mt-2">
                                 <div>
-                                    <span className="text-[#0B3A2E] text-[10px] font-black uppercase tracking-[0.25em] opacity-40 block mb-1">Grand Total</span>
-                                    <span className="text-[#0B3A2E] text-sm font-bold opacity-60">To be settled later</span>
+                                    <span className="text-[#0B3A2E] text-[10px] font-black uppercase tracking-[0.25em] block mb-1">Grand Total</span>
+                                    <span className="text-[#0B3A2E] text-[10px] font-medium opacity-60">Inclusive of taxes & fees</span>
                                 </div>
                                 <span className="text-[#0B3A2E] text-4xl font-black font-serif tabular-nums">£{finalTotal.toFixed(2)}</span>
                             </div>
