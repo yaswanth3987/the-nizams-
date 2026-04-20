@@ -1010,7 +1010,41 @@ export default function CustomerMenu() {
                             </div>
                         ))}
 
-                        <div className="pt-6 pb-10">
+                        <div className="pt-4">
+                             <div className="flex items-center justify-between mb-4 bg-blue-50/50 p-4 rounded-2xl border border-blue-100 shadow-sm animate-fade-in">
+                                 <div className="flex flex-col">
+                                     <h4 className="font-bold text-[#0B3A2E] text-sm flex items-center gap-2">
+                                         <span className="text-xl">💧</span> Add Water
+                                     </h4>
+                                     <p className="text-[10px] text-[#6D5D4B] font-bold opacity-60 uppercase tracking-widest pl-7 mt-0.5">Chilled Natural Water</p>
+                                 </div>
+                                 <div className="flex items-center gap-3 bg-white rounded-[16px] p-1.5 shadow-sm border border-black/5">
+                                     <button 
+                                         onClick={() => updateQuantity('dr3', -1)}
+                                         disabled={!cart.find(i => i.id === 'dr3')}
+                                         className={`w-8 h-8 rounded-[12px] flex items-center justify-center transition-all ${cart.find(i => i.id === 'dr3') ? 'bg-blue-50 text-blue-600 active:scale-75' : 'bg-gray-50 text-gray-400'}`}
+                                     >
+                                         <Minus size={14} strokeWidth={3} />
+                                     </button>
+                                     <span className="font-black text-[#0B3A2E] text-sm min-w-[16px] text-center tabular-nums">{cart.find(i => i.id === 'dr3')?.qty || 0}</span>
+                                     <button 
+                                         onClick={() => {
+                                             const waterItem = menu.find(i => i.id === 'dr3') || { id: 'dr3', name: 'WATER BOTTLE', price: 1.00, category: 'Drinks' };
+                                             if (!cart.find(i => i.id === 'dr3')) {
+                                                 handleAddToCart(waterItem);
+                                             } else {
+                                                 updateQuantity('dr3', 1);
+                                             }
+                                         }}
+                                         className="w-8 h-8 bg-blue-500 text-white rounded-[12px] flex items-center justify-center shadow-md active:scale-75 transition-all"
+                                     >
+                                         <Plus size={14} strokeWidth={3} />
+                                     </button>
+                                 </div>
+                             </div>
+                        </div>
+
+                        <div className="pt-2 pb-10">
                              <div className="flex items-center gap-3 mb-4">
                                 <div className="h-px bg-[#0B3A2E]/10 flex-1"></div>
                                 <p className="text-[#0B3A2E]/40 text-[10px] font-black uppercase tracking-[0.25em]">Special Requests</p>
