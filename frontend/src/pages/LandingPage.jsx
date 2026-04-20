@@ -18,7 +18,7 @@ export default function LandingPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-[#0B3A2E] to-[#07241C] flex flex-col items-center justify-center p-6 text-white relative overflow-hidden">
-            <div className="absolute inset-0 opacity-10 bg-[url('/pattern.png')] bg-repeat" />
+            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#C29958_0.8px,transparent_0.8px)] [background-size:24px_24px]" />
             
             <div className="z-10 text-center w-full max-w-md">
                 <div className="w-24 h-24 mx-auto mb-6 bg-[#C29958] rounded-full flex items-center justify-center premium-shadow animate-fade-in shadow-[0_0_30px_rgba(194,153,88,0.4)]">

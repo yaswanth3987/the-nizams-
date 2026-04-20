@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import AdminUnavailabilityScheduler from '../components/admin/AdminUnavailabilityScheduler';
 import { socket } from '../utils/socket';
 import Receipt from '../components/Receipt';
@@ -41,6 +41,7 @@ export default function AdminDashboard() {
     const hasUnattendedAssistance = assistanceRequests.some(r => r.status === 'new');
     const { playSound } = useSoundSystem(hasUnattendedAssistance);
 
+    // Initial Fetch Effect
     useEffect(() => {
         setIsLoading(true);
         Promise.all([
@@ -55,12 +56,14 @@ export default function AdminDashboard() {
             setErrorMsg("Failed to connect to backend server. Please check your connection.");
             setIsLoading(false);
         });
+    }, [fetchSessions, fetchNewOrders, fetchAssistance, fetchDashboardData]);
 
+    // Socket Listeners Effect
+    useEffect(() => {
         const handleSessionUpdate = (session) => {
             setSessions(prev => {
                 const exists = prev.find(s => s.id === session.id);
                 if (exists) {
-                    // Trigger "Ready" sound if status becomes ready
                     if (exists.status !== 'ready' && session.status === 'ready') {
                         playSound('ready');
                     }
@@ -101,7 +104,6 @@ export default function AdminDashboard() {
                 if (prev.some(r => r.id === req.id)) return prev;
                 setTimeout(() => {
                     setUnreadAlerts(u => u + 1);
-                    // playSound('assistance') is handled by the hook's loop
                 }, 0);
                 return [req, ...prev];
             });
@@ -110,6 +112,7 @@ export default function AdminDashboard() {
         socket.on('assistanceUpdated', (updatedReq) => {
             setAssistanceRequests(prev => prev.map(r => r.id === updatedReq.id ? updatedReq : r));
         });
+
         socket.on('assistanceDeleted', ({ id }) => {
             setAssistanceRequests(prev => prev.filter(r => r.id !== id));
         });
@@ -117,13 +120,15 @@ export default function AdminDashboard() {
         return () => {
             socket.off('sessionUpdated');
             socket.off('tableReset');
+            socket.off('orderCreated');
+            socket.off('orderUpdated');
             socket.off('assistanceRequested');
             socket.off('assistanceUpdated');
             socket.off('assistanceDeleted');
         };
-    }, [playSound]);
+    }, [playSound, fetchSessions, fetchNewOrders, fetchDashboardData]);
 
-    const fetchSessions = () => {
+    const fetchSessions = useCallback(() => {
         return fetch(`${API_URL}/orders`) // End-point now returns sessions
             .then(res => {
                 if(!res.ok) throw new Error("Orders API Failed");
@@ -131,16 +136,16 @@ export default function AdminDashboard() {
             })
             .then(data => setSessions(data))
             .catch(err => { console.error("Error fetching sessions:", err); throw err; });
-    };
+    }, [API_URL]);
 
-    const fetchAssistance = () => {
+    const fetchAssistance = useCallback(() => {
         return fetch(`${API_URL}/assistance`)
             .then(res => res.json())
             .then(data => setAssistanceRequests(data || []))
             .catch(err => { console.error("Error fetching assistance:", err); });
-    };
+    }, [API_URL]);
 
-    const fetchDashboardData = async () => {
+    const fetchDashboardData = useCallback(async () => {
         try {
             const [dailyRes, itemsRes, salesRes] = await Promise.all([
                 fetch(`${API_URL}/analytics/daily`),
@@ -161,9 +166,8 @@ export default function AdminDashboard() {
             setSalesList(salesData || []);
         } catch (err) {
             console.error("Failed to load dashboard data:", err);
-            // Don't throw here to avoid crashing the whole dashboard if only analytics fail
         }
-    };
+    }, [API_URL]);
 
     const updateAssistance = async (id, status) => {
         try {
@@ -181,12 +185,12 @@ export default function AdminDashboard() {
         } catch (err) { console.error(err); }
     };
 
-    const fetchNewOrders = () => {
+    const fetchNewOrders = useCallback(() => {
         return fetch(`${API_URL}/new-orders`)
             .then(res => res.json())
             .then(data => setNewOrders(data || []))
             .catch(err => console.error(err));
-    };
+    }, [API_URL]);
 
     const updateStatus = async (id, status, isRawOrder = false) => {
         try {

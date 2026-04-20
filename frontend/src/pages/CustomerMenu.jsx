@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
     ChevronLeft, 
@@ -105,7 +105,7 @@ export default function CustomerMenu() {
     useEffect(() => {
         if (!selectedTable) return;
         
-        const validateSession = async () => {
+        const validateSession = useCallback(async () => {
             try {
                 const sid = localStorage.getItem(`session_${selectedTable}`) || sessionId;
                 const formattedTable = /^[A-Z]/.test(selectedTable) ? selectedTable : `T${selectedTable}`;
@@ -120,7 +120,7 @@ export default function CustomerMenu() {
             } catch (e) {
                 console.error(e);
             }
-        };
+        }, [selectedTable, sessionId, API_URL]);
         validateSession();
 
         // Auto-mark table as ordering when customer opens the menu
@@ -171,7 +171,7 @@ export default function CustomerMenu() {
     useEffect(() => {
         setMenu(menuData);
         
-        const fetchRemoteMenu = () => {
+        const fetchRemoteMenu = useCallback(() => {
             setIsMenuLoading(true);
             fetch(`${API_URL}/menu`)
                 .then(res => res.json())
@@ -185,7 +185,7 @@ export default function CustomerMenu() {
                     console.log("Silent fail on menu API, using defaults");
                     setIsMenuLoading(false);
                 });
-        };
+        }, [API_URL]);
 
         fetchRemoteMenu();
 

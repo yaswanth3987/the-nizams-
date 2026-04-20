@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { socket } from '../utils/socket';
 import { ChefHat, Bell, Search, User, Menu, FileText, BarChart2, Settings, UtensilsCrossed, CheckCircle2 } from 'lucide-react';
 
@@ -16,13 +16,13 @@ export default function KitchenDisplay() {
         audio.play().catch(e => console.log('Audio play blocked:', e));
     };
 
-    const fetchKitchenOrders = () => {
+    const fetchKitchenOrders = useCallback(() => {
         // Fetch confirmed, active, and ready sessions
         fetch(`${API_URL}/orders?statuses=confirmed,active,ready`)
             .then(res => res.json())
             .then(data => setOrders(data))
             .catch(err => console.error("Error fetching kitchen orders:", err));
-    };
+    }, [API_URL]);
 
     useEffect(() => {
         fetchKitchenOrders();
@@ -42,16 +42,15 @@ export default function KitchenDisplay() {
             }
         });
 
-        socket.on('orderUpdated', () => { fetchKitchenOrders(); });
-
-        socket.on('tableReset', () => { fetchKitchenOrders(); });
+        socket.on('orderUpdated', fetchKitchenOrders);
+        socket.on('tableReset', fetchKitchenOrders);
 
         return () => {
             socket.off('sessionUpdated');
-            socket.off('orderUpdated');
-            socket.off('tableReset');
+            socket.off('orderUpdated', fetchKitchenOrders);
+            socket.off('tableReset', fetchKitchenOrders);
         };
-    }, []);
+    }, [fetchKitchenOrders]);
 
     const updateOrderStatus = async (id, status) => {
         try {
