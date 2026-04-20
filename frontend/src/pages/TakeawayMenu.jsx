@@ -253,7 +253,7 @@ export default function TakeawayMenu() {
                             <div className="flex items-center justify-between mt-2 mb-2 bg-blue-50/50 p-4 rounded-xl border border-blue-100 shadow-sm animate-fade-in">
                                 <div className="flex flex-col">
                                     <h4 className="font-bold text-[#0B3A2E] text-sm flex items-center gap-2">
-                                        <span className="text-lg">💧</span> Need Water?
+                                        <span className="text-lg">💧</span> Add Bottle
                                     </h4>
                                     <p className="text-[10px] text-[#6D5D4B] font-bold opacity-60 uppercase tracking-widest pl-7 mt-0.5">Chilled Natural Water</p>
                                 </div>
