@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { TrendingUp, Package, PoundSterling, FileText, Printer, Calendar as CalendarIcon, Filter, Layers } from 'lucide-react';
+import { TrendingUp, Package, PoundSterling, FileText, Printer, Calendar as CalendarIcon, Filter, Layers, Lock, User } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
 
 const API_URL = import.meta.env.DEV 
@@ -10,6 +10,25 @@ export default function InventoryDashboard() {
     const [itemAnalytics, setItemAnalytics] = useState([]);
     const [salesList, setSalesList] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    // Authentication State
+    const [isAuthenticated, setIsAuthenticated] = useState(() => {
+        return sessionStorage.getItem('inventory_auth') === 'true';
+    });
+    const [authInput, setAuthInput] = useState({ username: '', password: '' });
+    const [authError, setAuthError] = useState(false);
+
+    const handleLogin = (e) => {
+        e.preventDefault();
+        if (authInput.username === 'admin5005' && authInput.password === 'nizam0304') {
+            setIsAuthenticated(true);
+            sessionStorage.setItem('inventory_auth', 'true');
+            setAuthError(false);
+        } else {
+            setAuthError(true);
+            setAuthInput({ username: '', password: '' });
+        }
+    };
 
     const [datePreset, setDatePreset] = useState('week'); // 'today', 'week', 'month', 'custom'
     const [startDate, setStartDate] = useState(new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]);
@@ -92,6 +111,65 @@ export default function InventoryDashboard() {
 
     if (loading) {
         return <div className="text-center py-12 text-white/40 uppercase text-[10px] font-black tracking-widest animate-pulse">Loading comprehensive analytics...</div>;
+    }
+
+    if (!isAuthenticated) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                <div className="bg-[#111311] border border-white/10 p-8 rounded-2xl shadow-2xl max-w-sm w-full">
+                    <div className="flex justify-center mb-6">
+                        <div className="bg-accent/10 p-4 rounded-xl text-accent border border-accent/20 glow-gold">
+                            <Lock size={32} />
+                        </div>
+                    </div>
+                    <h2 className="text-2xl font-serif text-accent text-center mb-2">Inventory Security</h2>
+                    <p className="text-white/40 text-[10px] uppercase font-black tracking-[0.2em] text-center mb-8">
+                        Management Access Required
+                    </p>
+                    
+                    <form onSubmit={handleLogin} className="space-y-4">
+                        <div>
+                            <div className="bg-black/30 border border-white/10 rounded-lg flex items-center px-4 py-3 focus-within:border-accent/40 transition-colors">
+                                <User size={16} className="text-white/40 mr-3" />
+                                <input
+                                    type="text"
+                                    placeholder="Username"
+                                    value={authInput.username}
+                                    onChange={(e) => setAuthInput({...authInput, username: e.target.value})}
+                                    className="bg-transparent border-none text-white focus:outline-none w-full placeholder:text-white/20"
+                                    autoComplete="off"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <div className="bg-black/30 border border-white/10 rounded-lg flex items-center px-4 py-3 focus-within:border-accent/40 transition-colors">
+                                <Lock size={16} className="text-white/40 mr-3" />
+                                <input
+                                    type="password"
+                                    placeholder="Password"
+                                    value={authInput.password}
+                                    onChange={(e) => setAuthInput({...authInput, password: e.target.value})}
+                                    className="bg-transparent border-none text-white focus:outline-none w-full placeholder:text-white/20"
+                                />
+                            </div>
+                        </div>
+                        
+                        {authError && (
+                            <p className="text-red-400 text-xs text-center font-black uppercase tracking-widest mt-2 animate-pulse">
+                                Access Denied
+                            </p>
+                        )}
+                        
+                        <button
+                            type="submit"
+                            className="w-full bg-accent hover:bg-accent/90 text-black font-black uppercase tracking-[0.2em] text-[10px] py-4 rounded-lg mt-6 shadow-[0_0_15px_rgba(212,175,55,0.3)] transition-all"
+                        >
+                            Unlock Database
+                        </button>
+                    </form>
+                </div>
+            </div>
+        );
     }
 
     return (
