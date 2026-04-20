@@ -13,7 +13,7 @@ if (isPg) {
     // Create new schemas
     const initPg = async () => {
         try {
-            await pgPool.query(`CREATE TABLE IF NOT EXISTS menu_items (id SERIAL PRIMARY KEY, name TEXT NOT NULL, price REAL NOT NULL, category TEXT NOT NULL, image TEXT, description TEXT, "isAvailable" BOOLEAN DEFAULT true, "unavailableUntil" TIMESTAMP, "isPopular" BOOLEAN DEFAULT false, "isRecommended" BOOLEAN DEFAULT false, "isBestSeller" BOOLEAN DEFAULT false, "isNew" BOOLEAN DEFAULT false);`);
+            await pgPool.query(`CREATE TABLE IF NOT EXISTS menu_items (id SERIAL PRIMARY KEY, name TEXT NOT NULL, price REAL NOT NULL, category TEXT NOT NULL, image TEXT, description TEXT, "isAvailable" BOOLEAN DEFAULT true, "unavailableUntil" TIMESTAMP, "isPopular" BOOLEAN DEFAULT false, "isRecommended" BOOLEAN DEFAULT false, "isBestSeller" BOOLEAN DEFAULT false, "isNew" BOOLEAN DEFAULT false, "availableFrom" TEXT, "availableTo" TEXT);`);
             await pgPool.query(`CREATE TABLE IF NOT EXISTS table_sessions (id SERIAL PRIMARY KEY, "tableId" TEXT NOT NULL, items TEXT NOT NULL, "finalTotal" REAL NOT NULL, "subtotal" REAL DEFAULT 0, "serviceCharge" REAL DEFAULT 0, status TEXT DEFAULT 'active', "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
             await pgPool.query(`ALTER TABLE table_sessions RENAME COLUMN net TO subtotal;`).catch(() => {});
             await pgPool.query(`ALTER TABLE table_sessions RENAME COLUMN vat TO serviceCharge;`).catch(() => {});
@@ -22,6 +22,8 @@ if (isPg) {
             await pgPool.query(`ALTER TABLE table_sessions ADD COLUMN IF NOT EXISTS "customerName" TEXT;`).catch(() => {});
             await pgPool.query(`ALTER TABLE table_sessions ADD COLUMN IF NOT EXISTS "phone" TEXT;`).catch(() => {});
             await pgPool.query(`ALTER TABLE table_sessions ADD COLUMN IF NOT EXISTS "sessionId" TEXT;`).catch(() => {});
+            await pgPool.query(`ALTER TABLE table_sessions ADD COLUMN IF NOT EXISTS "prepTime" INTEGER;`).catch(() => {});
+            await pgPool.query(`ALTER TABLE table_sessions ADD COLUMN IF NOT EXISTS "prepStartedAt" TIMESTAMP;`).catch(() => {});
             
             await pgPool.query(`CREATE TABLE IF NOT EXISTS orders (id SERIAL PRIMARY KEY, "tableId" TEXT NOT NULL, items TEXT NOT NULL, "finalTotal" REAL NOT NULL, "subtotal" REAL DEFAULT 0, "serviceCharge" REAL DEFAULT 0, status TEXT DEFAULT 'new', "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
             await pgPool.query(`ALTER TABLE orders RENAME COLUMN net TO subtotal;`).catch(() => {});
@@ -31,6 +33,8 @@ if (isPg) {
             await pgPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS "customerName" TEXT;`).catch(() => {});
             await pgPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS "phone" TEXT;`).catch(() => {});
             await pgPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS "sessionId" TEXT;`).catch(() => {});
+            await pgPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS "prepTime" INTEGER;`).catch(() => {});
+            await pgPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS "prepStartedAt" TIMESTAMP;`).catch(() => {});
             await pgPool.query(`CREATE TABLE IF NOT EXISTS table_status ("tableId" TEXT PRIMARY KEY, status TEXT NOT NULL, "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
             await pgPool.query(`CREATE TABLE IF NOT EXISTS active_sessions ("tableId" TEXT PRIMARY KEY, "sessionId" TEXT NOT NULL, "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
             await pgPool.query(`CREATE TABLE IF NOT EXISTS qr_sessions (id SERIAL PRIMARY KEY, seating_id TEXT NOT NULL, session_token TEXT NOT NULL, status TEXT DEFAULT 'ACTIVE', start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, end_time TIMESTAMP);`);
@@ -40,12 +44,15 @@ if (isPg) {
             await pgPool.query(`CREATE TABLE IF NOT EXISTS assistance_requests (id SERIAL PRIMARY KEY, "tableId" TEXT NOT NULL, status TEXT DEFAULT 'pending', "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
             await pgPool.query(`CREATE TABLE IF NOT EXISTS employees (id SERIAL PRIMARY KEY, name TEXT NOT NULL, phone TEXT NOT NULL, "faceEmbedding" TEXT, "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
             await pgPool.query(`CREATE TABLE IF NOT EXISTS attendance (id SERIAL PRIMARY KEY, "employeeId" INTEGER NOT NULL, date DATE NOT NULL, "checkInTime" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, verified BOOLEAN DEFAULT false, UNIQUE(date, "employeeId"));`);
+            await pgPool.query(`CREATE TABLE IF NOT EXISTS unavailability_schedules (id SERIAL PRIMARY KEY, "itemIds" TEXT, category TEXT, type TEXT NOT NULL, "startDate" DATE, "startTime" TEXT NOT NULL, "endTime" TEXT NOT NULL, "daysOfWeek" TEXT, "isEnabled" BOOLEAN DEFAULT true, label TEXT, "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
             await pgPool.query(`ALTER TABLE employees ADD COLUMN "faceEmbedding" TEXT;`).catch(() => {});
-+            // Add badge columns to menu_items if they don't exist
-+            await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "isPopular" BOOLEAN DEFAULT false;`).catch(() => {});
-+            await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "isRecommended" BOOLEAN DEFAULT false;`).catch(() => {});
-+            await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "isBestSeller" BOOLEAN DEFAULT false;`).catch(() => {});
-+            await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "isNew" BOOLEAN DEFAULT false;`).catch(() => {});
+            // Add badge columns to menu_items if they don't exist
+            await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "isPopular" BOOLEAN DEFAULT false;`).catch(() => {});
+            await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "isRecommended" BOOLEAN DEFAULT false;`).catch(() => {});
+            await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "isBestSeller" BOOLEAN DEFAULT false;`).catch(() => {});
+            await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "isNew" BOOLEAN DEFAULT false;`).catch(() => {});
+            await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "availableFrom" TEXT;`).catch(() => {});
+            await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "availableTo" TEXT;`).catch(() => {});
         } catch (err) { console.error('Error creating PG tables', err); }
     };
     initPg();
@@ -56,7 +63,7 @@ if (isPg) {
         if (err) console.error('Error opening local SQLite database', err.message);
         else {
             console.log('Connected to the local SQLite database.');
-            db.run(`CREATE TABLE IF NOT EXISTS menu_items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, price REAL NOT NULL, category TEXT NOT NULL, image TEXT, description TEXT, isAvailable BOOLEAN DEFAULT 1, unavailableUntil DATETIME, isPopular BOOLEAN DEFAULT 0, isRecommended BOOLEAN DEFAULT 0, isBestSeller BOOLEAN DEFAULT 0, isNew BOOLEAN DEFAULT 0)`);
+            db.run(`CREATE TABLE IF NOT EXISTS menu_items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, price REAL NOT NULL, category TEXT NOT NULL, image TEXT, description TEXT, isAvailable BOOLEAN DEFAULT 1, unavailableUntil DATETIME, isPopular BOOLEAN DEFAULT 0, isRecommended BOOLEAN DEFAULT 0, isBestSeller BOOLEAN DEFAULT 0, isNew BOOLEAN DEFAULT 0, availableFrom TEXT, availableTo TEXT)`);
             db.run(`CREATE TABLE IF NOT EXISTS table_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, tableId TEXT NOT NULL, items TEXT NOT NULL, finalTotal REAL NOT NULL, subtotal REAL DEFAULT 0, serviceCharge REAL DEFAULT 0, status TEXT DEFAULT 'active', createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
             db.run(`ALTER TABLE table_sessions RENAME COLUMN net TO subtotal`, (err) => {});
             db.run(`ALTER TABLE table_sessions RENAME COLUMN vat TO serviceCharge`, (err) => {});
@@ -65,6 +72,8 @@ if (isPg) {
             db.run(`ALTER TABLE table_sessions ADD COLUMN customerName TEXT`, (err) => {});
             db.run(`ALTER TABLE table_sessions ADD COLUMN phone TEXT`, (err) => {});
             db.run(`ALTER TABLE table_sessions ADD COLUMN sessionId TEXT`, (err) => {});
+            db.run(`ALTER TABLE table_sessions ADD COLUMN prepTime INTEGER`, (err) => {});
+            db.run(`ALTER TABLE table_sessions ADD COLUMN prepStartedAt DATETIME`, (err) => {});
 
             db.run(`CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY AUTOINCREMENT, tableId TEXT NOT NULL, items TEXT NOT NULL, finalTotal REAL NOT NULL, subtotal REAL DEFAULT 0, serviceCharge REAL DEFAULT 0, status TEXT DEFAULT 'new', createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
             db.run(`ALTER TABLE orders RENAME COLUMN net TO subtotal`, (err) => {});
@@ -74,6 +83,8 @@ if (isPg) {
             db.run(`ALTER TABLE orders ADD COLUMN customerName TEXT`, (err) => {});
             db.run(`ALTER TABLE orders ADD COLUMN phone TEXT`, (err) => {});
             db.run(`ALTER TABLE orders ADD COLUMN sessionId TEXT`, (err) => {});
+            db.run(`ALTER TABLE orders ADD COLUMN prepTime INTEGER`, (err) => {});
+            db.run(`ALTER TABLE orders ADD COLUMN prepStartedAt DATETIME`, (err) => {});
             
             db.run(`CREATE TABLE IF NOT EXISTS table_status (tableId TEXT PRIMARY KEY, status TEXT NOT NULL, updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
             db.run(`CREATE TABLE IF NOT EXISTS active_sessions (tableId TEXT PRIMARY KEY, sessionId TEXT NOT NULL, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
@@ -84,12 +95,15 @@ if (isPg) {
             db.run(`CREATE TABLE IF NOT EXISTS assistance_requests (id INTEGER PRIMARY KEY AUTOINCREMENT, tableId TEXT NOT NULL, status TEXT DEFAULT 'pending', createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
             db.run(`CREATE TABLE IF NOT EXISTS employees (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, phone TEXT NOT NULL, faceEmbedding TEXT, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
             db.run(`CREATE TABLE IF NOT EXISTS attendance (id INTEGER PRIMARY KEY AUTOINCREMENT, employeeId INTEGER NOT NULL, date DATE NOT NULL, checkInTime DATETIME DEFAULT CURRENT_TIMESTAMP, verified BOOLEAN DEFAULT 0, UNIQUE(date, employeeId))`);
+            db.run(`CREATE TABLE IF NOT EXISTS unavailability_schedules (id INTEGER PRIMARY KEY AUTOINCREMENT, itemIds TEXT, category TEXT, type TEXT NOT NULL, startDate DATE, startTime TEXT NOT NULL, endTime TEXT NOT NULL, daysOfWeek TEXT, isEnabled BOOLEAN DEFAULT 1, label TEXT, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
             db.run(`ALTER TABLE employees ADD COLUMN faceEmbedding TEXT`, (err) => {});
-+            // Add badge columns to menu_items if they don't exist
-+            db.run(`ALTER TABLE menu_items ADD COLUMN isPopular BOOLEAN DEFAULT 0`, (err) => {});
-+            db.run(`ALTER TABLE menu_items ADD COLUMN isRecommended BOOLEAN DEFAULT 0`, (err) => {});
-+            db.run(`ALTER TABLE menu_items ADD COLUMN isBestSeller BOOLEAN DEFAULT 0`, (err) => {});
-+            db.run(`ALTER TABLE menu_items ADD COLUMN isNew BOOLEAN DEFAULT 0`, (err) => {});
+            // Add badge columns to menu_items if they don't exist
+            db.run(`ALTER TABLE menu_items ADD COLUMN isPopular BOOLEAN DEFAULT 0`, (err) => {});
+            db.run(`ALTER TABLE menu_items ADD COLUMN isRecommended BOOLEAN DEFAULT 0`, (err) => {});
+            db.run(`ALTER TABLE menu_items ADD COLUMN isBestSeller BOOLEAN DEFAULT 0`, (err) => {});
+            db.run(`ALTER TABLE menu_items ADD COLUMN isNew BOOLEAN DEFAULT 0`, (err) => {});
+            db.run(`ALTER TABLE menu_items ADD COLUMN availableFrom TEXT`, (err) => {});
+            db.run(`ALTER TABLE menu_items ADD COLUMN availableTo TEXT`, (err) => {});
         }
     });
 }
@@ -134,23 +148,28 @@ const getOrdersByStatus = async (statuses) => {
 };
 
 const addOrderToSession = async (orderData) => {
-    const { tableId, items, finalTotal, subtotal, serviceCharge, orderType, customerName, phone, sessionId } = orderData;
+    const { tableId, items, orderType, customerName, phone, sessionId } = orderData;
     const itemsJson = JSON.stringify(items);
     const ot = orderType || 'dine-in';
     const cName = customerName || null;
     const pNum = phone || null;
     const sId = sessionId || null;
     
+    // Secure backend calculations
+    const calcSubtotal = items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    const calcServiceCharge = (ot === 'takeaway' || tableId === 'TAKEAWAY') ? 0 : calcSubtotal * 0.10;
+    const calcFinalTotal = calcSubtotal + calcServiceCharge;
+    
     // Always create a new session (shard) for each incoming order round 
     // This satisfies the requirement to "show the difference" in the admin dashboard
     if (isPg) {
         const sql = `INSERT INTO table_sessions ("tableId", items, "finalTotal", subtotal, "serviceCharge", status, "orderType", "customerName", "phone", "sessionId") VALUES (?, ?, ?, ?, ?, 'confirmed', ?, ?, ?, ?) RETURNING *`;
-        const res = await runQuery(sql, [tableId.toString(), itemsJson, finalTotal, subtotal, serviceCharge, ot, cName, pNum, sId]);
+        const res = await runQuery(sql, [tableId.toString(), itemsJson, calcFinalTotal, calcSubtotal, calcServiceCharge, ot, cName, pNum, sId]);
         const row = res.rows[0];
         return { ...row, items: typeof row.items === 'string' ? JSON.parse(row.items) : row.items };
     } else {
         const sql = `INSERT INTO table_sessions (tableId, items, finalTotal, subtotal, serviceCharge, status, orderType, customerName, phone, sessionId) VALUES (?, ?, ?, ?, ?, 'confirmed', ?, ?, ?, ?)`;
-        const res = await runQuery(sql, [tableId.toString(), itemsJson, finalTotal, subtotal, serviceCharge, ot, cName, pNum, sId]);
+        const res = await runQuery(sql, [tableId.toString(), itemsJson, calcFinalTotal, calcSubtotal, calcServiceCharge, ot, cName, pNum, sId]);
         const selectRes = await runQuery(`SELECT * FROM table_sessions WHERE id = ?`, [res.lastID]);
         const row = selectRes.rows[0];
         return { ...row, items: JSON.parse(row.items) };
@@ -158,21 +177,26 @@ const addOrderToSession = async (orderData) => {
 };
 
 const createOrder = async (orderData) => {
-    const { tableId, items, finalTotal, subtotal, serviceCharge, orderType, customerName, phone, sessionId } = orderData;
+    const { tableId, items, orderType, customerName, phone, sessionId } = orderData;
     const itemsJson = JSON.stringify(items);
     const ot = orderType || 'dine-in';
     const cName = customerName || null;
     const pNum = phone || null;
     const sId = sessionId || null;
     
+    // Secure backend calculations
+    const calcSubtotal = items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    const calcServiceCharge = (ot === 'takeaway' || tableId === 'TAKEAWAY') ? 0 : calcSubtotal * 0.10;
+    const calcFinalTotal = calcSubtotal + calcServiceCharge;
+
     if (isPg) {
         const sql = `INSERT INTO orders ("tableId", items, "finalTotal", subtotal, "serviceCharge", status, "orderType", "customerName", "phone", "sessionId") VALUES (?, ?, ?, ?, ?, 'new', ?, ?, ?, ?) RETURNING *`;
-        const res = await runQuery(sql, [tableId.toString(), itemsJson, finalTotal, subtotal, serviceCharge, ot, cName, pNum, sId]);
+        const res = await runQuery(sql, [tableId.toString(), itemsJson, calcFinalTotal, calcSubtotal, calcServiceCharge, ot, cName, pNum, sId]);
         const row = res.rows[0];
         return { ...row, items: typeof row.items === 'string' ? JSON.parse(row.items) : row.items };
     } else {
         const sql = `INSERT INTO orders (tableId, items, finalTotal, subtotal, serviceCharge, status, orderType, customerName, phone, sessionId) VALUES (?, ?, ?, ?, ?, 'new', ?, ?, ?, ?)`;
-        const res = await runQuery(sql, [tableId.toString(), itemsJson, finalTotal, subtotal, serviceCharge, ot, cName, pNum, sId]);
+        const res = await runQuery(sql, [tableId.toString(), itemsJson, calcFinalTotal, calcSubtotal, calcServiceCharge, ot, cName, pNum, sId]);
         const selectRes = await runQuery(`SELECT * FROM orders WHERE id = ?`, [res.lastID]);
         const row = selectRes.rows[0];
         return { ...row, items: JSON.parse(row.items) };
@@ -395,21 +419,39 @@ const getAttendanceToday = async () => {
 // Menu Management
 const getMenuItems = async () => {
     const res = await runQuery(`SELECT * FROM menu_items ORDER BY id ASC`);
-    return res.rows;
+    const nowStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+    
+    return res.rows.map(item => {
+        let isTimedOut = false;
+        if (item.availableFrom && item.availableTo) {
+            if (item.availableFrom <= item.availableTo) {
+                // Same day logic: 09:00 - 17:00
+                isTimedOut = nowStr < item.availableFrom || nowStr > item.availableTo;
+            } else {
+                // Overnight logic: 22:00 - 05:00
+                isTimedOut = nowStr < item.availableFrom && nowStr > item.availableTo;
+            }
+        }
+        return { 
+            ...item, 
+            isAvailable: item.isAvailable && !isTimedOut,
+            isTemporarilyUnavailable: isTimedOut 
+        };
+    });
 };
 
 const addMenuItem = async (item) => {
     const { name, price, category, image, description } = item;
     if (isPg) {
         const res = await runQuery(
-            `INSERT INTO menu_items (name, price, category, image, description, "isPopular", "isRecommended", "isBestSeller", "isNew") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`,
-            [name, price, category, image, description, item.isPopular || false, item.isRecommended || false, item.isBestSeller || false, item.isNew || false]
+            `INSERT INTO menu_items (name, price, category, image, description, "isPopular", "isRecommended", "isBestSeller", "isNew", "availableFrom", "availableTo") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`,
+            [name, price, category, image, description, item.isPopular || false, item.isRecommended || false, item.isBestSeller || false, item.isNew || false, item.availableFrom || null, item.availableTo || null]
         );
         return res.rows[0];
     } else {
         const res = await runQuery(
-            `INSERT INTO menu_items (name, price, category, image, description, isPopular, isRecommended, isBestSeller, isNew) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [name, price, category, image, description, item.isPopular ? 1 : 0, item.isRecommended ? 1 : 0, item.isBestSeller ? 1 : 0, item.isNew ? 1 : 0]
+            `INSERT INTO menu_items (name, price, category, image, description, isPopular, isRecommended, isBestSeller, isNew, availableFrom, availableTo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [name, price, category, image, description, item.isPopular ? 1 : 0, item.isRecommended ? 1 : 0, item.isBestSeller ? 1 : 0, item.isNew ? 1 : 0, item.availableFrom || null, item.availableTo || null]
         );
         const selectRes = await runQuery(`SELECT * FROM menu_items WHERE id = ?`, [res.lastID]);
         return selectRes.rows[0];
@@ -420,13 +462,13 @@ const updateMenuItem = async (id, item) => {
     const { name, price, category, image, description } = item;
     if (isPg) {
         await runQuery(
-            `UPDATE menu_items SET name = ?, price = ?, category = ?, image = ?, description = ?, "isPopular" = ?, "isRecommended" = ?, "isBestSeller" = ?, "isNew" = ? WHERE id = ?`,
-            [name, price, category, image, description, item.isPopular || false, item.isRecommended || false, item.isBestSeller || false, item.isNew || false, id]
+            `UPDATE menu_items SET name = ?, price = ?, category = ?, image = ?, description = ?, "isPopular" = ?, "isRecommended" = ?, "isBestSeller" = ?, "isNew" = ?, "availableFrom" = ?, "availableTo" = ? WHERE id = ?`,
+            [name, price, category, image, description, item.isPopular || false, item.isRecommended || false, item.isBestSeller || false, item.isNew || false, item.availableFrom || null, item.availableTo || null, id]
         );
     } else {
         await runQuery(
-            `UPDATE menu_items SET name = ?, price = ?, category = ?, image = ?, description = ?, isPopular = ?, isRecommended = ?, isBestSeller = ?, isNew = ? WHERE id = ?`,
-            [name, price, category, image, description, item.isPopular ? 1 : 0, item.isRecommended ? 1 : 0, item.isBestSeller ? 1 : 0, item.isNew ? 1 : 0, id]
+            `UPDATE menu_items SET name = ?, price = ?, category = ?, image = ?, description = ?, isPopular = ?, isRecommended = ?, isBestSeller = ?, isNew = ?, availableFrom = ?, availableTo = ? WHERE id = ?`,
+            [name, price, category, image, description, item.isPopular ? 1 : 0, item.isRecommended ? 1 : 0, item.isBestSeller ? 1 : 0, item.isNew ? 1 : 0, item.availableFrom || null, item.availableTo || null, id]
         );
     }
     const res = await runQuery(`SELECT * FROM menu_items WHERE id = ?`, [id]);
@@ -453,8 +495,8 @@ const seedMenu = async (menuData) => {
         if (!existingItem) {
             await addMenuItem(item);
             addedCount++;
-        } else if (item.image && existingItem.image !== item.image) {
-            await updateMenuItem(existingItem.id, { ...existingItem, image: item.image });
+        } else if (existingItem.price !== item.price || (item.image && existingItem.image !== item.image)) {
+            await updateMenuItem(existingItem.id, { ...existingItem, price: item.price, image: item.image });
             updatedCount++;
         }
     }
@@ -478,6 +520,19 @@ const updateMenuItemStatus = async (id, isAvailable, until = null) => {
     });
     const res = await runQuery(`SELECT * FROM menu_items WHERE id = ?`, [id]);
     return res.rows[0];
+};
+
+const updateCategoryItemStatus = async (category, isAvailable, until = null) => {
+    await runQuery(
+        `UPDATE menu_items SET "isAvailable" = ?, "unavailableUntil" = ? WHERE category = ?`, 
+        [isAvailable ? (isPg ? true : 1) : (isPg ? false : 0), until, category]
+    ).catch(async () => {
+        await runQuery(
+            `UPDATE menu_items SET isAvailable = ?, unavailableUntil = ? WHERE category = ?`, 
+            [isAvailable ? (isPg ? true : 1) : (isPg ? false : 0), until, category]
+        );
+    });
+    return true;
 };
 
 const checkMenuAvailabilityReset = async () => {
@@ -568,13 +623,146 @@ const getOrdersByTable = async (tableId, statuses) => {
     return res.rows.map(row => ({ ...row, items: typeof row.items === 'string' ? JSON.parse(row.items) : row.items }));
 };
 
+const updatePrepTime = async (id, minutes, type = 'session') => {
+    const table = type === 'session' ? 'table_sessions' : 'orders';
+    const now = new Date().toISOString();
+    const colPrep = isPg ? '"prepTime"' : 'prepTime';
+    const colStarted = isPg ? '"prepStartedAt"' : 'prepStartedAt';
+    
+    await runQuery(`UPDATE ${table} SET ${colPrep} = ?, ${colStarted} = ? WHERE id = ?`, [minutes, now, id]);
+    const res = await runQuery(`SELECT * FROM ${table} WHERE id = ?`, [id]);
+    const row = res.rows[0];
+    if (!row) throw new Error(`${type} with id ${id} not found`);
+    
+    let items = row.items;
+    if (typeof items === 'string') {
+        try { items = JSON.parse(items); } catch(e) { items = []; }
+    }
+    return { ...row, items };
+};
+
+const getUnavailabilitySchedules = async () => {
+    const res = await runQuery(`SELECT * FROM unavailability_schedules ORDER BY id DESC`);
+    return res.rows;
+};
+
+const createUnavailabilitySchedule = async (data) => {
+    const { itemIds, category, type, startDate, startTime, endTime, daysOfWeek, label } = data;
+    const itemIdsStr = itemIds ? JSON.stringify(itemIds) : null;
+    
+    if (isPg) {
+        const sql = `INSERT INTO unavailability_schedules ("itemIds", category, type, "startDate", "startTime", "endTime", "daysOfWeek", label) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`;
+        const res = await runQuery(sql, [itemIdsStr, category || null, type, startDate || null, startTime, endTime, daysOfWeek || null, label || null]);
+        return res.rows[0];
+    } else {
+        const sql = `INSERT INTO unavailability_schedules (itemIds, category, type, startDate, startTime, endTime, daysOfWeek, label) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+        const res = await runQuery(sql, [itemIdsStr, category || null, type, startDate || null, startTime, endTime, daysOfWeek || null, label || null]);
+        const sel = await runQuery(`SELECT * FROM unavailability_schedules WHERE id = ?`, [res.lastID]);
+        return sel.rows[0];
+    }
+};
+
+const updateUnavailabilitySchedule = async (id, data) => {
+    const { itemIds, category, type, startDate, startTime, endTime, daysOfWeek, isEnabled, label } = data;
+    const itemIdsStr = itemIds ? JSON.stringify(itemIds) : null;
+    
+    const colItemIds = isPg ? '"itemIds"' : 'itemIds';
+    const colStartDate = isPg ? '"startDate"' : 'startDate';
+    const colStartTime = isPg ? '"startTime"' : 'startTime';
+    const colEndTime = isPg ? '"endTime"' : 'endTime';
+    const colDays = isPg ? '"daysOfWeek"' : 'daysOfWeek';
+    const colEnabled = isPg ? '"isEnabled"' : 'isEnabled';
+
+    const sql = `UPDATE unavailability_schedules SET ${colItemIds} = ?, category = ?, type = ?, ${colStartDate} = ?, ${colStartTime} = ?, ${colEndTime} = ?, ${colDays} = ?, ${colEnabled} = ?, label = ? WHERE id = ?`;
+    await runQuery(sql, [itemIdsStr, category || null, type, startDate || null, startTime, endTime, daysOfWeek || null, isEnabled ? (isPg ? true : 1) : (isPg ? false : 0), label || null, id]);
+    
+    const res = await runQuery(`SELECT * FROM unavailability_schedules WHERE id = ?`, [id]);
+    return res.rows[0];
+};
+
+const deleteUnavailabilitySchedule = async (id) => {
+    await runQuery(`DELETE FROM unavailability_schedules WHERE id = ?`, [id]);
+    return { id };
+};
+
+const processSchedulesTask = async () => {
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const dayOfWeek = now.getDay().toString(); // 0 (Sun) to 6 (Sat)
+
+    const schedules = await getUnavailabilitySchedules();
+    const activeSchedules = schedules.filter(s => {
+        if (!s.isEnabled) return false;
+        
+        // 1. Check time range
+        let inTimeRange = false;
+        if (s.startTime <= s.endTime) {
+            inTimeRange = timeStr >= s.startTime && timeStr <= s.endTime;
+        } else {
+            // Overnight range
+            inTimeRange = timeStr >= s.startTime || timeStr <= s.endTime;
+        }
+        if (!inTimeRange) return false;
+
+        // 2. Check type specific conditions
+        if (s.type === 'one-time') {
+            const sDate = s.startDate instanceof Date ? s.startDate.toISOString().split('T')[0] : s.startDate;
+            return sDate === todayStr;
+        }
+        if (s.type === 'weekly') {
+            const days = s.daysOfWeek ? s.daysOfWeek.split(',') : [];
+            return days.includes(dayOfWeek);
+        }
+        return s.type === 'daily'; // Daily only needs time range
+    });
+
+    const itemsToDisable = new Map(); // id -> endTime
+    for (const s of activeSchedules) {
+        if (s.category) {
+            const catItems = await runQuery(`SELECT id FROM menu_items WHERE category = ?`, [s.category]);
+            catItems.rows.forEach(r => itemsToDisable.set(r.id, s.endTime));
+        }
+        if (s.itemIds) {
+            try {
+                const ids = JSON.parse(s.itemIds);
+                ids.forEach(id => itemsToDisable.set(id, s.endTime));
+            } catch (e) {}
+        }
+    }
+
+    // Update menu_items availability
+    const allItems = await getMenuItems();
+    let changeCount = 0;
+    for (const item of allItems) {
+        const scheduleEndTime = itemsToDisable.get(item.id);
+        const shouldBeUnavailable = !!scheduleEndTime;
+        const currentlyAvailable = isPg ? (item.isAvailable === true) : (item.isAvailable === 1);
+        
+        if (shouldBeUnavailable && currentlyAvailable) {
+            // Calculate "until" timestamp for today
+            const untilDate = new Date();
+            const [h, m] = scheduleEndTime.split(':');
+            untilDate.setHours(parseInt(h), parseInt(m), 0, 0);
+            await updateMenuItemStatus(item.id, false, untilDate.toISOString());
+            changeCount++;
+        } else if (!shouldBeUnavailable && !currentlyAvailable && !item.unavailableUntil) {
+            // Only auto-enable if it's NOT manually locked (manual locks set unavailableUntil)
+            await updateMenuItemStatus(item.id, true);
+            changeCount++;
+        }
+    }
+    return changeCount;
+};
+
 module.exports = {
     db, pgPool, runQuery, isPg, getOrdersByStatus, createOrder, addOrderToSession, updateOrderStatus,
     deleteOrder, clearTableOrders, getAnalyticsDaily, getItemAnalytics,
     getAssistanceRequests, createAssistanceRequest, updateAssistanceStatus, deleteAssistanceRequest,
     getEmployees, createEmployee, updateEmployee, deleteEmployee, markAttendance, getAttendanceToday,
     getMenuItems, addMenuItem, updateMenuItem, deleteMenuItem, seedMenu,
-    updateMenuItemStatus, checkMenuAvailabilityReset, getSessionsByStatus, updateSessionStatus,
+    updateMenuItemStatus, checkMenuAvailabilityReset, getSessionsByStatus, updateSessionStatus, updateCategoryItemStatus,
     getTableStatuses, updateTableStatus, getSessionsByTable, getOrdersByTable,
-    allocateSession, getActiveSession, clearSession
+    allocateSession, getActiveSession, clearSession, updatePrepTime,
+    getUnavailabilitySchedules, createUnavailabilitySchedule, updateUnavailabilitySchedule, deleteUnavailabilitySchedule, processSchedulesTask
 };

@@ -249,6 +249,38 @@ export default function TakeawayMenu() {
                                     </div>
                                 </div>
                             ))}
+
+                            <div className="flex items-center justify-between mt-2 mb-2 bg-blue-50/50 p-4 rounded-xl border border-blue-100 shadow-sm animate-fade-in">
+                                <div className="flex flex-col">
+                                    <h4 className="font-bold text-[#0B3A2E] text-sm flex items-center gap-2">
+                                        <span className="text-lg">💧</span> Need Water?
+                                    </h4>
+                                    <p className="text-[10px] text-[#6D5D4B] font-bold opacity-60 uppercase tracking-widest pl-7 mt-0.5">Chilled Natural Water</p>
+                                </div>
+                                <div className="flex items-center gap-3 bg-white rounded-full p-1 shadow-sm border border-black/5">
+                                    <button 
+                                        onClick={() => updateQuantity('dr3', -1)}
+                                        disabled={!cart.find(i => i.id === 'dr3')}
+                                        className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${cart.find(i => i.id === 'dr3') ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-400'}`}
+                                    >
+                                        <Minus size={14} strokeWidth={2} />
+                                    </button>
+                                    <span className="font-bold text-[#0B3A2E] text-xs min-w-[14px] text-center tabular-nums">{cart.find(i => i.id === 'dr3')?.qty || 0}</span>
+                                    <button 
+                                        onClick={() => {
+                                            const waterItem = menu.find(i => i.id === 'dr3') || { id: 'dr3', name: 'WATER BOTTLE', price: 1.00, category: 'Drinks' };
+                                            if (!cart.find(i => i.id === 'dr3')) {
+                                                handleAddToCart(waterItem);
+                                            } else {
+                                                updateQuantity('dr3', 1);
+                                            }
+                                        }}
+                                        className="w-7 h-7 bg-blue-500 text-white rounded-full flex items-center justify-center shadow-md active:scale-95 transition-all"
+                                    >
+                                        <Plus size={14} strokeWidth={2} />
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                         <div className="p-6 bg-[#F6EFE6] border-t border-gray-100 rounded-t-3xl -mt-4 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
                             <div className="flex justify-between items-center mb-4">

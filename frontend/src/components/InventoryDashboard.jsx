@@ -93,23 +93,23 @@ export default function InventoryDashboard() {
     };
 
     if (loading) {
-        return <div className="text-center py-12 text-gray-500">Loading comprehensive analytics...</div>;
+        return <div className="text-center py-12 text-white/40 uppercase text-[10px] font-black tracking-widest animate-pulse">Loading comprehensive analytics...</div>;
     }
 
     return (
         <div className="space-y-6">
             {/* Calendar / Filter Controls */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-emerald-100 flex flex-wrap gap-4 items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Filter className="w-5 h-5 text-emerald-700" />
-                    <span className="font-bold text-gray-700 uppercase tracking-widest text-xs">Report Filters</span>
+            <div className="bg-[#111311] p-6 rounded-2xl shadow-sm border border-white/10 flex flex-wrap gap-6 items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <Filter className="w-5 h-5 text-accent glow-gold" />
+                    <span className="font-black text-white/60 uppercase tracking-[0.2em] text-xs">Report Filters</span>
                 </div>
-                <div className="flex bg-gray-100 p-1 rounded-lg">
+                <div className="flex bg-black/40 p-1.5 rounded-xl border border-white/5">
                     {['today', 'week', 'month', 'custom', 'all'].map(mode => (
                         <button 
                             key={mode} 
                             onClick={() => handlePresetChange(mode)}
-                            className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase tracking-widest transition-colors ${datePreset === mode ? 'bg-emerald-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
+                            className={`px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-[0.2em] transition-all ${datePreset === mode ? 'bg-accent text-black shadow-[0_0_15px_rgba(255,215,0,0.4)] glow-gold' : 'text-white/40 hover:text-white'}`}
                         >
                             {mode}
                         </button>
@@ -117,51 +117,51 @@ export default function InventoryDashboard() {
                 </div>
                 
                 {datePreset === 'custom' && (
-                    <div className="flex items-center gap-2 text-sm">
-                        <CalendarIcon className="w-4 h-4 text-gray-400" />
-                        <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="border border-gray-300 rounded px-2 py-1 text-xs" />
-                        <span className="text-gray-400">to</span>
-                        <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="border border-gray-300 rounded px-2 py-1 text-xs" />
+                    <div className="flex items-center gap-3 text-sm bg-black/40 p-2 rounded-xl border border-white/10">
+                        <CalendarIcon className="w-4 h-4 text-accent" />
+                        <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-transparent border-none text-white focus:outline-none focus:ring-0 rounded px-2 py-1 text-xs font-bold uppercase" />
+                        <span className="text-white/40 text-[10px] font-black uppercase tracking-widest">to</span>
+                        <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-transparent border-none text-white focus:outline-none focus:ring-0 rounded px-2 py-1 text-xs font-bold uppercase" />
                     </div>
                 )}
             </div>
 
             {/* A. Daily/Filtered Sales Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-white p-5 rounded-xl shadow-sm border border-emerald-100 flex items-center gap-4">
-                    <div className="bg-emerald-100 p-3 rounded-lg text-primary text-emerald-700">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="bg-[#111311] p-6 rounded-2xl border border-white/10 flex items-center gap-5 hover:border-accent/40 transition-colors">
+                    <div className="bg-emerald-500/10 p-4 rounded-xl text-emerald-400 border border-emerald-500/20">
                         <FileText size={24} />
                     </div>
                     <div>
-                        <p className="text-sm text-gray-500 font-semibold uppercase tracking-wider">Filtered Orders</p>
-                        <h3 className="text-2xl font-bold text-gray-900">{displayTotalOrders}</h3>
+                        <p className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] mb-1">Filtered Orders</p>
+                        <h3 className="text-3xl font-serif italic text-white font-bold">{displayTotalOrders}</h3>
                     </div>
                 </div>
-                <div className="bg-white p-5 rounded-xl shadow-sm border border-emerald-100 flex items-center gap-4">
-                    <div className="bg-emerald-100 p-3 rounded-lg text-primary text-emerald-700">
+                <div className="bg-[#111311] p-6 rounded-2xl border border-white/10 flex items-center gap-5 hover:border-accent/40 transition-colors">
+                    <div className="bg-accent/10 p-4 rounded-xl text-accent border border-accent/20 glow-gold">
                         <PoundSterling size={24} />
                     </div>
                     <div>
-                        <p className="text-sm text-gray-500 font-semibold uppercase tracking-wider">Filtered Revenue</p>
-                        <h3 className="text-2xl font-bold text-gray-900">£{displayRevenue.toFixed(2)}</h3>
+                        <p className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] mb-1">Filtered Revenue</p>
+                        <h3 className="text-3xl font-serif italic text-white font-bold tracking-tighter">£{displayRevenue.toFixed(2)}</h3>
                     </div>
                 </div>
-                <div className="bg-white p-5 rounded-xl shadow-sm border border-emerald-100 flex items-center gap-4">
-                    <div className="bg-emerald-100 p-3 rounded-lg text-primary text-emerald-700">
+                <div className="bg-[#111311] p-6 rounded-2xl border border-white/10 flex items-center gap-5 hover:border-accent/40 transition-colors">
+                    <div className="bg-blue-500/10 p-4 rounded-xl text-blue-400 border border-blue-500/20">
                         <FileText size={24} />
                     </div>
                     <div>
-                        <p className="text-sm text-gray-500 font-semibold uppercase tracking-wider">Service Charge</p>
-                        <h3 className="text-2xl font-bold text-gray-900">£{displayServiceCharge.toFixed(2)}</h3>
+                        <p className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] mb-1">Service Charge</p>
+                        <h3 className="text-3xl font-serif italic text-white font-bold tracking-tighter">£{displayServiceCharge.toFixed(2)}</h3>
                     </div>
                 </div>
-                <div className="bg-white p-5 rounded-xl shadow-sm border border-emerald-100 flex items-center gap-4">
-                    <div className="bg-emerald-100 p-3 rounded-lg text-primary text-emerald-700">
+                <div className="bg-[#111311] p-6 rounded-2xl border border-white/10 flex items-center gap-5 hover:border-accent/40 transition-colors">
+                    <div className="bg-orange-500/10 p-4 rounded-xl text-orange-400 border border-orange-500/20">
                         <Package size={24} />
                     </div>
                     <div>
-                        <p className="text-sm text-gray-500 font-semibold uppercase tracking-wider">All-time Items</p>
-                        <h3 className="text-xl font-bold text-gray-900">
+                        <p className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] mb-1">All-time Items</p>
+                        <h3 className="text-2xl font-serif italic text-white font-bold tracking-tighter">
                             {itemAnalytics.reduce((sum, item) => sum + item.quantitySold, 0)} Sold
                         </h3>
                     </div>
@@ -169,27 +169,28 @@ export default function InventoryDashboard() {
             </div>
 
             {/* B. Graphical Analytics (Recharts) */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
-                    <TrendingUp size={18} className="text-emerald-700"/> Revenue & Order Analytics Graph ({datePreset.toUpperCase()})
+            <div className="bg-[#111311] border border-white/10 rounded-2xl p-8 shadow-2xl">
+                <h3 className="text-sm font-black text-white/60 mb-8 uppercase tracking-[0.3em] flex items-center gap-3">
+                    <TrendingUp size={18} className="text-accent glow-gold"/> Revenue Analytics Graph ({datePreset.toUpperCase()})
                 </h3>
                 {generatedChartData.length === 0 ? (
-                    <div className="h-64 flex items-center justify-center text-gray-400">No data available for this range.</div>
+                    <div className="h-64 flex items-center justify-center text-white/20 font-serif italic">No data available for this range.</div>
                 ) : (
                     <div className="h-72 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={generatedChartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} dy={10} />
-                                <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} tickFormatter={v => `£${v}`} />
-                                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff" strokeOpacity={0.05} />
+                                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#ffffff', opacity: 0.4 }} dy={10} />
+                                <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#ffffff', opacity: 0.4 }} tickFormatter={v => `£${v}`} />
+                                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#ffffff', opacity: 0.4 }} />
                                 <Tooltip 
-                                    cursor={{fill: '#F3F4F6'}} 
-                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                    cursor={{fill: '#ffffff', opacity: 0.05}} 
+                                    contentStyle={{ borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', backgroundColor: '#0c0d0c', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', color: '#fff' }}
+                                    itemStyle={{ color: '#FFD700' }}
                                 />
-                                <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                                <Bar yAxisId="left" dataKey="revenue" name="Revenue (£)" fill="#047857" radius={[4, 4, 0, 0]} barSize={40} />
-                                <Line yAxisId="right" type="monotone" dataKey="orders" name="Orders Count" stroke="#D97706" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                                <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px' }} />
+                                <Bar yAxisId="left" dataKey="revenue" name="Revenue (£)" fill="#0F3A2F" stroke="#10B981" strokeWidth={1} radius={[4, 4, 0, 0]} barSize={40} />
+                                <Line yAxisId="right" type="monotone" dataKey="orders" name="Orders Count" stroke="#FFD700" strokeWidth={3} dot={{ r: 4, fill: '#0c0d0c', stroke: '#FFD700' }} activeDot={{ r: 6, fill: '#FFD700' }} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
@@ -198,44 +199,44 @@ export default function InventoryDashboard() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* C. Sales List (Detailed Orders Filtered) */}
-                <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-[400px]">
-                    <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-xl">
-                        <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                            <Layers size={18} className="text-emerald-700"/> Filtered Sales List
+                <div className="lg:col-span-2 bg-[#111311] rounded-2xl border border-white/10 flex flex-col h-[400px] overflow-hidden">
+                    <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
+                        <h3 className="text-[12px] font-black text-white/60 uppercase tracking-[0.2em] flex items-center gap-3">
+                            <Layers size={18} className="text-accent glow-gold"/> Filtered Sales List
                         </h3>
                     </div>
-                    <div className="flex-1 overflow-x-auto p-4">
+                    <div className="flex-1 overflow-x-auto p-0">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="text-xs uppercase text-gray-500 border-b border-gray-200">
-                                    <th className="pb-2 font-semibold font-mono">Order ID</th>
-                                    <th className="pb-2 font-semibold">Table</th>
-                                    <th className="pb-2 font-semibold w-1/3">Items</th>
-                                    <th className="pb-2 font-semibold">Subtotal</th>
-                                    <th className="pb-2 font-semibold">Srv. Chg</th>
-                                    <th className="pb-2 font-semibold">Total</th>
-                                    <th className="pb-2 font-semibold text-right">Time</th>
+                                <tr className="text-[10px] uppercase font-bold text-white/20 border-b border-white/5 bg-black/20">
+                                    <th className="px-6 py-4 tracking-[0.2em]">Order ID</th>
+                                    <th className="px-6 py-4 tracking-[0.2em]">Table</th>
+                                    <th className="px-6 py-4 tracking-[0.2em] w-1/3">Items</th>
+                                    <th className="px-6 py-4 tracking-[0.2em]">Subtotal</th>
+                                    <th className="px-6 py-4 tracking-[0.2em]">Srv. Chg</th>
+                                    <th className="px-6 py-4 tracking-[0.2em]">Total</th>
+                                    <th className="px-6 py-4 tracking-[0.2em] text-right">Time</th>
                                 </tr>
                             </thead>
                             <tbody className="text-sm">
                                 {filteredSalesList.map(order => (
-                                    <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50">
-                                        <td className="py-3 font-mono text-gray-600">#{order.id}</td>
-                                        <td className="py-3 font-semibold text-gray-800">{order.tableId}</td>
-                                        <td className="py-3 text-gray-600 text-xs">
+                                    <tr key={order.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                                        <td className="px-6 py-4 font-mono text-white/40 text-xs">#{order.id}</td>
+                                        <td className="px-6 py-4 font-serif italic text-white">{order.tableId}</td>
+                                        <td className="px-6 py-4 text-white/40 text-[11px] uppercase tracking-wide">
                                             {order.items.map(i => `${i.qty}x ${i.name}`).join(', ')}
                                         </td>
-                                        <td className="py-3">£{order.subtotal.toFixed(2)}</td>
-                                        <td className="py-3 text-gray-500">£{order.serviceCharge.toFixed(2)}</td>
-                                        <td className="py-3 font-bold text-emerald-700">£{order.finalTotal.toFixed(2)}</td>
-                                        <td className="py-3 text-right text-gray-500 text-xs text-nowrap">
+                                        <td className="px-6 py-4 text-white/60">£{order.subtotal.toFixed(2)}</td>
+                                        <td className="px-6 py-4 text-white/40">£{order.serviceCharge.toFixed(2)}</td>
+                                        <td className="px-6 py-4 font-bold text-accent glow-gold">£{order.finalTotal.toFixed(2)}</td>
+                                        <td className="px-6 py-4 text-right text-white/40 text-[10px] font-black uppercase tracking-widest text-nowrap">
                                             {new Date(order.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                         </td>
                                     </tr>
                                 ))}
                                 {filteredSalesList.length === 0 && (
                                     <tr>
-                                        <td colSpan="7" className="text-center py-6 text-gray-400">No sales recorded in this timeframe.</td>
+                                        <td colSpan="7" className="text-center py-12 text-white/20 font-serif italic">No sales recorded in this timeframe.</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -246,51 +247,53 @@ export default function InventoryDashboard() {
                 {/* Right Side Column */}
                 <div className="space-y-6">
                     {/* D. End of Day Report Summary */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                        <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
-                            <Printer size={18} className="text-emerald-700"/> Print Actions
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-4">
-                            Generates a full comprehensive summary of the filtered performance for external reporting or filing.
-                        </p>
+                    <div className="bg-[#111311] rounded-2xl border border-white/10 p-6 flex flex-col justify-between">
+                        <div>
+                            <h3 className="text-[12px] font-black text-white/60 mb-4 pb-4 border-b border-white/5 uppercase tracking-[0.2em] flex items-center gap-3">
+                                <Printer size={18} className="text-accent glow-gold"/> Print Actions
+                            </h3>
+                            <p className="text-[10px] text-white/40 mb-6 uppercase tracking-widest leading-relaxed">
+                                Generates a full comprehensive summary of the filtered performance for external reporting or filing.
+                            </p>
+                        </div>
                         <button 
                             onClick={handlePrintEndOfDay}
-                            className="w-full bg-emerald-700 text-white font-semibold py-3 rounded-lg hover:bg-emerald-800 flex justify-center items-center gap-2 shadow-sm transition-colors"
+                            className="w-full bg-accent text-black font-black uppercase tracking-[0.3em] py-4 rounded-xl hover:bg-[#FFC300] flex justify-center items-center gap-3 shadow-[0_10px_20px_rgba(255,215,0,0.2)] transition-all glow-gold active:scale-95"
                         >
-                            <Printer size={18} /> Generate Z-Report
+                            <Printer size={16} /> Generate Z-Report
                         </button>
                     </div>
 
                     {/* E. Item-wise Sales Tracking (All-time or today based on itemAnalytics) */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-[230px]">
-                         <div className="p-4 border-b border-gray-100 bg-gray-50 rounded-t-xl">
-                            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                                <Package size={18} className="text-emerald-700"/> Top Performers
+                    <div className="bg-[#111311] rounded-2xl border border-white/10 flex flex-col h-[230px] overflow-hidden">
+                         <div className="p-6 border-b border-white/5 bg-white/5">
+                            <h3 className="text-[12px] font-black text-white/60 uppercase tracking-[0.2em] flex items-center gap-3">
+                                <Package size={18} className="text-accent glow-gold"/> Top Performers
                             </h3>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-4">
+                        <div className="flex-1 overflow-y-auto p-0 no-scrollbar">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="text-xs uppercase text-gray-500 border-b border-gray-200">
-                                        <th className="pb-2 font-semibold">Item Name</th>
-                                        <th className="pb-2 font-semibold text-center">Qty</th>
-                                        <th className="pb-2 font-semibold text-right">Rev</th>
+                                    <tr className="text-[9px] uppercase font-black text-white/20 border-b border-white/5 bg-black/40">
+                                        <th className="px-6 py-3 tracking-widest">Item Name</th>
+                                        <th className="px-6 py-3 tracking-widest text-center">Qty</th>
+                                        <th className="px-6 py-3 tracking-widest text-right">Rev</th>
                                     </tr>
                                 </thead>
                                 <tbody className="text-sm">
                                     {itemAnalytics.map((item, idx) => (
-                                        <tr key={item.id} className="border-b border-gray-50 hover:bg-gray-50">
-                                            <td className="py-2.5 text-gray-800 font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]" title={item.itemName}>
-                                                {idx < 3 && <span className="text-amber-500 mr-1 text-xs">★</span>}
+                                        <tr key={item.id} className="border-b border-white/5 hover:bg-white/[0.02]">
+                                            <td className="px-6 py-3 text-white/80 font-serif italic whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]" title={item.itemName}>
+                                                {idx < 3 && <span className="text-accent mr-2 text-xs glow-gold">★</span>}
                                                 {item.itemName}
                                             </td>
-                                            <td className="py-2.5 text-center font-bold text-gray-600">{item.quantitySold}</td>
-                                            <td className="py-2.5 text-right font-bold text-emerald-700">£{item.totalRevenue.toFixed(2)}</td>
+                                            <td className="px-6 py-3 text-center font-bold text-white/40">{item.quantitySold}</td>
+                                            <td className="px-6 py-3 text-right font-bold text-accent glow-gold">£{item.totalRevenue.toFixed(2)}</td>
                                         </tr>
                                     ))}
                                     {itemAnalytics.length === 0 && (
                                         <tr>
-                                            <td colSpan="3" className="text-center py-6 text-gray-400">No items sold yet.</td>
+                                            <td colSpan="3" className="text-center py-6 text-white/20 font-serif italic">No items sold yet.</td>
                                         </tr>
                                     )}
                                 </tbody>

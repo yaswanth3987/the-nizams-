@@ -54,6 +54,21 @@ export default function CustomerMenu() {
     const [previewItem, setPreviewItem] = useState(null);
     const [specialRequest, setSpecialRequest] = useState('');
     const [spiceLevel, setSpiceLevel] = useState('');
+    const [lastScrollTime, setLastScrollTime] = useState(0);
+
+    const playWhoosh = () => {
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
+        audio.volume = 0.05; // Very subtle
+        audio.play().catch(() => {}); // Browser might block auto-play
+    };
+
+    const handleScroll = (e) => {
+        const now = Date.now();
+        if (now - lastScrollTime > 800) { // Throttle 800ms
+            playWhoosh();
+            setLastScrollTime(now);
+        }
+    };
 
     const KITCHEN_EFFECTS = ['steam', 'spice', 'flame'];
 
@@ -220,10 +235,12 @@ export default function CustomerMenu() {
     };
 
     const submitOrder = async () => {
-        if (cart.length === 0 || !selectedTable) return;
+        if (cart.length === 0 || !selectedTable || orderStatus === 'submitting') return;
         setOrderStatus('submitting');
         
         const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        const serviceCharge = 0;
+        const finalTotal = subtotal;
         
         const formattedTable = /^[A-Z]/.test(selectedTable) ? selectedTable : `T${selectedTable}`;
         const itemsList = cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty }));
@@ -252,14 +269,23 @@ export default function CustomerMenu() {
                 setCart([]);
                 setOrderStatus('success');
                 setIsCartOpen(false);
+                setSpecialRequest('');
+                setSpiceLevel('');
                 setTimeout(() => setOrderStatus(null), 3000);
-            } else if (res.status === 403) {
-                setSessionError(true);
-                setOrderStatus('error');
             } else {
+                const errData = await res.json();
+                if (res.status === 403) {
+                    setSessionError(true);
+                }
                 setOrderStatus('error');
+                console.error('Order submission failed:', errData);
+                setTimeout(() => setOrderStatus(null), 4000);
             }
-        } catch (err) { setOrderStatus('error'); }
+        } catch (err) { 
+            console.error('Network error during order submission:', err);
+            setOrderStatus('error'); 
+            setTimeout(() => setOrderStatus(null), 4000);
+        }
     };
 
     const handleTableSelect = (table) => {
@@ -281,7 +307,10 @@ export default function CustomerMenu() {
             
             // Map session statuses to customer-friendly labels
             const statusLabel = (s) => {
-                if (s === 'confirmed' || s === 'active') return 'Preparing';
+                if (s === 'confirmed') return 'Order Received';
+                if (s === 'active') return 'Cooking Started';
+                if (s === 'ready') return 'Ready to Serve';
+                if (s === 'served') return 'Served';
                 if (s === 'billed' || s === 'payment') return 'Ready to Pay';
                 if (s === 'completed') return 'Completed';
                 return 'Processing';
@@ -292,7 +321,7 @@ export default function CustomerMenu() {
                 .map(s => ({
                 id: s.id,
                 items: s.items,
-                total: s.finalTotal,
+                total: s.subtotal || s.finalTotal,
                 status: statusLabel(s.status),
                 createdAt: s.createdAt
             }));
@@ -309,7 +338,7 @@ export default function CustomerMenu() {
                 .map(o => ({
                 id: o.id,
                 items: o.items,
-                total: o.finalTotal,
+                total: o.subtotal || o.finalTotal,
                 status: rawStatusLabel(o.status),
                 createdAt: o.createdAt
             }));
@@ -350,8 +379,8 @@ export default function CustomerMenu() {
                 <p className="text-[#a8b8b2] text-sm mb-6">Please select your seating unit to view the menu.</p>
                 
                 <div className="text-left mb-2 text-[#d4af37] text-xs font-bold uppercase tracking-widest border-b border-[#d4af37]/30 pb-1">Tables</div>
-                <div className="grid grid-cols-5 gap-2 mb-4">
-                    {Array.from({length: 15}).map((_, i) => {
+                <div className="grid grid-cols-4 gap-2 mb-4">
+                    {Array.from({length: 4}).map((_, i) => {
                         const t = `T${String(i+1).padStart(2, '0')}`;
                         return (
                             <button key={t} onClick={() => handleTableSelect(t)} className="bg-[#111312] border border-[#d4af37]/30 text-[#d4af37] py-2 rounded font-bold text-sm hover:bg-[#d4af37]/10 transition-colors shadow-inner">{t}</button>
@@ -359,19 +388,19 @@ export default function CustomerMenu() {
                     })}
                 </div>
 
-                <div className="text-left mb-2 text-[#d4af37] text-xs font-bold uppercase tracking-widest border-b border-[#d4af37]/30 pb-1">Boxes (Private)</div>
-                <div className="grid grid-cols-5 gap-2 mb-4">
-                    {Array.from({length: 5}).map((_, i) => {
+                <div className="text-left mb-2 text-[#d4af37] text-xs font-bold uppercase tracking-widest border-b border-[#d4af37]/30 pb-1">Boxes</div>
+                <div className="grid grid-cols-6 gap-2 mb-4">
+                    {Array.from({length: 6}).map((_, i) => {
                         const b = `B${String(i+1).padStart(2, '0')}`;
                         return (
-                            <button key={b} onClick={() => handleTableSelect(b)} className="bg-[#111312] border border-[#d4af37]/30 text-amber-500 py-2 rounded font-bold text-sm hover:bg-[#d4af37]/10 transition-colors shadow-inner">{b}</button>
+                            <button key={b} onClick={() => handleTableSelect(b)} className="bg-[#111312] border border-[#d4af37]/30 text-emerald-300 py-2 rounded font-bold text-sm hover:bg-[#d4af37]/10 transition-colors shadow-inner">{b}</button>
                         );
                     })}
                 </div>
 
-                <div className="text-left mb-2 text-[#d4af37] text-xs font-bold uppercase tracking-widest border-b border-[#d4af37]/30 pb-1">Chokies</div>
-                <div className="grid grid-cols-4 gap-2">
-                    {Array.from({length: 4}).map((_, i) => {
+                <div className="text-left mb-2 text-[#d4af37] text-xs font-bold uppercase tracking-widest border-b border-[#d4af37]/30 pb-1">Chowkies</div>
+                <div className="grid grid-cols-5 gap-2">
+                    {Array.from({length: 13}).map((_, i) => {
                         const c = `C${String(i+1).padStart(2, '0')}`;
                         return (
                             <button key={c} onClick={() => handleTableSelect(c)} className="bg-[#111312] border border-[#d4af37]/30 text-emerald-500 py-2 rounded font-bold text-sm hover:bg-[#d4af37]/10 transition-colors shadow-inner">{c}</button>
@@ -661,7 +690,10 @@ export default function CustomerMenu() {
         const featuredItem = menu.find(i => i.name === 'Nizami Dum Biryani') || menu[0];
 
         return (
-            <div className="flex-1 overflow-y-auto pb-[90px] no-scrollbar scroll-smooth">
+            <div 
+                className="flex-1 overflow-y-auto pb-[90px] no-scrollbar scroll-smooth"
+                onScroll={handleScroll}
+            >
                 {/* Categories Bar */}
                 <div className="flex overflow-x-auto px-6 py-5 gap-8 no-scrollbar sticky top-0 bg-[#F9F6F0] z-[45] border-b border-[#0B3A2E]/5 shadow-sm">
                     {categories.map(cat => (
@@ -769,9 +801,14 @@ export default function CustomerMenu() {
                                                 className={`flex gap-4 p-4 rounded-[20px] transition-all duration-500 bg-white premium-shadow border border-black/5 hover:-translate-y-1 hover:shadow-[0_20px_40px_-15px_rgba(11,58,46,0.15)] ${inCart ? 'ring-2 ring-[#C29958] bg-gradient-to-br from-white to-[#F6EFE6]' : ''}`}
                                             >
                                                 <div 
-                                                    onClick={() => setPreviewItem(item)}
-                                                    className={`relative w-24 h-24 shrink-0 rounded-[18px] overflow-hidden bg-[#F6EFE6]/30 border border-black/5 ${activeEffect?.id === item.id ? 'animate-item-pop' : ''}`}
+                                                    onClick={() => !item.isTemporarilyUnavailable && setPreviewItem(item)}
+                                                    className={`relative w-24 h-24 shrink-0 rounded-[18px] overflow-hidden bg-[#F6EFE6]/30 border border-black/5 ${activeEffect?.id === item.id ? 'animate-item-pop' : ''} ${item.isTemporarilyUnavailable ? 'grayscale ring-1 ring-red-500/20' : ''}`}
                                                 >
+                                                    {item.isTemporarilyUnavailable && (
+                                                        <div className="absolute inset-0 bg-red-950/20 flex items-center justify-center z-10">
+                                                            <Clock size={20} className="text-white/80 drop-shadow-md" />
+                                                        </div>
+                                                    )}
                                                     {/* Kitchen Effects Overlays */}
                                                     {activeEffect?.id === item.id && (
                                                         <div className="absolute inset-0 z-10 pointer-events-none">
@@ -807,8 +844,13 @@ export default function CustomerMenu() {
                                                         </div>
                                                     )}
                                                     {!item.isAvailable && (
-                                                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center backdrop-blur-[2px]">
-                                                            <span className="bg-white/90 text-black text-[8px] font-black uppercase px-2 py-1 rounded-md tracking-[0.2em] shadow-xl">SOULD OUT</span>
+                                                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center backdrop-blur-[3px] p-2 text-center">
+                                                            <span className="bg-white text-black text-[8px] font-black uppercase px-2 py-1 rounded-md tracking-[0.2em] shadow-xl mb-1.5">UNAVAILABLE</span>
+                                                            {item.unavailableUntil && (
+                                                                <div className="flex items-center gap-1.5 text-white/90 text-[7px] font-bold uppercase tracking-widest bg-red-500/20 px-2 py-0.5 rounded-full border border-red-500/20 animate-pulse">
+                                                                    <Clock size={8} /> Available after {new Date(item.unavailableUntil).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>
@@ -849,7 +891,14 @@ export default function CustomerMenu() {
                                                                         <Plus size={12} strokeWidth={3} className="group-hover:rotate-90 transition-transform" /> 
                                                                         <span>Add</span>
                                                                     </>
-                                                                ) : 'Sold Out'}
+                                                                ) : (
+                                                                    <div className="flex flex-col items-center gap-0.5">
+                                                                        <span className="opacity-60">Locked</span>
+                                                                        {item.unavailableUntil && (
+                                                                            <span className="text-[6px] normal-case opacity-40 lowercase">{new Date(item.unavailableUntil).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+                                                                        )}
+                                                                    </div>
+                                                                )}
                                                             </button>
                                                         )}
                                                     </div>
@@ -893,8 +942,8 @@ export default function CustomerMenu() {
     const renderCartSheet = () => {
         if (!isCartOpen) return null;
         const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
-        const serviceCharge = Number((subtotal * 0.10).toFixed(2));
-        const finalTotal = Number((subtotal + serviceCharge).toFixed(2));
+        const serviceCharge = 0;
+        const finalTotal = subtotal;
 
         return (
             <div className="fixed inset-0 z-[100] flex flex-col justify-end">
@@ -997,8 +1046,8 @@ export default function CustomerMenu() {
                         <div className="space-y-3">
                             <div className="flex justify-between items-end pt-5 mt-2">
                                 <div>
-                                    <span className="text-[#0B3A2E] text-[10px] font-black uppercase tracking-[0.25em] block mb-1">Grand Total</span>
-                                    <span className="text-[#0B3A2E] text-[10px] font-medium opacity-60">Inclusive of taxes & fees</span>
+                                    <span className="text-[#0B3A2E] text-[10px] font-black uppercase tracking-[0.25em] block mb-1">Items Total</span>
+                                    <span className="text-[#0B3A2E] text-[10px] font-medium opacity-60">Excluding service fee</span>
                                 </div>
                                 <span className="text-[#0B3A2E] text-4xl font-black font-serif tabular-nums">£{finalTotal.toFixed(2)}</span>
                             </div>
@@ -1043,44 +1092,97 @@ export default function CustomerMenu() {
                              <span className="text-[#C29958] text-[10px] font-black uppercase tracking-widest">IN PROGRESS</span>
                         </div>
                     </div>
-                    {myOrders.filter(o => ['Pending', 'Preparing', 'Rejected ✗'].includes(o.status)).length === 0 ? (
+                    {myOrders.filter(o => ['Pending', 'Order Received', 'Cooking Started', 'Ready to Serve', 'Served', 'Accepted ✓', 'Rejected ✗'].includes(o.status)).length === 0 ? (
                         <div className="bg-white/40 rounded-[40px] p-20 text-center border-2 border-dashed border-[#0B3A2E]/5 flex flex-col items-center">
                             <Clock className="w-12 h-12 text-[#0B3A2E]/10 mb-5" strokeWidth={1.5} />
                             <p className="text-[#6D5D4B] text-xs font-black uppercase tracking-widest opacity-40">No active delights</p>
                             <button onClick={() => setView('menu')} className="mt-8 bg-[#0B3A2E]/5 text-[#0B3A2E] px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#0B3A2E]/10 transition-all">Start Ordering</button>
                         </div>
                     ) : (
-                        myOrders.filter(o => ['Pending', 'Preparing', 'Rejected ✗'].includes(o.status)).map(order => (
-                            <div key={order.id} className="bg-white rounded-[45px] p-8 shadow-[0_25px_60px_rgba(0,0,0,0.06)] relative overflow-hidden mb-8 border border-white transition-all hover:shadow-[0_40px_80px_rgba(0,0,0,0.12)]">
-                                <div className="absolute -top-10 -right-10 w-48 h-48 bg-[#C29958]/5 blur-[60px] rounded-full"></div>
-                                <div className="flex justify-between items-start mb-8">
-                                    <div className="bg-[#0B3A2E]/5 px-5 py-2.5 rounded-2xl">
-                                        <p className="text-[#0B3A2E] text-[10px] font-black uppercase tracking-[0.15em] opacity-50 mb-0.5">Order #NIZ-{order.id.toString().slice(-4)}</p>
-                                        <h4 className="text-[#0B3A2E] text-xl font-bold font-serif leading-none italic">Dakhni Chowgra Table</h4>
-                                    </div>
-                                    <span className="bg-[#F5E6CC] text-[#7F5E24] px-5 py-2.5 rounded-[20px] text-[11px] font-black uppercase tracking-[0.1em] shadow-sm">
-                                        {order.status.toUpperCase()}
-                                    </span>
-                                </div>
-                                <div className="space-y-4 mb-8">
-                                    {order.items.map((item, idx) => (
-                                        <div key={idx} className="flex justify-between items-center text-sm">
-                                            <span className="font-bold text-[#0B3A2E] opacity-90">{item.name}</span>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[#C29958] text-[11px] font-black">×</span>
-                                                <span className="font-black text-[#0B3A2E] text-base">{item.qty}</span>
-                                            </div>
+                        myOrders.filter(o => ['Pending', 'Order Received', 'Cooking Started', 'Ready to Serve', 'Served', 'Accepted ✓', 'Rejected ✗'].includes(o.status)).map(order => {
+                            // Tracker Logic inside Component
+                            const steps = [
+                                { label: 'PREPARING', trigger: ['Pending', 'Order Received', 'Cooking Started', 'Ready to Serve', 'Served', 'Accepted ✓'] },
+                                { label: 'READY', trigger: ['Ready to Serve', 'Served'] },
+                                { label: 'SERVED', trigger: ['Served'] },
+                            ];
+                            let currentStepIndex = -1;
+                            for (let i = steps.length - 1; i >= 0; i--) {
+                                if (steps[i].trigger.includes(order.status)) {
+                                    currentStepIndex = i;
+                                    break;
+                                }
+                            }
+                            const isRejected = order.status === 'Rejected ✗';
+
+                            return (
+                                <div key={order.id} className="bg-white rounded-[45px] p-8 shadow-[0_25px_60px_rgba(0,0,0,0.06)] relative overflow-hidden mb-8 border border-white transition-all hover:shadow-[0_40px_80px_rgba(0,0,0,0.12)]">
+                                    <div className="absolute -top-10 -right-10 w-48 h-48 bg-[#C29958]/5 blur-[60px] rounded-full pointer-events-none"></div>
+                                    <div className="flex justify-between items-start mb-6 relative z-10">
+                                        <div className="bg-[#0B3A2E]/5 px-5 py-2.5 rounded-2xl">
+                                            <p className="text-[#0B3A2E] text-[10px] font-black uppercase tracking-[0.15em] opacity-50 mb-0.5">Order #NIZ-{order.id.toString().slice(-4)}</p>
+                                            <h4 className="text-[#0B3A2E] text-xl font-bold font-serif leading-none italic">Royal Order</h4>
                                         </div>
-                                    ))}
-                                </div>
-                                <div className="pt-6 border-t border-[#0B3A2E]/5 flex items-center gap-3 text-[#C29958]">
-                                    <div className="w-10 h-10 bg-[#F5E6CC]/40 rounded-full flex items-center justify-center">
-                                         <Clock size={18} strokeWidth={2.5} />
                                     </div>
-                                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Estimated arrival: 12-15 mins</span>
+                                    
+                                    <div className="space-y-3 mb-8 relative z-10">
+                                        {order.items.map((item, idx) => (
+                                            <div key={idx} className="flex justify-between items-center text-sm border-b border-[#0B3A2E]/5 pb-3 last:border-0 last:pb-0">
+                                                <div className="flex items-center gap-3">
+                                                    <span className="w-5 h-5 bg-[#C29958]/10 text-[#C29958] flex items-center justify-center rounded text-[10px] font-black">x{item.qty}</span>
+                                                    <span className="font-bold text-[#0B3A2E] opacity-90">{item.name}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Swiggy-Style Tracker */}
+                                    <div className="mt-8 mb-4 px-2 relative z-10">
+                                        {isRejected ? (
+                                            <div className="text-red-500 font-bold text-[10px] uppercase tracking-widest text-center bg-red-50 p-4 rounded-2xl border border-red-100">
+                                                Order Rejected by Restaurant
+                                            </div>
+                                        ) : (
+                                            <div className="flex justify-between items-center relative pt-2 pb-6">
+                                                <div className="absolute left-[10px] right-[10px] top-4 h-[2px] bg-[#0B3A2E]/10 z-0"></div>
+                                                <div className="absolute left-[10px] top-4 h-[2px] bg-[#0B3A2E] z-0 transition-all duration-1000 ease-in-out" style={{ width: `calc(${(Math.max(0, currentStepIndex) / (steps.length - 1)) * 100}% - 20px)` }}></div>
+                                                
+                                                {steps.map((step, idx) => {
+                                                    const active = idx <= currentStepIndex;
+                                                    const current = idx === currentStepIndex;
+                                                    return (
+                                                        <div key={idx} className="relative z-10 flex flex-col items-center">
+                                                            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-700 bg-white shadow-sm ${active ? 'border-[#0B3A2E]' : 'border-[#0B3A2E]/20'}`}>
+                                                                {active && <div className={`w-3 h-3 rounded-full ${current ? 'bg-[#C29958] animate-pulse shadow-[0_0_8px_rgba(194,153,88,0.5)]' : 'bg-[#0B3A2E]'}`}></div>}
+                                                            </div>
+                                                            <span className={`text-[8px] font-black uppercase tracking-widest absolute -bottom-5 w-max text-center transition-colors duration-500 ${current ? 'text-[#C29958]' : active ? 'text-[#0B3A2E]' : 'text-[#0B3A2E]/40'}`}>
+                                                                {step.label}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="pt-6 border-t border-[#0B3A2E]/5 flex items-center gap-3 text-[#C29958] mt-4 relative z-10">
+                                        <div className="w-10 h-10 bg-[#F5E6CC]/40 rounded-full flex items-center justify-center">
+                                             <Clock size={18} strokeWidth={2.5} />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+                                                {currentStepIndex >= 3 ? 'Arrived at table' : 
+                                                 order.prepTime ? `Estimated ready in ~${Math.max(0, order.prepTime - Math.ceil((Date.now() - new Date(order.prepStartedAt).getTime()) / 60000))} mins` : 
+                                                 'Awaiting kitchen timing'}
+                                            </span>
+                                            {order.prepTime && (
+                                                <span className="text-[8px] font-bold text-[#0B3A2E]/40 uppercase tracking-widest">Live Kitchen Tracking Active</span>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        ))
+                            );
+                        })
                     )}
                 </section>
 

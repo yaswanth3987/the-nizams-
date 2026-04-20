@@ -13,8 +13,11 @@ export default function AdminMenuManagement() {
     const [activeCategory, setActiveCategory] = useState('All');
     
     // Availability Modal State
-    const [availabilityModal, setAvailabilityModal] = useState(null); // { item, type: 'manual'|'today'|'custom' }
-    const [customTime, setCustomTime] = useState('1'); // Hours
+    const [availabilityModal, setAvailabilityModal] = useState(null); 
+    const [customTimeH, setCustomTimeH] = useState('1'); 
+    const [customTimeM, setCustomTimeM] = useState('0'); 
+    const [alarmTime, setAlarmTime] = useState('12:00');
+
 
     const [newItem, setNewItem] = useState({
         name: '',
@@ -24,12 +27,18 @@ export default function AdminMenuManagement() {
         isPopular: false,
         isRecommended: false,
         isBestSeller: false,
-        isNew: false
+        isNew: false,
+        availableFrom: '',
+        availableTo: ''
     });
 
+    const [now, setNow] = useState(new Date());
+    
     useEffect(() => {
         fetchMenu();
         
+        const timer = setInterval(() => setNow(new Date()), 10000); // Update every 10s for timers
+
         socket.on('menuUpdated', (updatedItem) => {
             setMenuItems(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item));
         });
@@ -39,10 +48,20 @@ export default function AdminMenuManagement() {
         });
 
         return () => {
+            clearInterval(timer);
             socket.off('menuUpdated');
             socket.off('menuReset');
         };
     }, []);
+
+    const getRemainingTime = (until) => {
+        if (!until) return null;
+        const diff = new Date(until) - now;
+        if (diff <= 0) return null;
+        const mins = Math.ceil(diff / 60000);
+        if (mins >= 60) return `${Math.floor(mins/60)}h ${mins%60}m`;
+        return `${mins}m`;
+    };
 
     const fetchMenu = async () => {
         try {
@@ -116,9 +135,14 @@ export default function AdminMenuManagement() {
         }
     };
 
-    const toggleAvailability = async (item, isAvailable, until = null) => {
+    const toggleAvailability = async (targetData, isAvailable, until = null) => {
         try {
-            const res = await fetch(`${API_URL}/menu/${item.id}/availability`, {
+            const isCategory = targetData.targetType === 'category';
+            const url = isCategory 
+                ? `${API_URL}/menu/category/${encodeURIComponent(targetData.target)}/availability` 
+                : `${API_URL}/menu/${targetData.target.id}/availability`;
+                
+            const res = await fetch(url, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ isAvailable, until })
@@ -131,6 +155,7 @@ export default function AdminMenuManagement() {
             console.error('Failed to update availability:', err);
         }
     };
+
 
     const categories = ['All', ...new Set(menuItems.map(item => item.category))];
     
@@ -147,255 +172,323 @@ export default function AdminMenuManagement() {
         return acc;
     }, {});
 
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-nizam-gold"></div>
-            </div>
-        );
-    }
-
     return (
-        <div className="space-y-6 animate-in fade-in duration-500 pb-12">
-            <div className="flex justify-between items-start">
+        <div className="space-y-8 animate-in fade-in duration-700 pb-24 font-sans">
+            <div className="flex justify-between items-end mb-8">
                 <div>
-                    <h2 className="text-3xl font-serif text-white mb-2 tracking-wide">Menu Management</h2>
-                    <p className="text-nizam-textMuted text-sm max-w-lg">
-                        Control item availability in real-time. Changes reflect instantly on customer devices.
+                    <h2 className="text-5xl font-serif text-white mb-2 font-bold italic">Menu Catalog</h2>
+                    <p className="text-white/60 max-w-lg text-sm leading-relaxed">
+                        Manage your kitchen catalog, categories, and item availability.
                     </p>
                 </div>
                 <button 
                     onClick={() => setIsAddModalOpen(true)}
-                    className="bg-nizam-gold text-black hover:bg-nizam-gold/90 px-5 py-2.5 rounded text-[11px] font-bold uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg shadow-nizam-gold/10"
+                    className="h-14 px-8 rounded-xl bg-emerald-600 text-white font-bold text-sm flex items-center gap-3 transition-all hover:bg-emerald-500 shadow-lg"
                 >
-                    <Plus className="w-4 h-4" /> Add Item
+                    <Plus size={20} /> Add New Item
                 </button>
             </div>
 
-            {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-4">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-nizam-textMuted" />
-                    <input 
-                        type="text" 
-                        placeholder="Search by name..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-nizam-dark border border-nizam-border rounded-lg pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-nizam-gold/50 transition-colors shadow-inner"
-                    />
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end mb-8">
+                <div className="lg:col-span-5 relative">
+                    <label className="block text-xs font-bold text-white/40 uppercase mb-3 ml-1 tracking-widest">Search Catalog</label>
+                    <div className="relative">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                        <input 
+                            type="text" 
+                            placeholder="Search by name..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full bg-[#111311] border border-white/10 rounded-xl pl-12 pr-6 py-4 text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                        />
+                    </div>
                 </div>
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                    {categories.map(cat => (
-                        <button
-                            key={cat}
-                            onClick={() => setActiveCategory(cat)}
-                            className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border transition-all whitespace-nowrap ${
-                                activeCategory === cat 
-                                ? 'bg-nizam-gold/10 border-nizam-gold text-nizam-gold shadow-sm' 
-                                : 'bg-nizam-dark border-nizam-border text-nizam-textMuted hover:border-nizam-gold/30'
-                            }`}
-                        >
-                            {cat}
-                        </button>
-                    ))}
+                <div className="lg:col-span-7">
+                    <label className="block text-xs font-bold text-white/40 uppercase mb-3 ml-1 tracking-widest">Filter by Category</label>
+                    <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar">
+                        {categories.map(cat => (
+                            <button
+                                key={cat}
+                                onClick={() => setActiveCategory(cat)}
+                                className={`px-6 py-3 rounded-xl text-xs font-black uppercase border-2 transition-all whitespace-nowrap glow-gold ${
+                                    activeCategory === cat 
+                                    ? 'bg-accent/10 text-accent border-accent shadow-[0_0_25px_rgba(255,215,0,0.3)]' 
+                                    : 'bg-white/5 border-white/5 text-white/60 hover:border-accent hover:text-accent'
+                                }`}
+                            >
+                                {cat}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
-            {/* Menu List */}
             <div className="space-y-8">
                 {Object.keys(groupedMenu).sort().map(category => (
-                    <div key={category} className="space-y-4">
-                        <div className="flex items-center gap-4">
-                            <h3 className="text-xs font-bold text-nizam-gold uppercase tracking-[0.2em] whitespace-nowrap">{category}</h3>
-                            <div className="h-[1px] w-full bg-gradient-to-r from-nizam-gold/20 to-transparent"></div>
+                    <div key={category} className="bg-[#111311] border border-white/10 rounded-2xl overflow-hidden">
+                        <div className="px-8 py-6 border-b border-white/10 bg-white/5 flex justify-between items-center group/header">
+                            <h3 className="text-sm font-bold text-emerald-500 uppercase tracking-wider">{category}</h3>
+                            <button
+                                onClick={() => setAvailabilityModal({ targetType: 'category', target: category, type: 'custom' })}
+                                className="text-[10px] uppercase font-bold tracking-widest text-white/40 group-hover/header:text-accent group-hover/header:glow-gold transition-all flex items-center gap-2 px-3 py-1.5 rounded-lg border border-transparent group-hover/header:border-accent/20 bg-black/20"
+                            >
+                                <Clock size={12} /> Category Timer
+                            </button>
                         </div>
-                        <div className="grid grid-cols-1 gap-2">
-                            {groupedMenu[category].map(item => (
-                                <div key={item.id} className={`bg-nizam-card border rounded-lg p-4 flex items-center justify-between transition-all group ${!item.isAvailable ? 'border-red-900/30 opacity-70' : 'border-nizam-border/30 hover:border-nizam-border/60 shadow-lg shadow-black/20'}`}>
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3">
-                                            <h4 className={`font-medium ${!item.isAvailable ? 'text-nizam-textMuted line-through' : 'text-white'}`}>{item.name}</h4>
-                                            {!item.isAvailable && (
-                                                <span className="bg-red-950/40 text-red-500 text-[9px] font-bold px-2 py-0.5 rounded border border-red-900/30 uppercase tracking-widest">
-                                                    Unavailable
-                                                </span>
-                                            )}
-                                            {/* Badge Indicators for Admin */}
-                                            <div className="flex gap-1">
-                                                {item.isPopular && <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]" title="Popular"></div>}
-                                                {item.isBestSeller && <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]" title="Best Seller"></div>}
-                                                {item.isRecommended && <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_5px_rgba(245,158,11,0.5)]" title="Recommended"></div>}
-                                                {item.isNew && <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,0.5)]" title="New"></div>}
-                                            </div>
-                                        </div>
-                                        <p className="text-nizam-textMuted text-xs mt-1 truncate max-w-md">{item.description || 'No description available.'}</p>
-                                    </div>
+                        <table className="w-full text-left border-collapse">
+                            <thead className="text-[10px] uppercase font-bold text-white/20 border-b border-white/5 bg-black/20">
+                                <tr>
+                                    <th className="px-8 py-5 tracking-[0.2em]">Item Asset</th>
+                                    <th className="px-8 py-5 tracking-[0.2em]">Metric (£)</th>
+                                    <th className="px-8 py-5 tracking-[0.2em]">Status Lock</th>
+                                    <th className="px-8 py-5 tracking-[0.2em] text-right">Operations</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/10">
+                                {groupedMenu[category].map(item => {
+                                    const timeRem = getRemainingTime(item.until);
+                                    const isLocked = !item.isAvailable;
 
-                                    <div className="flex items-center gap-8">
-                                        <div className="text-right">
-                                            <p className="text-nizam-gold font-bold text-sm">£{Number(item.price || 0).toFixed(2)}</p>
-                                        </div>
-
-                                        <div className="flex items-center h-10 gap-2">
-                                            {/* Availability Toggle */}
-                                            <button 
-                                                onClick={() => {
-                                                    if (item.isAvailable) setAvailabilityModal(item);
-                                                    else toggleAvailability(item, true);
-                                                }}
-                                                className={`h-full px-4 rounded text-[10px] font-bold uppercase tracking-widest border transition-all flex items-center gap-2 ${
-                                                    item.isAvailable 
-                                                    ? 'bg-emerald-950/20 border-emerald-900/50 text-emerald-500 hover:bg-emerald-900/40' 
-                                                    : 'bg-red-950/20 border-red-900/50 text-red-500 hover:bg-red-900/40'
-                                                }`}
-                                            >
-                                                {item.isAvailable ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
-                                                {item.isAvailable ? 'Available' : 'Unavailable'}
-                                            </button>
-                                             <div className="flex items-center gap-1 border-l border-nizam-border/30 pl-2">
-                                                <button 
-                                                    onClick={() => setEditingItem(item)}
-                                                    className="p-2.5 rounded hover:bg-nizam-gold/10 text-nizam-textMuted hover:text-nizam-gold transition-all"
-                                                >
-                                                    <Edit2 className="w-3.5 h-3.5" />
-                                                </button>
-                                                <button 
-                                                    onClick={() => handleDelete(item.id)}
-                                                    className="p-2.5 rounded hover:bg-red-950/20 text-nizam-textMuted hover:text-red-500 transition-all"
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                                    return (
+                                        <tr key={item.id} className="group hover:bg-white/[0.02] transition-colors border-b border-white/5 last:border-0 relative">
+                                            <td className="px-8 py-7">
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`w-2 h-2 rounded-full ${!isLocked ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-red-500 animate-pulse'}`}></div>
+                                                    <div>
+                                                        <p className="text-white font-serif italic text-lg">{item.name}</p>
+                                                        <p className="text-[11px] text-white/40 font-bold uppercase tracking-wider">{item.category}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-7">
+                                                <span className="text-lg font-black text-accent glow-gold">£{Number(item.price).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                            </td>
+                                            <td className="px-8 py-7">
+                                                {timeRem ? (
+                                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-red-500/10 border border-red-500/20">
+                                                        <Clock size={12} className="text-red-400" />
+                                                        <span className="text-[10px] font-bold text-red-400 uppercase tracking-widest">{timeRem} REMAINING</span>
+                                                    </div>
+                                                ) : isLocked ? (
+                                                    <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">PERMANENT LOCK</span>
+                                                ) : (
+                                                    <span className="text-[10px] font-bold text-emerald-500/40 uppercase tracking-widest">OPERATIONAL</span>
+                                                )}
+                                                {item.availableFrom && item.availableTo && (
+                                                    <div className="mt-1 text-[9px] font-black text-white/30 uppercase tracking-tighter">
+                                                        SCHED: {item.availableFrom} - {item.availableTo}
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="px-8 py-7 text-right">
+                                                <div className="flex justify-end gap-3 opacity-40 group-hover:opacity-100 transition-opacity">
+                                                    {isLocked ? (
+                                                        <button
+                                                            onClick={() => toggleAvailability({ targetType: 'item', target: item }, true)}
+                                                            className="px-6 py-3 rounded-lg text-emerald-500 bg-emerald-500/10 font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500/20 transition-all border border-emerald-500/20"
+                                                        >
+                                                            Unlock Record
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => setAvailabilityModal({ targetType: 'item', target: item, type: 'manual' })}
+                                                            className="px-6 py-3 rounded-lg text-red-500 bg-red-500/10 font-black text-[10px] uppercase tracking-widest hover:bg-red-500/20 transition-all border border-red-500/20"
+                                                        >
+                                                            Isolate Record
+                                                        </button>
+                                                    )}
+                                                    <button onClick={() => setEditingItem(item)} className="p-3 bg-white/5 rounded-xl border border-white/10 text-white hover:text-accent hover:border-accent transition-all">
+                                                        <Edit2 size={16} />
+                                                    </button>
+                                                    <button onClick={() => handleDelete(item.id)} className="p-3 bg-white/5 rounded-xl border border-white/10 text-white/40 hover:text-red-500 hover:border-red-500/40 transition-all">
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
                     </div>
                 ))}
             </div>
 
             {/* Availability Modal */}
             {availabilityModal && (
-                <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[110] flex items-center justify-center p-4">
-                    <div className="bg-nizam-card border border-nizam-border rounded-xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-                        <div className="p-6 border-b border-nizam-border/30 text-center bg-nizam-dark/30">
-                            <div className="w-12 h-12 bg-red-950/30 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-900/50">
-                                <Clock className="w-6 h-6 text-red-500" />
+                <div className="fixed inset-0 bg-[#0c0d0c]/98 backdrop-blur-2xl z-[110] flex items-center justify-center p-8 animate-in fade-in duration-500">
+                    <div className="bg-[#111311] border border-white/5 rounded-[3rem] w-full max-w-md overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.8)]">
+                        <div className="p-12 text-center border-b border-white/5 bg-black/40">
+                            <div className="w-20 h-20 bg-red-500/10 rounded-[1.5rem] flex items-center justify-center mx-auto mb-8 border border-red-500/20">
+                                <Clock size={32} className="text-red-500" />
                             </div>
-                            <h3 className="text-xl font-serif text-white mb-2">Mark Unavailable</h3>
-                            <p className="text-sm text-nizam-textMuted italic">"{availabilityModal.name}"</p>
+                            <h3 className="text-4xl font-serif text-white mb-3 font-bold tracking-tight">System Isolation</h3>
+                            <p className="text-[14px] text-white/80 italic font-medium px-4">
+                                "{availabilityModal.targetType === 'category' ? `CATEGORY: ${availabilityModal.target}` : availabilityModal.target.name}"
+                            </p>
                         </div>
-                        <div className="p-4 space-y-2">
+                        <div className="p-8 space-y-4">
                             <button 
                                 onClick={() => {
                                     const until = new Date();
                                     until.setHours(23, 59, 59, 999);
                                     toggleAvailability(availabilityModal, false, until.toISOString());
                                 }}
-                                className="w-full text-left p-4 rounded-lg bg-nizam-dark/50 border border-nizam-border/30 hover:border-nizam-gold/50 hover:bg-nizam-gold/5 transition-all group"
+                                className="w-full text-left p-8 rounded-[2rem] bg-black/40 border border-white/5 hover:border-accent transition-all group glow-gold"
                             >
                                 <div className="flex justify-between items-center">
-                                    <span className="text-sm font-medium text-white group-hover:text-nizam-gold transition-colors">Today Only</span>
-                                    <span className="text-[10px] text-nizam-textMuted uppercase tracking-widest">Until Midnight</span>
+                                    <span className="text-lg font-serif font-bold text-white group-hover:text-accent transition-colors italic">Shift Isolation</span>
+                                    <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em]">Until Midnight</span>
                                 </div>
                             </button>
-                            <div className="p-4 rounded-lg bg-nizam-dark/50 border border-nizam-border/30 space-y-3">
-                                <div className="flex justify-between items-center mb-1">
-                                    <span className="text-sm font-medium text-white">Custom Time</span>
-                                    <span className="text-[10px] text-nizam-textMuted uppercase tracking-widest">Select Hours</span>
+                            
+                            <div className="p-8 rounded-[2rem] bg-black/40 border border-white/5 space-y-6">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-lg font-serif font-bold text-white italic">Temporal Lock</span>
+                                    <span className="text-[9px] font-black text-white/60 uppercase tracking-[0.3em]">H : M</span>
                                 </div>
-                                <div className="grid grid-cols-4 gap-2">
-                                    {['1', '2', '4', '8'].map(h => (
+                                <div className="grid grid-cols-4 gap-3">
+                                    {[{label: '15m', h: '0', m: '15'}, {label: '30m', h: '0', m: '30'}, {label: '1h', h: '1', m: '0'}, {label: '2h', h: '2', m: '0'}].map(preset => (
                                         <button 
-                                            key={h}
-                                            onClick={() => setCustomTime(h)}
-                                            className={`py-2 rounded border text-[10px] font-bold transition-all ${customTime === h ? 'bg-nizam-gold border-nizam-gold text-black' : 'bg-nizam-dark border-nizam-border/50 text-nizam-textMuted hover:border-nizam-gold/30'}`}
+                                            key={preset.label}
+                                            onClick={() => { setCustomTimeH(preset.h); setCustomTimeM(preset.m); }}
+                                            className={`h-12 rounded-xl text-[10px] font-black tracking-widest transition-all ${(customTimeH === preset.h && customTimeM === preset.m) ? 'bg-accent text-black glow-gold' : 'bg-white/5 text-white/60 border border-white/5 hover:border-white/20'}`}
                                         >
-                                            {h}h
+                                            {preset.label}
                                         </button>
                                     ))}
                                 </div>
-                                <div className="flex gap-2">
-                                    <input 
-                                        type="number" 
-                                        value={customTime}
-                                        onChange={(e) => setCustomTime(e.target.value)}
-                                        className="flex-1 bg-nizam-dark border border-nizam-border/50 rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-nizam-gold shadow-inner"
-                                        placeholder="Enter hours..."
-                                    />
+                                <div className="flex gap-4 items-center">
+                                    <div className="flex bg-[#0c0d0c] border border-white/20 rounded-xl overflow-hidden focus-within:border-accent/50 transition-colors">
+                                        <input 
+                                            type="number" 
+                                            value={customTimeH}
+                                            onChange={(e) => setCustomTimeH(e.target.value)}
+                                            min="0"
+                                            className="w-16 bg-transparent px-2 py-4 text-center text-white font-serif font-bold italic focus:outline-none placeholder-white/20"
+                                            placeholder="HH"
+                                        />
+                                        <span className="flex items-center text-white/20 font-black">:</span>
+                                        <input 
+                                            type="number" 
+                                            value={customTimeM}
+                                            onChange={(e) => setCustomTimeM(e.target.value)}
+                                            min="0"
+                                            max="59"
+                                            className="w-16 bg-transparent px-2 py-4 text-center text-white font-serif font-bold italic focus:outline-none placeholder-white/20"
+                                            placeholder="MM"
+                                        />
+                                    </div>
                                     <button 
                                         onClick={() => {
-                                            if (customTime && !isNaN(customTime)) {
-                                                const until = new Date(Date.now() + parseInt(customTime) * 3600000);
-                                                toggleAvailability(availabilityModal, false, until.toISOString());
-                                            }
+                                            const h = parseInt(customTimeH) || 0;
+                                            const m = parseInt(customTimeM) || 0;
+                                            if (h === 0 && m === 0) return;
+                                            const until = new Date();
+                                            until.setHours(until.getHours() + h);
+                                            until.setMinutes(until.getMinutes() + m);
+                                            toggleAvailability(availabilityModal, false, until.toISOString());
                                         }}
-                                        className="bg-nizam-gold text-black px-4 py-2 rounded text-[10px] font-bold uppercase tracking-widest hover:brightness-110 transition-all shadow-sm shadow-nizam-gold/20"
+                                        className="flex-1 bg-accent text-black py-4 rounded-xl font-black text-[10px] uppercase tracking-[0.3em] hover:bg-[#FFC300] transition-all shadow-xl shadow-accent/20 glow-gold"
                                     >
-                                        Set
+                                        Execute
                                     </button>
                                 </div>
                             </div>
-                            <button 
-                                onClick={() => toggleAvailability(availabilityModal, false, null)}
-                                className="w-full text-left p-4 rounded-lg bg-nizam-dark/50 border border-nizam-border/30 hover:border-nizam-gold/50 hover:bg-nizam-gold/5 transition-all group"
-                            >
+                            
+                            <div className="p-8 rounded-[2rem] bg-black/40 border border-white/5 space-y-6">
                                 <div className="flex justify-between items-center">
-                                    <span className="text-sm font-medium text-white group-hover:text-nizam-gold transition-colors">Manual Enable</span>
-                                    <span className="text-[10px] text-nizam-textMuted uppercase tracking-widest">Infinite</span>
+                                    <span className="text-lg font-serif font-bold text-white italic">Alarm Schedule</span>
+                                    <span className="text-[9px] font-black text-white/60 uppercase tracking-[0.3em]">Exact Time</span>
                                 </div>
-                            </button>
+                                <div className="flex gap-4 items-center">
+                                    <div className="flex bg-[#0c0d0c] border border-white/20 rounded-xl overflow-hidden focus-within:border-accent/50 transition-colors w-full px-4">
+                                        <input 
+                                            type="time" 
+                                            value={alarmTime}
+                                            onChange={(e) => setAlarmTime(e.target.value)}
+                                            className="w-full bg-transparent py-4 text-center text-white font-serif font-bold italic focus:outline-none focus:ring-0 [&::-webkit-calendar-picker-indicator]:invert"
+                                        />
+                                    </div>
+                                    <button 
+                                        onClick={() => {
+                                            if (!alarmTime) return;
+                                            const [h, m] = alarmTime.split(':');
+                                            const until = new Date();
+                                            until.setHours(parseInt(h), parseInt(m), 0, 0);
+                                            
+                                            // If time is strictly in the past today, assume tomorrow
+                                            if (until < new Date()) {
+                                                until.setDate(until.getDate() + 1);
+                                            }
+                                            
+                                            toggleAvailability(availabilityModal, false, until.toISOString());
+                                        }}
+                                        className="flex-1 bg-accent text-black py-4 rounded-xl font-black text-[10px] uppercase tracking-[0.3em] hover:bg-[#FFC300] transition-all shadow-xl shadow-accent/20 glow-gold"
+                                    >
+                                        Execute
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div className="p-4 bg-nizam-dark/40 border-t border-nizam-border/30">
-                            <button onClick={() => setAvailabilityModal(null)} className="w-full py-2 text-[10px] font-bold text-nizam-textMuted hover:text-white uppercase tracking-widest transition-colors">
-                                Cancel
+                        <div className="p-8 bg-black/40 border-t border-white/5">
+                            <button onClick={() => setAvailabilityModal(null)} className="w-full h-16 text-[10px] font-black text-white/60 hover:text-white uppercase tracking-[0.4em] transition-colors">
+                                Abort isolation
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Edit/Add Modals (Similar to before but without image field) */}
-            {editingItem && (
-                <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-                    <div className="bg-nizam-card border border-nizam-border rounded-xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-                        <div className="p-6 border-b border-nizam-border/30 flex justify-between items-center bg-nizam-dark/30">
-                            <h3 className="text-xl font-serif text-white tracking-wide">Edit Item</h3>
-                            <button onClick={() => setEditingItem(null)} className="text-nizam-textMuted hover:text-white transition-colors">
-                                <X className="w-5 h-5" />
+            {/* Modals are kept similar but with updated visuals */}
+            {(editingItem || isAddModalOpen) && (
+                 <div className="fixed inset-0 bg-[#0c0d0c]/98 backdrop-blur-2xl z-[100] flex items-center justify-center p-8 animate-in fade-in duration-500">
+                    <div className="bg-[#111311] border border-white/5 rounded-[3rem] w-full max-w-2xl overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.8)]">
+                        <div className="p-12 border-b border-white/5 flex justify-between items-center bg-black/40">
+                            <div>
+                                <h3 className="text-5xl font-serif text-white font-bold tracking-tight">{editingItem ? 'Edit Entry' : 'Manual Intake'}</h3>
+                                <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] mt-2">DATABASE CORE 0.1</p>
+                            </div>
+                            <button onClick={() => editingItem ? setEditingItem(null) : setIsAddModalOpen(false)} className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white/20 hover:text-white transition-all">
+                                <X size={20} />
                             </button>
                         </div>
-                        <form onSubmit={handleUpdate} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-[10px] font-bold text-nizam-textMuted uppercase tracking-widest mb-2">Item Name</label>
-                                <input 
-                                    required 
-                                    type="text" 
-                                    value={editingItem.name}
-                                    onChange={e => setEditingItem({...editingItem, name: e.target.value})}
-                                    className="w-full bg-nizam-dark border border-nizam-border/50 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold shadow-inner"
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
+                        <form onSubmit={editingItem ? handleUpdate : handleAdd} className="p-12 space-y-10 max-h-[70vh] overflow-y-auto no-scrollbar">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                 <div>
-                                    <label className="block text-[10px] font-bold text-nizam-textMuted uppercase tracking-widest mb-2">Price (£)</label>
+                                    <label className="block text-[10px] font-black text-white/20 uppercase tracking-[0.5em] mb-4">ITEM DESIGNATION</label>
                                     <input 
                                         required 
-                                        type="number" 
-                                        step="0.01"
-                                        value={editingItem.price}
-                                        onChange={e => setEditingItem({...editingItem, price: parseFloat(e.target.value)})}
-                                        className="w-full bg-nizam-dark border border-nizam-border/50 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold shadow-inner"
+                                        type="text" 
+                                        value={editingItem ? editingItem.name : newItem.name}
+                                        onChange={e => editingItem ? setEditingItem({...editingItem, name: e.target.value}) : setNewItem({...newItem, name: e.target.value})}
+                                        className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-xl text-white font-serif italic focus:outline-none focus:border-accent transition-all shadow-inner placeholder:text-white/5"
+                                        placeholder="Identification..."
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-bold text-nizam-textMuted uppercase tracking-widest mb-2">Category</label>
+                                    <label className="block text-[10px] font-black text-white/20 uppercase tracking-[0.5em] mb-4">UNIT PRICE (GBP)</label>
+                                    <div className="relative">
+                                        <span className="absolute left-6 top-1/2 -translate-y-1/2 text-accent/40 font-serif font-bold text-xl italic">£</span>
+                                        <input 
+                                            required 
+                                            type="number" 
+                                            step="0.01"
+                                            value={editingItem ? editingItem.price : newItem.price}
+                                            onChange={e => editingItem ? setEditingItem({...editingItem, price: parseFloat(e.target.value)}) : setNewItem({...newItem, price: parseFloat(e.target.value)})}
+                                            className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 pl-12 text-xl text-white font-serif italic focus:outline-none focus:border-accent/50 transition-all shadow-inner"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                <div>
+                                    <label className="block text-[10px] font-black text-white/20 uppercase tracking-[0.5em] mb-4">CLASSIFICATION</label>
                                     <select 
-                                        value={editingItem.category}
-                                        onChange={e => setEditingItem({...editingItem, category: e.target.value})}
-                                        className="w-full bg-nizam-dark border border-nizam-border/50 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold appearance-none shadow-inner"
+                                        value={editingItem ? editingItem.category : newItem.category}
+                                        onChange={e => editingItem ? setEditingItem({...editingItem, category: e.target.value}) : setNewItem({...newItem, category: e.target.value})}
+                                        className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-xl text-white font-serif italic focus:outline-none focus:border-nizam-gold/50 transition-all shadow-inner appearance-none"
                                     >
                                         <option>Biryani Thaali</option>
                                         <option>Non Veg Starters</option>
@@ -407,155 +500,63 @@ export default function AdminMenuManagement() {
                                         <option>Drinks</option>
                                     </select>
                                 </div>
-                            </div>
-                            <div>
-                                <label className="block text-[10px] font-bold text-nizam-textMuted uppercase tracking-widest mb-2">Description</label>
-                                <textarea 
-                                    value={editingItem.description}
-                                    onChange={e => setEditingItem({...editingItem, description: e.target.value})}
-                                    className="w-full bg-nizam-dark border border-nizam-border/50 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold h-20 resize-none shadow-inner"
-                                />
-                            </div>
-
-                            {/* Badge Highlights */}
-                            <div className="space-y-3 pt-2">
-                                <label className="block text-[10px] font-bold text-nizam-textMuted uppercase tracking-widest mb-1">Badge Highlights (Max 2)</label>
-                                <div className="grid grid-cols-2 gap-3">
-                                    {[
-                                        { id: 'isPopular', label: 'Popular', color: 'text-red-500' },
-                                        { id: 'isRecommended', label: 'Recommended', color: 'text-amber-500' },
-                                        { id: 'isBestSeller', label: 'Best Seller', color: 'text-emerald-500' },
-                                        { id: 'isNew', label: 'New', color: 'text-blue-500' }
-                                    ].map(badge => {
-                                        const activeCount = ['isPopular', 'isRecommended', 'isBestSeller', 'isNew'].filter(b => editingItem[b]).length;
-                                        const isDisabled = !editingItem[badge.id] && activeCount >= 2;
-
-                                        return (
-                                            <label 
-                                                key={badge.id}
-                                                className={`flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer ${editingItem[badge.id] ? 'bg-nizam-gold/10 border-nizam-gold/50' : 'bg-nizam-dark border-nizam-border/30'} ${isDisabled ? 'opacity-30 cursor-not-allowed' : 'hover:border-nizam-gold/30'}`}
-                                            >
-                                                <span className={`text-[10px] font-black uppercase tracking-wider ${editingItem[badge.id] ? badge.color : 'text-nizam-textMuted'}`}>{badge.label}</span>
-                                                <input 
-                                                    type="checkbox"
-                                                    disabled={isDisabled}
-                                                    checked={editingItem[badge.id]}
-                                                    onChange={e => setEditingItem({ ...editingItem, [badge.id]: e.target.checked })}
-                                                    className="w-4 h-4 rounded border-nizam-border/50 bg-nizam-dark text-nizam-gold focus:ring-0 focus:ring-offset-0"
-                                                />
-                                            </label>
-                                        );
-                                    })}
+                                <div className="space-y-4">
+                                    <label className="block text-[10px] font-black text-white/20 uppercase tracking-[0.5em] mb-4">FLAGS</label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {[
+                                            { id: 'isPopular', label: 'POPULAR', color: 'text-red-500' },
+                                            { id: 'isRecommended', label: 'ELITE', color: 'text-nizam-gold' }
+                                        ].map(badge => {
+                                            const target = editingItem || newItem;
+                                            return (
+                                                <label key={badge.id} className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${target[badge.id] ? 'bg-white/5 border-nizam-gold' : 'bg-black/40 border-white/5 hover:border-white/20'}`}>
+                                                    <span className={`text-[9px] font-black tracking-widest ${target[badge.id] ? badge.color : 'text-white/20'}`}>{badge.label}</span>
+                                                    <input 
+                                                        type="checkbox"
+                                                        checked={target[badge.id]}
+                                                        onChange={e => editingItem ? setEditingItem({ ...editingItem, [badge.id]: e.target.checked }) : setNewItem({ ...newItem, [badge.id]: e.target.checked })}
+                                                        className="hidden"
+                                                    />
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
-                                {['isPopular', 'isRecommended', 'isBestSeller', 'isNew'].filter(b => editingItem[b]).length >= 2 && (
-                                    <p className="text-[9px] text-amber-500 font-bold uppercase tracking-widest animate-pulse">Max 2 badges selected</p>
-                                )}
                             </div>
-                            <button type="submit" className="w-full py-4 bg-nizam-gold text-black font-bold uppercase tracking-widest text-[11px] rounded-lg mt-4 shadow-lg shadow-nizam-gold/10 hover:bg-nizam-gold/90 transition-all">
-                                Save Changes
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            )}
 
-            {isAddModalOpen && (
-                <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-                    <div className="bg-nizam-card border border-nizam-border rounded-xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-                        <div className="p-6 border-b border-nizam-border/30 flex justify-between items-center bg-nizam-dark/30">
-                            <h3 className="text-xl font-serif text-white tracking-wide">Add Item</h3>
-                            <button onClick={() => setIsAddModalOpen(false)} className="text-nizam-textMuted hover:text-white transition-colors">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <form onSubmit={handleAdd} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-[10px] font-bold text-nizam-textMuted uppercase tracking-widest mb-2">Item Name</label>
-                                <input 
-                                    required 
-                                    type="text" 
-                                    value={newItem.name}
-                                    onChange={e => setNewItem({...newItem, name: e.target.value})}
-                                    className="w-full bg-nizam-dark border border-nizam-border/50 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold shadow-inner"
-                                    placeholder="e.g. Lamb Chops"
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                 <div>
-                                    <label className="block text-[10px] font-bold text-nizam-textMuted uppercase tracking-widest mb-2">Price (£)</label>
+                                    <label className="block text-[10px] font-black text-white/20 uppercase tracking-[0.5em] mb-4">AVAILABILITY START (HH:mm)</label>
                                     <input 
-                                        required 
-                                        type="number" 
-                                        step="0.01"
-                                        value={newItem.price}
-                                        onChange={e => setNewItem({...newItem, price: parseFloat(e.target.value)})}
-                                        className="w-full bg-nizam-dark border border-nizam-border/50 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold shadow-inner"
-                                        placeholder="0.00"
+                                        type="time" 
+                                        value={editingItem ? editingItem.availableFrom || '' : newItem.availableFrom || ''}
+                                        onChange={e => editingItem ? setEditingItem({...editingItem, availableFrom: e.target.value}) : setNewItem({...newItem, availableFrom: e.target.value})}
+                                        className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-xl text-white font-serif focus:outline-none focus:border-nizam-gold/50 transition-all font-bold"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-bold text-nizam-textMuted uppercase tracking-widest mb-2">Category</label>
-                                    <select 
-                                        value={newItem.category}
-                                        onChange={e => setNewItem({...newItem, category: e.target.value})}
-                                        className="w-full bg-nizam-dark border border-nizam-border/50 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold appearance-none shadow-inner"
-                                    >
-                                        <option>Biryani Thaali</option>
-                                        <option>Non Veg Starters</option>
-                                        <option>Sea Food</option>
-                                        <option>Veg Starters</option>
-                                        <option>Main Course</option>
-                                        <option>Mandi</option>
-                                        <option>Desserts</option>
-                                        <option>Drinks</option>
-                                    </select>
+                                    <label className="block text-[10px] font-black text-white/20 uppercase tracking-[0.5em] mb-4">AVAILABILITY END (HH:mm)</label>
+                                    <input 
+                                        type="time" 
+                                        value={editingItem ? editingItem.availableTo || '' : newItem.availableTo || ''}
+                                        onChange={e => editingItem ? setEditingItem({...editingItem, availableTo: e.target.value}) : setNewItem({...newItem, availableTo: e.target.value})}
+                                        className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-xl text-white font-serif focus:outline-none focus:border-nizam-gold/50 transition-all font-bold"
+                                    />
                                 </div>
                             </div>
+
                             <div>
-                                <label className="block text-[10px] font-bold text-nizam-textMuted uppercase tracking-widest mb-2">Description</label>
+                                <label className="block text-[10px] font-black text-white/20 uppercase tracking-[0.5em] mb-4">CULINARY SPECIFICATIONS</label>
                                 <textarea 
-                                    value={newItem.description}
-                                    onChange={e => setNewItem({...newItem, description: e.target.value})}
-                                    className="w-full bg-nizam-dark border border-nizam-border/50 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-nizam-gold h-20 resize-none shadow-inner"
+                                    value={editingItem ? editingItem.description : newItem.description}
+                                    onChange={e => editingItem ? setEditingItem({...editingItem, description: e.target.value}) : setNewItem({...newItem, description: e.target.value})}
+                                    className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-lg text-white font-serif italic focus:outline-none focus:border-nizam-gold/50 transition-all h-32 resize-none shadow-inner placeholder:text-white/5"
+                                    placeholder="Enter descriptive metadata..."
                                 />
                             </div>
 
-                            {/* Badge Highlights */}
-                            <div className="space-y-3 pt-2">
-                                <label className="block text-[10px] font-bold text-nizam-textMuted uppercase tracking-widest mb-1">Badge Highlights (Max 2)</label>
-                                <div className="grid grid-cols-2 gap-3">
-                                    {[
-                                        { id: 'isPopular', label: 'Popular', color: 'text-red-500' },
-                                        { id: 'isRecommended', label: 'Recommended', color: 'text-amber-500' },
-                                        { id: 'isBestSeller', label: 'Best Seller', color: 'text-emerald-500' },
-                                        { id: 'isNew', label: 'New', color: 'text-blue-500' }
-                                    ].map(badge => {
-                                        const activeCount = ['isPopular', 'isRecommended', 'isBestSeller', 'isNew'].filter(b => newItem[b]).length;
-                                        const isDisabled = !newItem[badge.id] && activeCount >= 2;
-
-                                        return (
-                                            <label 
-                                                key={badge.id}
-                                                className={`flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer ${newItem[badge.id] ? 'bg-nizam-gold/10 border-nizam-gold/50' : 'bg-nizam-dark border-nizam-border/30'} ${isDisabled ? 'opacity-30 cursor-not-allowed' : 'hover:border-nizam-gold/30'}`}
-                                            >
-                                                <span className={`text-[10px] font-black uppercase tracking-wider ${newItem[badge.id] ? badge.color : 'text-nizam-textMuted'}`}>{badge.label}</span>
-                                                <input 
-                                                    type="checkbox"
-                                                    disabled={isDisabled}
-                                                    checked={newItem[badge.id]}
-                                                    onChange={e => setNewItem({ ...newItem, [badge.id]: e.target.checked })}
-                                                    className="w-4 h-4 rounded border-nizam-border/50 bg-nizam-dark text-nizam-gold focus:ring-0 focus:ring-offset-0"
-                                                />
-                                            </label>
-                                        );
-                                    })}
-                                </div>
-                                {['isPopular', 'isRecommended', 'isBestSeller', 'isNew'].filter(b => newItem[b]).length >= 2 && (
-                                    <p className="text-[9px] text-amber-500 font-bold uppercase tracking-widest animate-pulse">Max 2 badges selected</p>
-                                )}
-                            </div>
-                            <button type="submit" className="w-full py-4 bg-nizam-gold text-black font-bold uppercase tracking-widest text-[11px] rounded-lg mt-4 shadow-lg hover:bg-nizam-gold/90 transition-all">
-                                Create Item
+                            <button type="submit" className="w-full h-24 bg-accent text-black py-4 rounded-[2rem] font-black uppercase tracking-[0.4em] text-[11px] shadow-2xl hover:bg-accent-hover transition-all mt-4 glow-gold">
+                                {editingItem ? 'SYNCHRONIZE DATABASE' : 'INJECT NEW ENTRY'}
                             </button>
                         </form>
                     </div>

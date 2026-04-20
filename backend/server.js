@@ -9,9 +9,10 @@ const {
     updateAssistanceStatus, deleteAssistanceRequest, getEmployees, createEmployee, 
     updateEmployee, deleteEmployee, markAttendance, getAttendanceToday,
     getMenuItems, addMenuItem, updateMenuItem, deleteMenuItem, seedMenu,
-    updateMenuItemStatus, checkMenuAvailabilityReset, getSessionsByStatus, updateSessionStatus,
+    updateMenuItemStatus, checkMenuAvailabilityReset, getSessionsByStatus, updateSessionStatus, updateCategoryItemStatus,
     getTableStatuses, updateTableStatus, allocateSession, getActiveSession, clearSession,
-    getSessionsByTable, getOrdersByTable
+    getSessionsByTable, getOrdersByTable, updatePrepTime,
+    getUnavailabilitySchedules, createUnavailabilitySchedule, updateUnavailabilitySchedule, deleteUnavailabilitySchedule, processSchedulesTask
 } = require('./database');
 
 const app = express();
@@ -191,7 +192,7 @@ app.delete('/api/tables/:tableId/orders', async (req, res) => {
 });
 app.get('/api/tables/:tableId/sessions', async (req, res) => {
     try {
-        const statuses = ['confirmed', 'active', 'billed', 'completed'];
+        const statuses = ['confirmed', 'active', 'ready', 'served', 'billed', 'completed'];
         const sessions = await getSessionsByTable(req.params.tableId, statuses);
         res.json(sessions);
     } catch (err) {
@@ -201,7 +202,7 @@ app.get('/api/tables/:tableId/sessions', async (req, res) => {
 
 app.get('/api/tables/:tableId/new-orders', async (req, res) => {
     try {
-        const orders = await getOrdersByTable(req.params.tableId, ['new', 'pending', 'accepted', 'rejected']);
+        const orders = await getOrdersByTable(req.params.tableId, ['new', 'pending', 'rejected']);
         res.json(orders);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -231,6 +232,29 @@ app.put('/api/new-orders/:id/status', async (req, res) => {
         // Broadcast event to refresh New Orders and Table Sessions tabs
         io.emit('orderUpdated', { id: req.params.id, status });
         // The frontend 'orderUpdated' listener handles fetching the updated sessions cleanly.
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/orders/:id/prep-time', async (req, res) => {
+    try {
+        const { minutes, type } = req.body; // type: 'session' | 'order'
+        const updated = await updatePrepTime(req.params.id, minutes, type);
+        io.emit(type === 'session' ? 'sessionUpdated' : 'orderUpdated', updated);
+        res.json(updated);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/menu/category/:category/availability', async (req, res) => {
+    try {
+        const { isAvailable, until } = req.body;
+        await updateCategoryItemStatus(req.params.category, isAvailable, until);
+        const allMenu = await getMenuItems();
+        io.emit('menuReset', allMenu);
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -429,6 +453,35 @@ app.post('/api/attendance/biometric', async (req, res) => {
     }
 });
 
+// Unavailability Scheduler APIs
+app.get('/api/schedules', async (req, res) => {
+    try {
+        const schedules = await getUnavailabilitySchedules();
+        res.json(schedules);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/schedules', async (req, res) => {
+    try {
+        const schedule = await createUnavailabilitySchedule(req.body);
+        res.status(201).json(schedule);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/schedules/:id', async (req, res) => {
+    try {
+        const schedule = await updateUnavailabilitySchedule(req.params.id, req.body);
+        res.json(schedule);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/schedules/:id', async (req, res) => {
+    try {
+        await deleteUnavailabilitySchedule(req.params.id);
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
@@ -450,11 +503,19 @@ server.listen(PORT, '0.0.0.0', async () => {
         console.error('Menu seeding failed:', err.message);
     }
 
-    // Availability auto-reset checker (every 1 minute)
+    // Availability & Schedule background task (every 1 minute)
     setInterval(async () => {
+        // 1. Manual resets (unavailableUntil)
         const resets = await checkMenuAvailabilityReset().catch(e => 0);
-        if (resets > 0) {
-            console.log(`Auto-reset ${resets} menu items to Available.`);
+        
+        // 2. Automated schedules
+        const scheduleChanges = await processSchedulesTask().catch(e => {
+            console.error('Scheduler Task Failed:', e.message);
+            return 0;
+        });
+
+        if (resets > 0 || scheduleChanges > 0) {
+            console.log(`[Scheduler] Auto-updated ${resets + scheduleChanges} menu items.`);
             const fullMenu = await getMenuItems().catch(e => []);
             io.emit('menuReset', fullMenu); 
         }

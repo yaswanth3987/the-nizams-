@@ -1,0 +1,11 @@
+const sqlite3 = require('sqlite3').verbose();
+const db = new sqlite3.Database('nizam.db');
+
+db.all("PRAGMA table_info(table_sessions)", (err, rows) => {
+    if (err) {
+        console.error('Error:', err);
+        process.exit(1);
+    }
+    console.log('Columns in table_sessions:', rows.map(r => r.name).join(', '));
+    db.close();
+});

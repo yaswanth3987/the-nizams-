@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import AdminUnavailabilityScheduler from '../components/admin/AdminUnavailabilityScheduler';
 import { socket } from '../utils/socket';
 import Receipt from '../components/Receipt';
 import AdminLayout from '../components/admin/AdminLayout';
@@ -13,6 +14,9 @@ import AdminMenuManagement from '../components/admin/AdminMenuManagement';
 import AdminTableOverview from '../components/admin/AdminTableOverview';
 import AdminTakeawayPOS from '../components/admin/AdminTakeawayPOS';
 import AdminTakeawayManager from '../components/admin/AdminTakeawayManager';
+import AdminQuickAccess from '../components/admin/AdminQuickAccess';
+import InventoryDashboard from '../components/InventoryDashboard';
+import { useSoundSystem } from '../hooks/useSoundSystem';
 
 const API_URL = import.meta.env.DEV 
     ? `http://${window.location.hostname}:3001/api` 
@@ -20,18 +24,22 @@ const API_URL = import.meta.env.DEV
 
 export default function AdminDashboard() {
     const [sessions, setSessions] = useState([]);
-    const [newOrders, setNewOrders] = useState([]); // Raw individual orders from 'orders' table
+    const [newOrders, setNewOrders] = useState([]); 
     const [assistanceRequests, setAssistanceRequests] = useState([]);
     const [activeView, setActiveView] = useState('orders');
     const [selectedSessionForReceipt, setSelectedSessionForReceipt] = useState(null);
-
-    // Analytics data for Inventory tab
-    const [analyticsDaily, setAnalyticsDaily] = useState(null);
-    const [itemAnalytics, setItemAnalytics] = useState([]);
-    const [salesList, setSalesList] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMsg, setErrorMsg] = useState(null);
     const [unreadAlerts, setUnreadAlerts] = useState(0);
+
+    // Analytics data omitted for brevity... (will be kept in actual file)
+    const [analyticsDaily, setAnalyticsDaily] = useState(null);
+    const [itemAnalytics, setItemAnalytics] = useState([]);
+    const [salesList, setSalesList] = useState([]);
+
+    // Sound System Integration
+    const hasUnattendedAssistance = assistanceRequests.some(r => r.status === 'new');
+    const { playSound } = useSoundSystem(hasUnattendedAssistance);
 
     useEffect(() => {
         setIsLoading(true);
@@ -48,26 +56,18 @@ export default function AdminDashboard() {
             setIsLoading(false);
         });
 
-        const playAssistancePing = () => {
-            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-            audio.play().catch(e => console.log('Audio play blocked:', e));
-        };
-
-        const playOrderPing = () => {
-            // Loud and clear digital alert sound
-            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2865/2865-preview.mp3');
-            audio.volume = 1.0; // Max volume
-            audio.play().catch(e => console.log('Audio play blocked:', e));
-        };
-
         const handleSessionUpdate = (session) => {
             setSessions(prev => {
                 const exists = prev.find(s => s.id === session.id);
                 if (exists) {
+                    // Trigger "Ready" sound if status becomes ready
+                    if (exists.status !== 'ready' && session.status === 'ready') {
+                        playSound('ready');
+                    }
                     return prev.map(s => s.id === session.id ? session : s);
                 }
                 setUnreadAlerts(unread => unread + 1);
-                playOrderPing(); // Play sound for new table session
+                playSound('newOrder');
                 return [session, ...prev];
             });
             
@@ -83,7 +83,7 @@ export default function AdminDashboard() {
                 if (prev.some(o => o.id === newOrder.id)) return prev;
                 setTimeout(() => {
                     setUnreadAlerts(u => u + 1);
-                    playOrderPing(); // Play sound for new order
+                    playSound('newOrder');
                 }, 0);
                 return [newOrder, ...prev];
             });
@@ -101,11 +101,12 @@ export default function AdminDashboard() {
                 if (prev.some(r => r.id === req.id)) return prev;
                 setTimeout(() => {
                     setUnreadAlerts(u => u + 1);
-                    playAssistancePing();
+                    // playSound('assistance') is handled by the hook's loop
                 }, 0);
                 return [req, ...prev];
             });
         });
+
         socket.on('assistanceUpdated', (updatedReq) => {
             setAssistanceRequests(prev => prev.map(r => r.id === updatedReq.id ? updatedReq : r));
         });
@@ -120,7 +121,7 @@ export default function AdminDashboard() {
             socket.off('assistanceUpdated');
             socket.off('assistanceDeleted');
         };
-    }, []);
+    }, [playSound]);
 
     const fetchSessions = () => {
         return fetch(`${API_URL}/orders`) // End-point now returns sessions
@@ -191,27 +192,30 @@ export default function AdminDashboard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status })
             });
-            if (res.ok) {
-                if (isRawOrder) fetchNewOrders();
-                fetchSessions();
-            }
+            if (!res.ok) throw new Error('Failed to update status');
+            
+            // Wait for immediate local sync if socket is slow
+            if (isRawOrder) await fetchNewOrders();
+            await fetchSessions();
         } catch (err) {
-            console.error(err);
+            console.error('Update status failed:', err);
+            alert(`Error: ${err.message}`);
         }
     };
 
     const cancelOrder = async (id) => {
         if (!confirm('Reject this order? The customer will be notified.')) return;
         try {
-            // Mark as rejected (not delete) so order status is properly tracked
-            await fetch(`${API_URL}/new-orders/${id}/status`, {
+            const res = await fetch(`${API_URL}/new-orders/${id}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'rejected' })
             });
-            fetchNewOrders();
+            if (!res.ok) throw new Error('Failed to reject order');
+            await fetchNewOrders();
         } catch (err) {
-            console.error(err);
+            console.error('Reject failed:', err);
+            alert(`Error: ${err.message}`);
         }
     };
 
@@ -251,6 +255,7 @@ export default function AdminDashboard() {
     const getHeaderConfig = () => {
         switch(activeView) {
             case 'pos': return { title: 'Takeaway POS', active: 'pos', tabs: [] };
+            case 'all-in-one': return { title: 'Quick Access', active: 'all-in-one', tabs: [] };
             case 'takeaway-manager': return { title: 'Takeaway Management', active: 'tm', tabs: [] };
             case 'inventory': return { title: 'The Great Nizam', active: 'inv', tabs: [{id:'dashboard', label:'DASHBOARD'}, {id:'inv', label:'INVENTORY'}, {id:'reports', label:'REPORTS'}] };
             case 'assistance': return { title: 'The Great Nizam', active: 'ast', tabs: [{id:'live', label:'LIVE VIEW'}, {id:'reports', label:'REPORTS'}, {id:'ast', label:'ASSISTANCE'}] };
@@ -261,6 +266,7 @@ export default function AdminDashboard() {
             case 'completed': return { title: 'The Great Nizam', active: 'today', tabs: [{id:'today', label:'TODAY'}, {id:'past', label:'PAST 7 DAYS'}] };
             case 'attendance': return { title: 'Staff Attendance', active: 'attendance', tabs: [] };
             case 'menu': return { title: 'Menu Management', active: 'menu', tabs: [] };
+            case 'scheduler': return { title: 'Temporal Scheduler', active: 'scheduler', tabs: [] };
             default: return { title: 'The Great Nizam', active: '', tabs: [] };
         }
     };
@@ -269,11 +275,11 @@ export default function AdminDashboard() {
 
     if (errorMsg) {
         return (
-            <div className="min-h-screen bg-nizam-dark flex items-center justify-center text-white">
-                <div className="text-center bg-[#1c1e1c] p-8 rounded-xl border border-red-900/50 shadow-2xl">
-                    <h2 className="text-xl font-bold text-red-500 mb-2">Connection Error</h2>
-                    <p className="text-sm text-[#a8b8b2]">{errorMsg}</p>
-                    <button onClick={() => window.location.reload()} className="mt-6 px-4 py-2 bg-red-900/40 hover:bg-red-900/60 rounded text-sm transition-colors border border-red-800/50">Retry Connection</button>
+            <div className="min-h-screen bg-[#0c0d0c] flex items-center justify-center text-white">
+                <div className="text-center bg-[#111311] p-10 rounded-2xl border border-red-900/30 shadow-2xl max-w-md">
+                    <h2 className="text-3xl font-serif font-bold text-red-500 mb-4">Connection Failure</h2>
+                    <p className="text-sm text-white/40 mb-8 leading-relaxed">{errorMsg}</p>
+                    <button onClick={() => window.location.reload()} className="w-full py-4 bg-red-900/20 hover:bg-red-900/40 rounded-xl text-[10px] font-black tracking-[0.2em] transition-all border border-red-900/30 uppercase">Re-establish Pulse</button>
                 </div>
             </div>
         );
@@ -281,9 +287,10 @@ export default function AdminDashboard() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-nizam-dark flex flex-col items-center justify-center">
-                <div className="w-16 h-16 border-4 border-nizam-border border-t-nizam-gold rounded-full animate-spin mb-4"></div>
-                <p className="text-nizam-gold font-serif tracking-widest uppercase text-xs animate-pulse">Initializing Nizam Local Systems...</p>
+            <div className="min-h-screen bg-[#0c0d0c] flex flex-col items-center justify-center relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-b from-[#064e3b]/10 to-transparent pointer-events-none"></div>
+                <div className="w-16 h-16 border-2 border-white/5 border-t-nizam-gold rounded-full animate-spin mb-8 shadow-[0_0_30px_rgba(198,168,124,0.1)]"></div>
+                <p className="text-nizam-gold font-serif tracking-[0.3em] uppercase text-[10px] animate-pulse font-bold">Synchronizing Concierge Systems...</p>
             </div>
         );
     }
@@ -317,6 +324,21 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
+                {activeView === 'all-in-one' && (
+                    <div className="w-full">
+                        <AdminQuickAccess 
+                            newOrders={newOrders}
+                            sessions={sessions}
+                            updateStatus={updateStatus}
+                            cancelOrder={cancelOrder}
+                            printReceipt={printReceipt}
+                            clearTable={clearTable}
+                            assistanceRequests={assistanceRequests}
+                            updateAssistance={updateAssistance}
+                        />
+                    </div>
+                )}
+
                 {activeView === 'takeaway-manager' && (
                     <AdminTakeawayManager 
                         orders={sessions}
@@ -347,6 +369,16 @@ export default function AdminDashboard() {
 
                 {activeView === 'menu' && (
                     <AdminMenuManagement />
+                )}
+
+                {activeView === 'inventory' && (
+                    <div className="p-6">
+                        <InventoryDashboard />
+                    </div>
+                )}
+
+                {activeView === 'scheduler' && (
+                    <AdminUnavailabilityScheduler />
                 )}
 
                 {activeView === 'tables' && (

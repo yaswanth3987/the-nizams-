@@ -10,14 +10,14 @@ export default function AdminLayout({
     children 
 }) {
     return (
-        <div className="flex h-screen bg-nizam-dark text-nizam-text overflow-hidden selection:bg-nizam-gold/20 antialiased font-sans">
+        <div className="flex h-screen bg-primary text-white overflow-hidden selection:bg-accent/20 antialiased font-sans">
             <AdminSidebar 
                 activeView={activeView} 
                 onViewChange={onViewChange} 
                 onRefresh={onRefresh} 
                 counts={counts}
             />
-            <div className="flex-1 flex flex-col min-w-0 bg-nizam-dark">
+            <div className="flex-1 flex flex-col min-w-0 bg-primary">
                 <AdminTopHeader 
                     title={title}
                     tabs={tabs}
@@ -26,8 +26,8 @@ export default function AdminLayout({
                     unreadAlerts={unreadAlerts}
                     onClearAlerts={onClearAlerts}
                 />
-                <main className="flex-1 overflow-y-auto p-4 md:p-8">
-                    <div className="max-w-[1600px] mx-auto space-y-8">
+                <main className="flex-1 overflow-y-auto p-8 md:p-12 no-scrollbar">
+                    <div className="max-w-[1800px] mx-auto space-y-12">
                         {children}
                     </div>
                 </main>
