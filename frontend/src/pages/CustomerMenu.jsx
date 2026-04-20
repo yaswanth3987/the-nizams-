@@ -406,14 +406,25 @@ export default function CustomerMenu() {
     );
 
     const renderHeader = () => (
-        <header className="sticky top-0 z-50 bg-[#F6EFE6]/80 backdrop-blur-md px-6 py-4 flex justify-between items-center border-b border-[#0B3A2E]/5">
+        <header className="sticky top-0 z-50 bg-[#F6EFE6]/80 backdrop-blur-md px-6 py-4 flex justify-between items-center border-b border-[#0B3A2E]/5 shadow-sm">
             <div className="flex items-center gap-3">
                 <img src="/logo-icon.png" alt="The Nizam's" className="h-10 w-10 object-contain drop-shadow-sm brightness-90" />
                 <div className="h-8 w-px bg-[#0B3A2E]/10 mx-1"></div>
                 <p className="text-[#C29958] text-[9px] uppercase tracking-[0.2em] font-bold leading-tight">Royal Dining<br/>Experience</p>
             </div>
-            <div className="bg-[#0B3A2E] text-white px-4 py-2 rounded-2xl text-[10px] font-black tracking-widest shadow-lg border border-white/10">
-                TABLE {selectedTable}
+            <div className="flex items-center gap-3">
+                <a 
+                    href="https://www.instagram.com/thegreatnizam/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="relative flex items-center justify-center p-2 rounded-xl bg-white shadow-[0_2px_10px_rgba(225,48,108,0.2)] border border-[#E1306C]/20 hover:scale-105 active:scale-95 transition-all group overflow-hidden"
+                >
+                    <div className="absolute inset-0 bg-gradient-to-tr from-[#f09433] via-[#e6683c] via-[#dc2743] to-[#cc2366] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <Instagram size={16} className="text-[#E1306C] group-hover:text-white relative z-10 transition-colors duration-300" strokeWidth={2.5} />
+                </a>
+                <div className="bg-[#0B3A2E] text-white px-4 py-2 rounded-2xl text-[10px] font-black tracking-widest shadow-lg border border-white/10">
+                    TABLE {selectedTable}
+                </div>
             </div>
         </header>
     );
