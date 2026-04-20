@@ -160,5 +160,5 @@ export const menuData = [
     // Drinks
     { id: 'dr1', name: 'SOFT DRINKS', price: 1.49, desc: 'Coke, Diet Coke, Pepsi, Diet Pepsi, 7Up, Mirinda, Tango', category: 'Drinks', spice: 0, veg: true },
     { id: 'dr2', name: 'THUMS UP / JEERA SODA / RED BULL', price: 2.49, category: 'Drinks', spice: 0, veg: true },
-    { id: 'dr3', name: 'WATER BOTTLE', price: 1.00, category: 'Drinks', spice: 0, veg: true }
+    { id: 'dr3', name: 'WATER BOTTLE', price: 0.00, category: 'Drinks', spice: 0, veg: true }
 ];

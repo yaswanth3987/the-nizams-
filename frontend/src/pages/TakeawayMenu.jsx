@@ -268,7 +268,7 @@ export default function TakeawayMenu() {
                                     <span className="font-bold text-[#0B3A2E] text-xs min-w-[14px] text-center tabular-nums">{cart.find(i => i.id === 'dr3')?.qty || 0}</span>
                                     <button 
                                         onClick={() => {
-                                            const waterItem = menu.find(i => i.id === 'dr3') || { id: 'dr3', name: 'WATER BOTTLE', price: 1.00, category: 'Drinks' };
+                                            const waterItem = menu.find(i => i.id === 'dr3') || { id: 'dr3', name: 'WATER BOTTLE', price: 0.00, category: 'Drinks' };
                                             if (!cart.find(i => i.id === 'dr3')) {
                                                 handleAddToCart(waterItem);
                                             } else {

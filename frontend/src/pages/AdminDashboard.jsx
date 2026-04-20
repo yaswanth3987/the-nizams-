@@ -148,16 +148,20 @@ export default function AdminDashboard() {
                 fetch(`${API_URL}/orders?statuses=completed,billed,archived`)
             ]);
             
-            const dailyData = await dailyRes.json();
-            const itemsData = await itemsRes.json();
-            const salesData = await salesRes.json();
+            if (!dailyRes.ok || !itemsRes.ok || !salesRes.ok) {
+                console.warn("One or more analytics endpoints failed");
+            }
+
+            const dailyData = dailyRes.ok ? await dailyRes.json() : null;
+            const itemsData = itemsRes.ok ? await itemsRes.json() : [];
+            const salesData = salesRes.ok ? await salesRes.json() : [];
 
             setAnalyticsDaily(dailyData || { totalOrders: 0, grossRevenue: 0, subtotal: 0, serviceCharge: 0 });
             setItemAnalytics(itemsData || []);
             setSalesList(salesData || []);
         } catch (err) {
-            console.error("Failed to load inventory data:", err);
-            throw err;
+            console.error("Failed to load dashboard data:", err);
+            // Don't throw here to avoid crashing the whole dashboard if only analytics fail
         }
     };
 
@@ -371,11 +375,7 @@ export default function AdminDashboard() {
                     <AdminMenuManagement />
                 )}
 
-                {activeView === 'inventory' && (
-                    <div className="p-6">
-                        <InventoryDashboard />
-                    </div>
-                )}
+
 
                 {activeView === 'scheduler' && (
                     <AdminUnavailabilityScheduler />

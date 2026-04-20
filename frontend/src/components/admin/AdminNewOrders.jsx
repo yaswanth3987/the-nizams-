@@ -41,8 +41,6 @@ export default function AdminNewOrders({ orders, updateStatus, cancelOrder }) {
                                 <div key={i} className="flex justify-between items-center text-sm">
                                     <span className="text-white/80 font-serif italic">{item.name}</span>
                                     <span className="text-accent font-bold">x{item.qty}</span>
-                                    <span className="text-white/80">{item.name}</span>
-                                    <span className="text-emerald-400 font-bold">x{item.qty}</span>
                                 </div>
                             ))}
                         </div>
