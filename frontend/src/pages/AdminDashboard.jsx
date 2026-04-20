@@ -13,7 +13,6 @@ import AdminAttendance from '../components/admin/AdminAttendance';
 import AdminMenuManagement from '../components/admin/AdminMenuManagement';
 import AdminTableOverview from '../components/admin/AdminTableOverview';
 import AdminTakeawayPOS from '../components/admin/AdminTakeawayPOS';
-import AdminTakeawayManager from '../components/admin/AdminTakeawayManager';
 import AdminQuickAccess from '../components/admin/AdminQuickAccess';
 import InventoryDashboard from '../components/InventoryDashboard';
 import { useSoundSystem } from '../hooks/useSoundSystem';
@@ -32,16 +31,61 @@ export default function AdminDashboard() {
     const [errorMsg, setErrorMsg] = useState(null);
     const [unreadAlerts, setUnreadAlerts] = useState(0);
 
-    // Analytics data omitted for brevity... (will be kept in actual file)
+    // Analytics data
     const [analyticsDaily, setAnalyticsDaily] = useState(null);
     const [itemAnalytics, setItemAnalytics] = useState([]);
     const [salesList, setSalesList] = useState([]);
+
+    // --- Define Callbacks first for Hook Stability ---
+    const fetchSessions = useCallback(() => {
+        return fetch(`${API_URL}/orders`)
+            .then(res => {
+                if(!res.ok) throw new Error("Orders API Failed");
+                return res.json();
+            })
+            .then(data => setSessions(data))
+            .catch(err => { console.error("Error fetching sessions:", err); throw err; });
+    }, []);
+
+    const fetchAssistance = useCallback(() => {
+        return fetch(`${API_URL}/assistance`)
+            .then(res => res.json())
+            .then(data => setAssistanceRequests(data || []))
+            .catch(err => { console.error("Error fetching assistance:", err); });
+    }, []);
+
+    const fetchDashboardData = useCallback(async () => {
+        try {
+            const [dailyRes, itemsRes, salesRes] = await Promise.all([
+                fetch(`${API_URL}/analytics/daily`),
+                fetch(`${API_URL}/analytics/items`),
+                fetch(`${API_URL}/orders?statuses=completed,billed,archived`)
+            ]);
+            
+            const dailyData = dailyRes.ok ? await dailyRes.json() : null;
+            const itemsData = itemsRes.ok ? await itemsRes.json() : [];
+            const salesData = salesRes.ok ? await salesRes.json() : [];
+
+            setAnalyticsDaily(dailyData || { totalOrders: 0, grossRevenue: 0, subtotal: 0, serviceCharge: 0 });
+            setItemAnalytics(itemsData || []);
+            setSalesList(salesData || []);
+        } catch (err) {
+            console.error("Failed to load dashboard data:", err);
+        }
+    }, []);
+
+    const fetchNewOrders = useCallback(() => {
+        return fetch(`${API_URL}/new-orders`)
+            .then(res => res.json())
+            .then(data => setNewOrders(data || []))
+            .catch(err => console.error(err));
+    }, []);
 
     // Sound System Integration
     const hasUnattendedAssistance = assistanceRequests.some(r => r.status === 'new');
     const { playSound } = useSoundSystem(hasUnattendedAssistance);
 
-    // Initial Fetch Effect
+    // --- Effects next ---
     useEffect(() => {
         setIsLoading(true);
         Promise.all([
@@ -53,7 +97,7 @@ export default function AdminDashboard() {
         .then(() => setIsLoading(false))
         .catch(err => {
             console.error(err);
-            setErrorMsg("Failed to connect to backend server. Please check your connection.");
+            setErrorMsg("Failed to connect to backend server.");
             setIsLoading(false);
         });
     }, [fetchSessions, fetchNewOrders, fetchAssistance, fetchDashboardData]);
@@ -128,47 +172,6 @@ export default function AdminDashboard() {
         };
     }, [playSound, fetchSessions, fetchNewOrders, fetchDashboardData]);
 
-    const fetchSessions = useCallback(() => {
-        return fetch(`${API_URL}/orders`) // End-point now returns sessions
-            .then(res => {
-                if(!res.ok) throw new Error("Orders API Failed");
-                return res.json();
-            })
-            .then(data => setSessions(data))
-            .catch(err => { console.error("Error fetching sessions:", err); throw err; });
-    }, [API_URL]);
-
-    const fetchAssistance = useCallback(() => {
-        return fetch(`${API_URL}/assistance`)
-            .then(res => res.json())
-            .then(data => setAssistanceRequests(data || []))
-            .catch(err => { console.error("Error fetching assistance:", err); });
-    }, [API_URL]);
-
-    const fetchDashboardData = useCallback(async () => {
-        try {
-            const [dailyRes, itemsRes, salesRes] = await Promise.all([
-                fetch(`${API_URL}/analytics/daily`),
-                fetch(`${API_URL}/analytics/items`),
-                fetch(`${API_URL}/orders?statuses=completed,billed,archived`)
-            ]);
-            
-            if (!dailyRes.ok || !itemsRes.ok || !salesRes.ok) {
-                console.warn("One or more analytics endpoints failed");
-            }
-
-            const dailyData = dailyRes.ok ? await dailyRes.json() : null;
-            const itemsData = itemsRes.ok ? await itemsRes.json() : [];
-            const salesData = salesRes.ok ? await salesRes.json() : [];
-
-            setAnalyticsDaily(dailyData || { totalOrders: 0, grossRevenue: 0, subtotal: 0, serviceCharge: 0 });
-            setItemAnalytics(itemsData || []);
-            setSalesList(salesData || []);
-        } catch (err) {
-            console.error("Failed to load dashboard data:", err);
-        }
-    }, [API_URL]);
-
     const updateAssistance = async (id, status) => {
         try {
             await fetch(`${API_URL}/assistance/${id}/status`, {
@@ -185,13 +188,6 @@ export default function AdminDashboard() {
         } catch (err) { console.error(err); }
     };
 
-    const fetchNewOrders = useCallback(() => {
-        return fetch(`${API_URL}/new-orders`)
-            .then(res => res.json())
-            .then(data => setNewOrders(data || []))
-            .catch(err => console.error(err));
-    }, [API_URL]);
-
     const updateStatus = async (id, status, isRawOrder = false) => {
         try {
             const endpoint = isRawOrder ? `${API_URL}/new-orders/${id}/status` : `${API_URL}/orders/${id}/status`;
@@ -202,12 +198,10 @@ export default function AdminDashboard() {
             });
             if (!res.ok) throw new Error('Failed to update status');
             
-            // Wait for immediate local sync if socket is slow
-            if (isRawOrder) await fetchNewOrders();
             await fetchSessions();
+            if (isRawOrder) await fetchNewOrders();
         } catch (err) {
-            console.error('Update status failed:', err);
-            alert(`Error: ${err.message}`);
+            console.error(err);
         }
     };
 

@@ -8,7 +8,6 @@ const API_URL = import.meta.env.DEV
 
 export default function KitchenDisplay() {
     const [orders, setOrders] = useState([]);
-    const [assistanceRequests, setAssistanceRequests] = useState([]);
     const [activeTab, setActiveTab] = useState('live');
 
     const playOrderPing = () => {
@@ -22,7 +21,7 @@ export default function KitchenDisplay() {
             .then(res => res.json())
             .then(data => setOrders(data))
             .catch(err => console.error("Error fetching kitchen orders:", err));
-    }, [API_URL]);
+    }, []);
 
     useEffect(() => {
         fetchKitchenOrders();
@@ -187,8 +186,6 @@ export default function KitchenDisplay() {
 
                         <div className="flex-1 overflow-y-auto space-y-5 pr-2 scrollbar-thin scrollbar-thumb-[#153428] no-scrollbar">
                             {preparingOrders.map(order => {
-                                const isVip = order.tableId?.toString().toUpperCase().includes('VIP');
-                                
                                 return (
                                     <div key={order.id} className="relative bg-[#171f1a] border border-[#d4af37]/20 rounded-2xl p-6 shadow-[0_10px_20px_rgba(0,0,0,0.3)] hover:border-[#d4af37]/40 transition-all group overflow-hidden shrink-0 flex flex-col">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-[#d4af37]/5 blur-3xl -mr-10 -mt-10 rounded-full pointer-events-none"></div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Layers, RotateCcw, AlertCircle, Sparkles } from 'lucide-react';
 
 export default function AdminTableOverview({ socket, API_URL }) {
@@ -20,7 +20,7 @@ export default function AdminTableOverview({ socket, API_URL }) {
         }))
     );
 
-    const fetchStatuses = async () => {
+    const fetchStatuses = useCallback(async () => {
         try {
             const res = await fetch(`${API_URL}/table-status`);
             if (!res.ok) throw new Error('Failed to fetch table statuses');
@@ -33,7 +33,7 @@ export default function AdminTableOverview({ socket, API_URL }) {
         } catch (err) {
             console.error('Error fetching table statuses:', err);
         }
-    };
+    }, [API_URL]);
 
     useEffect(() => {
         fetchStatuses();
@@ -61,7 +61,7 @@ export default function AdminTableOverview({ socket, API_URL }) {
                 socket.off('tableReset');
             }
         };
-    }, [socket, API_URL]);
+    }, [socket, fetchStatuses]);
 
     const handleReset = async (tableId) => {
         if (!confirm(`Emergency reset Table ${tableId}? This action clears all active session data.`)) return;

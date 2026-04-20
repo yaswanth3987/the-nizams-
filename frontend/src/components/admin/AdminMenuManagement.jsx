@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2, Edit2, Check, X, Utensils, IndianRupee, Search, Clock, AlertCircle, ChevronDown, ChevronRight } from 'lucide-react';
 import { socket } from '../../utils/socket';
 
@@ -6,7 +6,6 @@ const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/a
 
 export default function AdminMenuManagement() {
     const [menuItems, setMenuItems] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [editingItem, setEditingItem] = useState(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -34,8 +33,27 @@ export default function AdminMenuManagement() {
 
     const [now, setNow] = useState(new Date());
     
+    const getRemainingTime = (until) => {
+        if (!until) return null;
+        const diff = new Date(until) - now;
+        if (diff <= 0) return null;
+        const mins = Math.ceil(diff / 60000);
+        if (mins >= 60) return `${Math.floor(mins/60)}h ${mins%60}m`;
+        return `${mins}m`;
+    };
+
+    const fetchMenu = useCallback(async () => {
+        try {
+            const res = await fetch(`${API_URL}/menu`);
+            const data = await res.json();
+            setMenuItems(data);
+        } catch (err) {
+            console.error('Failed to fetch menu:', err);
+        }
+    }, []);
+
     useEffect(() => {
-        fetchMenu();
+        setTimeout(() => fetchMenu(), 0);
         
         const timer = setInterval(() => setNow(new Date()), 10000); // Update every 10s for timers
 
@@ -52,28 +70,7 @@ export default function AdminMenuManagement() {
             socket.off('menuUpdated');
             socket.off('menuReset');
         };
-    }, []);
-
-    const getRemainingTime = (until) => {
-        if (!until) return null;
-        const diff = new Date(until) - now;
-        if (diff <= 0) return null;
-        const mins = Math.ceil(diff / 60000);
-        if (mins >= 60) return `${Math.floor(mins/60)}h ${mins%60}m`;
-        return `${mins}m`;
-    };
-
-    const fetchMenu = async () => {
-        try {
-            const res = await fetch(`${API_URL}/menu`);
-            const data = await res.json();
-            setMenuItems(data);
-        } catch (err) {
-            console.error('Failed to fetch menu:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
+    }, [fetchMenu]);
 
     const handleAdd = async (e) => {
         e.preventDefault();

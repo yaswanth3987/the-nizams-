@@ -7,7 +7,6 @@ const API_URL = import.meta.env.DEV
     : '/api';
 
 export default function InventoryDashboard() {
-    const [analyticsDaily, setAnalyticsDaily] = useState(null);
     const [itemAnalytics, setItemAnalytics] = useState([]);
     const [salesList, setSalesList] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -24,8 +23,6 @@ export default function InventoryDashboard() {
         setLoading(true);
         try {
             // Using the existing endpoints for top-level stats
-            const dailyRes = await fetch(`${API_URL}/analytics/daily`);
-            const dailyData = await dailyRes.json();
             
             const itemsRes = await fetch(`${API_URL}/analytics/items`);
             const itemsData = await itemsRes.json();
@@ -34,7 +31,6 @@ export default function InventoryDashboard() {
             const salesRes = await fetch(`${API_URL}/orders?statuses=completed,billed,archived`);
             const salesData = await salesRes.json();
 
-            setAnalyticsDaily(dailyData || { totalOrders: 0, grossRevenue: 0, subtotal: 0, serviceCharge: 0 });
             setItemAnalytics(itemsData || []);
             setSalesList(salesData || []);
         } catch (err) {
@@ -48,6 +44,8 @@ export default function InventoryDashboard() {
         window.print();
     };
 
+    const [now] = useState(() => Date.now());
+
     // Filter Logic
     const filteredSalesList = useMemo(() => {
         return salesList.filter(order => {
@@ -60,11 +58,11 @@ export default function InventoryDashboard() {
             if (datePreset === 'all') return true;
             if (datePreset === 'today') return orderDateStr === endDate;
             if (datePreset === 'custom') return tsOrder >= tsStart && tsOrder <= tsEnd;
-            if (datePreset === 'week') return tsOrder >= new Date(Date.now() - 7 * 86400000).getTime();
-            if (datePreset === 'month') return tsOrder >= new Date(Date.now() - 30 * 86400000).getTime();
+            if (datePreset === 'week') return tsOrder >= new Date(now - 7 * 86400000).getTime();
+            if (datePreset === 'month') return tsOrder >= new Date(now - 30 * 86400000).getTime();
             return true;
         });
-    }, [salesList, datePreset, startDate, endDate]);
+    }, [salesList, datePreset, startDate, endDate, now]);
 
     const generatedChartData = useMemo(() => {
         const grouped = {};
@@ -85,11 +83,11 @@ export default function InventoryDashboard() {
 
     const handlePresetChange = (mode) => {
         setDatePreset(mode);
-        const today = new Date().toISOString().split('T')[0];
+        const today = new Date(now).toISOString().split('T')[0];
         setEndDate(today);
         if (mode === 'today') setStartDate(today);
-        else if (mode === 'week') setStartDate(new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]);
-        else if (mode === 'month') setStartDate(new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0]);
+        else if (mode === 'week') setStartDate(new Date(now - 7 * 86400000).toISOString().split('T')[0]);
+        else if (mode === 'month') setStartDate(new Date(now - 30 * 86400000).toISOString().split('T')[0]);
     };
 
     if (loading) {

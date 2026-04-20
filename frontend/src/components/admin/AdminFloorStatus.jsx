@@ -1,7 +1,7 @@
 import React from 'react';
 import { Sparkles, UtensilsCrossed, Monitor } from 'lucide-react';
 
-export default function AdminFloorStatus({ orders: sessions, updateStatus, printReceipt }) {
+export default function AdminFloorStatus({ orders: sessions, updateStatus }) {
     const confirmedSessions = sessions.filter(s => ['confirmed', 'active', 'ready', 'served'].includes(s.status) && s.orderType !== 'takeaway');
 
     // Group multiple sessions for the same table into one UI card

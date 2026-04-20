@@ -35,16 +35,26 @@ const API_URL = import.meta.env.DEV
     ? `http://${window.location.hostname}:3001/api` 
     : '/api';
 
+const generateSessionId = (tableId) => {
+    let sid = localStorage.getItem(`session_${tableId}`);
+    if (!sid) {
+        sid = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+        if (tableId) {
+            localStorage.setItem(`session_${tableId}`, sid);
+        }
+    }
+    return sid;
+};
+
 export default function CustomerMenu() {
     const [searchParams, setSearchParams] = useSearchParams();
     const tableParam = searchParams.get('table');
     const [selectedTable, setSelectedTable] = useState(tableParam || null);
 
-    const [menu, setMenu] = useState([]);
+    const [menu, setMenu] = useState(menuData);
     const [cart, setCart] = useState([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [orderStatus, setOrderStatus] = useState(null);
-    const [addedItems, setAddedItems] = useState({});
     const [view, setView] = useState('menu'); // 'menu' | 'search' | 'orders'
     const [expandedCategory, setExpandedCategory] = useState('Biryani Thaali');
     const [myOrders, setMyOrders] = useState([]);
@@ -55,24 +65,31 @@ export default function CustomerMenu() {
     const [specialRequest, setSpecialRequest] = useState('');
     const [spiceLevel, setSpiceLevel] = useState('');
     const [lastScrollTime, setLastScrollTime] = useState(0);
+    const [isMenuLoading, setIsMenuLoading] = useState(true);
 
-    const playWhoosh = () => {
+    const [now, setNow] = useState(() => Date.now());
+
+    useEffect(() => {
+        const timer = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    const playWhoosh = useCallback(() => {
         const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
-        audio.volume = 0.05; // Very subtle
-        audio.play().catch(() => {}); // Browser might block auto-play
-    };
+        audio.volume = 0.05;
+        audio.play().catch(() => {});
+    }, []);
 
-    const handleScroll = (e) => {
-        const now = Date.now();
-        if (now - lastScrollTime > 800) { // Throttle 800ms
+    const handleScroll = () => {
+        const currentTime = Date.now();
+        if (currentTime - lastScrollTime > 800) { // Throttle 800ms
             playWhoosh();
-            setLastScrollTime(now);
+            setLastScrollTime(currentTime);
         }
     };
 
-    const KITCHEN_EFFECTS = ['steam', 'spice', 'flame'];
-
-    const triggerKitchenFeedback = (itemId) => {
+    const triggerKitchenFeedback = useCallback((itemId) => {
+        const KITCHEN_EFFECTS = ['steam', 'spice', 'flame'];
         const randomEffect = KITCHEN_EFFECTS[Math.floor(Math.random() * KITCHEN_EFFECTS.length)];
         setActiveEffect({ id: itemId, effect: randomEffect });
         setCartPulse(true);
@@ -81,47 +98,52 @@ export default function CustomerMenu() {
             setActiveEffect(null);
             setCartPulse(false);
         }, 1000);
-    };
-    const [isOrdersLoading, setIsOrdersLoading] = useState(false);
-    const [isMenuLoading, setIsMenuLoading] = useState(true);
-    
+    }, []);
     const [assistanceStatus, setAssistanceStatus] = useState(null);
     const [assistanceCooldown, setAssistanceCooldown] = useState(() => {
         const saved = localStorage.getItem(`assist_cooldown_${selectedTable}`);
         return saved ? parseInt(saved, 10) : 0;
     });
     const [sessionError, setSessionError] = useState(false);
-    const [sessionId, setSessionId] = useState(() => {
-        let sid = localStorage.getItem(`session_${selectedTable}`);
-        if (!sid) {
-            sid = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
-            if (selectedTable) {
-                localStorage.setItem(`session_${selectedTable}`, sid);
+    const [sessionId] = useState(() => generateSessionId(selectedTable));
+
+    const validateSession = useCallback(async () => {
+        if (!selectedTable) return;
+        try {
+            const sid = localStorage.getItem(`session_${selectedTable}`) || sessionId;
+            const formattedTable = /^[A-Z]/.test(selectedTable) ? selectedTable : `T${selectedTable}`;
+            const res = await fetch(`${API_URL}/sessions/validate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tableId: formattedTable, sessionId: sid })
+            });
+            if (!res.ok) {
+                setSessionError(true);
             }
+        } catch (e) {
+            console.error(e);
         }
-        return sid;
-    });
+    }, [selectedTable, sessionId]);
+
+    const fetchRemoteMenu = useCallback(() => {
+        setIsMenuLoading(true);
+        fetch(`${API_URL}/menu`)
+            .then(res => res.json())
+            .then(data => {
+                if(data && data.length > 0) {
+                    setMenu(data);
+                }
+                setIsMenuLoading(false);
+            })
+            .catch(() => {
+                setIsMenuLoading(false);
+            });
+    }, []);
 
     useEffect(() => {
         if (!selectedTable) return;
         
-        const validateSession = useCallback(async () => {
-            try {
-                const sid = localStorage.getItem(`session_${selectedTable}`) || sessionId;
-                const formattedTable = /^[A-Z]/.test(selectedTable) ? selectedTable : `T${selectedTable}`;
-                const res = await fetch(`${API_URL}/sessions/validate`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tableId: formattedTable, sessionId: sid })
-                });
-                if (!res.ok) {
-                    setSessionError(true);
-                }
-            } catch (e) {
-                console.error(e);
-            }
-        }, [selectedTable, sessionId, API_URL]);
-        validateSession();
+        setTimeout(() => validateSession(), 0);
 
         // Auto-mark table as ordering when customer opens the menu
         const formattedTable = /^[A-Z]/.test(selectedTable) ? selectedTable : `T${selectedTable}`;
@@ -129,7 +151,7 @@ export default function CustomerMenu() {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: 'ordering' })
-        }).catch(err => console.log('Silent table status update failed', err));
+        }).catch(() => {});
 
         if (assistanceCooldown > 0) {
             const timer = setInterval(() => {
@@ -140,7 +162,7 @@ export default function CustomerMenu() {
             }, 1000);
             return () => clearInterval(timer);
         }
-    }, [assistanceCooldown, selectedTable]);
+    }, [assistanceCooldown, selectedTable, validateSession]);
 
     const requestAssistance = async () => {
         if (assistanceCooldown > 0 || !selectedTable) return;
@@ -162,32 +184,15 @@ export default function CustomerMenu() {
                 setAssistanceStatus('error');
                 setTimeout(() => setAssistanceStatus(null), 3000);
             }
-        } catch(err) {
+        } catch (error) {
+            console.error('Assistance Request Failed:', error);
             setAssistanceStatus('error');
             setTimeout(() => setAssistanceStatus(null), 3000);
         }
     };
 
     useEffect(() => {
-        setMenu(menuData);
-        
-        const fetchRemoteMenu = useCallback(() => {
-            setIsMenuLoading(true);
-            fetch(`${API_URL}/menu`)
-                .then(res => res.json())
-                .then(data => {
-                    if(data && data.length > 0) {
-                        setMenu(data);
-                    }
-                    setIsMenuLoading(false);
-                })
-                .catch(err => {
-                    console.log("Silent fail on menu API, using defaults");
-                    setIsMenuLoading(false);
-                });
-        }, [API_URL]);
-
-        fetchRemoteMenu();
+        setTimeout(() => fetchRemoteMenu(), 0);
 
         socket.on('menuUpdated', (updatedItem) => {
             setMenu(prev => prev.map(item => item.id === updatedItem.id ? { ...item, ...updatedItem } : item));
@@ -201,9 +206,7 @@ export default function CustomerMenu() {
             socket.off('menuUpdated');
             socket.off('menuReset');
         };
-    }, []);
-
-    const categories = categoriesData;
+    }, [fetchRemoteMenu]);
 
     const addToCart = (item) => {
         setCart(prev => {
@@ -219,8 +222,6 @@ export default function CustomerMenu() {
         if (e) e.stopPropagation();
         triggerKitchenFeedback(item.id);
         addToCart(item);
-        setAddedItems(prev => ({ ...prev, [item.id]: true }));
-        setTimeout(() => setAddedItems(prev => ({ ...prev, [item.id]: false })), 1500);
     };
 
     const updateQuantity = (id, delta) => {
@@ -273,16 +274,14 @@ export default function CustomerMenu() {
                 setSpiceLevel('');
                 setTimeout(() => setOrderStatus(null), 3000);
             } else {
-                const errData = await res.json();
                 if (res.status === 403) {
                     setSessionError(true);
                 }
                 setOrderStatus('error');
-                console.error('Order submission failed:', errData);
                 setTimeout(() => setOrderStatus(null), 4000);
             }
-        } catch (err) { 
-            console.error('Network error during order submission:', err);
+        } catch (error) { 
+            console.error('Order Submission Failed:', error);
             setOrderStatus('error'); 
             setTimeout(() => setOrderStatus(null), 4000);
         }
@@ -293,9 +292,8 @@ export default function CustomerMenu() {
         setSearchParams({ table });
     };
 
-    const fetchMyOrders = async () => {
+    const fetchMyOrders = useCallback(async () => {
         if (!selectedTable) return;
-        setIsOrdersLoading(true);
         try {
             const tableId = /^[A-Z]/.test(selectedTable) ? selectedTable : `T${selectedTable}`;
             const [sessionsRes, newOrdersRes] = await Promise.all([
@@ -305,7 +303,6 @@ export default function CustomerMenu() {
             const sessionsData = await sessionsRes.json();
             const newOrdersData = await newOrdersRes.json();
             
-            // Map session statuses to customer-friendly labels
             const statusLabel = (s) => {
                 if (s === 'confirmed') return 'Order Received';
                 if (s === 'active') return 'Cooking Started';
@@ -326,7 +323,6 @@ export default function CustomerMenu() {
                 createdAt: s.createdAt
             }));
 
-            // Include new, pending, accepted, and rejected orders
             const rawStatusLabel = (s) => {
                 if (s === 'accepted') return 'Accepted ✓';
                 if (s === 'rejected') return 'Rejected ✗';
@@ -344,18 +340,16 @@ export default function CustomerMenu() {
             }));
 
             setMyOrders([...formattedNew, ...formattedSessions]);
-        } catch (err) {
-            console.error("Failed to fetch my orders", err);
-        } finally {
-            setIsOrdersLoading(false);
+        } catch (error) {
+            console.error("Failed to fetch my orders", error);
         }
-    };
+    }, [selectedTable, sessionId]);
 
     useEffect(() => {
         let interval;
         if (view === 'orders') {
-            fetchMyOrders();
-            interval = setInterval(fetchMyOrders, 10000); // Pull backup
+            setTimeout(() => fetchMyOrders(), 0);
+            interval = setInterval(fetchMyOrders, 10000);
             
             const handleUpdate = () => fetchMyOrders();
             socket.on('orderUpdated', handleUpdate);
@@ -369,7 +363,7 @@ export default function CustomerMenu() {
                 socket.off('tableReset', handleUpdate);
             };
         }
-    }, [view, selectedTable]);
+    }, [view, selectedTable, fetchMyOrders]);
 
     const renderTableSelection = () => (
         <div className="min-h-screen bg-[#111312] py-8 px-4 flex flex-col items-center justify-center font-sans">
@@ -406,137 +400,6 @@ export default function CustomerMenu() {
                             <button key={c} onClick={() => handleTableSelect(c)} className="bg-[#111312] border border-[#d4af37]/30 text-emerald-500 py-2 rounded font-bold text-sm hover:bg-[#d4af37]/10 transition-colors shadow-inner">{c}</button>
                         );
                     })}
-                </div>
-            </div>
-        </div>
-    );
-
-    const renderLanding = () => (
-        <div className="min-h-screen bg-[#C2A165] py-8 px-4 flex flex-col items-center font-sans tracking-tight">
-            <div className="w-full max-w-[360px] bg-[#F7EFE1] rounded-lg shadow-xl overflow-hidden border border-white/20">
-                <div className="p-6 pb-4 flex flex-col items-center">
-                    <img src="/logo-with-name.png" alt="THE NIZAM'S" className="w-[160px] mb-2 drop-shadow-sm mix-blend-multiply" />
-                    <p className="text-[#966336] font-medium tracking-[0.15em] text-[9px] mb-6 uppercase text-center w-full border-b border-transparent">Authentic Indian Cuisine</p>
-
-                    <div className="w-full bg-[#EAE0CA] border border-[#D5CAA1] rounded-md p-3 px-4 flex items-center justify-between mb-6 shadow-sm">
-                        <p className="text-[#6D421B] text-[11px] font-medium leading-[1.4] max-w-[130px]">
-                            Scan & browse the all menu. No app required.
-                        </p>
-                        <div className="text-right border-l border-[#D5CAA1] pl-4">
-                            <p className="text-[#6D421B] text-[11px] font-semibold">Table: {selectedTable}</p>
-                            <p className="text-[#6D421B] text-[11px] font-semibold">Westminster</p>
-                        </div>
-                    </div>
-
-                    <div className="w-full space-y-2.5">
-                        <button onClick={() => setView('menu')} className="w-full bg-[#D66B16] text-white rounded-md p-3.5 flex items-center gap-3 hover:bg-[#B95910] transition-colors shadow-md group">
-                            <BookOpen strokeWidth={1.5} className="w-5 h-5 shrink-0" />
-                            <div className="text-left flex-1">
-                                <h3 className="font-bold text-[13px] leading-tight">View Menu</h3>
-                                <p className="text-white/90 text-[10px] opacity-90 font-medium">See biryanis, kebabs, curries & more</p>
-                            </div>
-                            <ChevronRight strokeWidth={2} className="w-4 h-4 text-white group-hover:translate-x-1 transition-transform" />
-                        </button>
-
-                        <button onClick={() => setView('book')} className="w-full bg-[#F5EFE3] text-[#6D421B] border border-[#E3D7C1] rounded-md p-3.5 flex items-center gap-3 hover:bg-[#EAE0CA] transition-colors shadow-sm">
-                            <Calendar strokeWidth={1.5} className="w-5 h-5 shrink-0 text-[#9E6E3D]" />
-                            <div className="text-left flex-1">
-                                <h3 className="font-semibold text-[13px] leading-tight text-[#6D421B]">Book Table</h3>
-                                <p className="text-[#9E6E3D] text-[10px] font-medium">Reserve your royal dining experience</p>
-                            </div>
-                            <ChevronRight strokeWidth={2} className="w-4 h-4 text-[#9E6E3D]" />
-                        </button>
-
-                        <button className="w-full bg-[#F5EFE3] text-[#6D421B] border border-[#E3D7C1] rounded-md p-3.5 flex items-center gap-3 hover:bg-[#EAE0CA] transition-colors shadow-sm">
-                            <AlertTriangle strokeWidth={1.5} className="w-5 h-5 shrink-0 text-[#9E6E3D]" />
-                            <div className="text-left flex-1">
-                                <h3 className="font-semibold text-[13px] leading-tight text-[#6D421B]">Allergens & Dietary Info</h3>
-                                <p className="text-[#9E6E3D] text-[10px] font-medium">View allergens, spice levels & symbols</p>
-                            </div>
-                            <ChevronRight strokeWidth={2} className="w-4 h-4 text-[#9E6E3D]" />
-                        </button>
-
-                        <button 
-                            onClick={requestAssistance}
-                            disabled={assistanceCooldown > 0 || assistanceStatus === 'notifying'}
-                            className="w-full bg-[#F5EFE3] text-[#6D421B] border border-[#E3D7C1] rounded-md p-3.5 flex items-center gap-3 hover:bg-[#EAE0CA] transition-colors shadow-sm disabled:opacity-75 disabled:cursor-not-allowed group relative overflow-hidden"
-                        >
-                            <Phone strokeWidth={1.5} className="w-5 h-5 shrink-0 text-[#9E6E3D]" />
-                            <div className="text-left flex-1">
-                                <h3 className="font-semibold text-[13px] leading-tight text-[#6D421B]">Call for Assistance</h3>
-                                <p className="text-[#9E6E3D] text-[10px] font-medium">Ask staff for help or special requests</p>
-                            </div>
-                            {assistanceCooldown > 0 ? (
-                                <span className="text-xs font-bold text-[#D31C13] bg-[#F4EBD7] px-2 py-1 rounded">
-                                    {Math.ceil((assistanceCooldown - Date.now())/1000)}s
-                                </span>
-                            ) : (
-                                <ChevronRight strokeWidth={2} className="w-4 h-4 text-[#9E6E3D] group-hover:translate-x-1 transition-transform" />
-                            )}
-                            
-                            {/* Inner Status Toast */}
-                            {assistanceStatus === 'success' && (
-                                <div className="absolute inset-0 bg-green-50 flex items-center justify-center gap-2 text-green-700 font-bold animate-slide-in">
-                                    <CheckCircle className="w-5 h-5" /> Staff has been notified
-                                </div>
-                            )}
-                        </button>
-
-                        <button 
-                            onClick={() => setView('orders')}
-                            className="w-full bg-[#F5EFE3] text-[#6D421B] border border-[#E3D7C1] rounded-md p-3.5 flex items-center gap-3 hover:bg-[#EAE0CA] transition-colors shadow-sm"
-                        >
-                            <Clock strokeWidth={1.5} className="w-5 h-5 shrink-0 text-[#9E6E3D]" />
-                            <div className="text-left flex-1">
-                                <h2 className="font-semibold text-[13px] leading-tight text-[#6D421B]">My Orders</h2>
-                                <p className="text-[#9E6E3D] text-[10px] font-medium">Track your active orders & bill status</p>
-                            </div>
-                            <ChevronRight strokeWidth={2} className="w-4 h-4 text-[#9E6E3D]" />
-                        </button>
-
-                        <button className="w-full bg-[#F5EFE3] text-[#6D421B] border border-[#E3D7C1] rounded-md p-3.5 flex items-center gap-3 hover:bg-[#EAE0CA] transition-colors shadow-sm">
-                            <Globe strokeWidth={1.5} className="w-5 h-5 shrink-0 text-[#9E6E3D]" />
-                            <div className="text-left flex-1">
-                                <h3 className="font-semibold text-[13px] leading-tight text-[#6D421B]">Visit Website</h3>
-                                <p className="text-[#9E6E3D] text-[10px] font-medium">View full story, gallery & events</p>
-                            </div>
-                            <ChevronRight strokeWidth={2} className="w-4 h-4 text-[#9E6E3D]" />
-                        </button>
-                    </div>
-
-                    <div className="w-full mt-6">
-                        <div className="flex justify-around py-4 border-t border-b border-[#D5CAA1]">
-                            <div className="flex flex-col items-center text-[#9E6E3D] hover:opacity-80 cursor-pointer">
-                                <MapPin strokeWidth={1.5} className="w-[18px] h-[18px] mb-1.5" />
-                                <span className="text-[10px] font-medium">Location</span>
-                            </div>
-                            <div className="flex flex-col items-center text-[#9E6E3D] hover:opacity-80 cursor-pointer">
-                                <Phone strokeWidth={1.5} className="w-[18px] h-[18px] mb-1.5" />
-                                <span className="text-[10px] font-medium">Call</span>
-                            </div>
-                            <div className="flex flex-col items-center text-[#9E6E3D] hover:opacity-80 cursor-pointer">
-                                <Clock strokeWidth={1.5} className="w-[18px] h-[18px] mb-1.5" />
-                                <span className="text-[10px] font-medium">Hours</span>
-                            </div>
-                        </div>
-                        <div className="py-4 border-b border-[#D5CAA1] flex justify-center cursor-pointer hover:opacity-80">
-                            <div className="flex items-center gap-2 text-[#9E6E3D]">
-                                <Instagram strokeWidth={1.5} className="w-[18px] h-[18px]" />
-                                <span className="text-[11px] font-semibold">Follow Us</span>
-                            </div>
-                        </div>
-                        <div className="pt-4 flex gap-3">
-                            <button className="flex-1 bg-[#F1E8D5] border border-[#E3D7C1] py-2.5 rounded-md flex items-center justify-center gap-1.5 text-[#6D421B] text-[11px] font-semibold hover:bg-[#EAE0CA]">
-                                <Star strokeWidth={1.5} className="w-[14px] h-[14px] text-[#A66D31]" /> Rate Us
-                            </button>
-                            <button className="flex-1 bg-[#F1E8D5] border border-[#E3D7C1] py-2.5 rounded-md flex items-center justify-center gap-1.5 text-[#6D421B] text-[11px] font-semibold hover:bg-[#EAE0CA]">
-                                <QrCode strokeWidth={1.5} className="w-[14px] h-[14px] text-[#A66D31]" /> Save QR
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div className="text-center pb-5 pt-1 text-[#AB8B63] text-[9px] font-medium tracking-wide">
-                    Designed for QR table-top menus
                 </div>
             </div>
         </div>
@@ -627,7 +490,6 @@ export default function CustomerMenu() {
             class: 'bg-blue-500 text-white border-blue-400/30' 
         });
 
-        // Limit to 2 badges as per rule
         const displayBadges = badges.slice(0, 2);
 
         if (displayBadges.length === 0) return null;
@@ -686,7 +548,6 @@ export default function CustomerMenu() {
     };
 
     const renderPremiumMenu = () => {
-        const categories = categoriesData;
         const featuredItem = menu.find(i => i.name === 'Nizami Dum Biryani') || menu[0];
 
         return (
@@ -694,9 +555,8 @@ export default function CustomerMenu() {
                 className="flex-1 overflow-y-auto pb-[90px] no-scrollbar scroll-smooth"
                 onScroll={handleScroll}
             >
-                {/* Categories Bar */}
                 <div className="flex overflow-x-auto px-6 py-5 gap-8 no-scrollbar sticky top-0 bg-[#F9F6F0] z-[45] border-b border-[#0B3A2E]/5 shadow-sm">
-                    {categories.map(cat => (
+                    {categoriesData.map(cat => (
                         <button 
                             key={cat.id}
                             onClick={() => {
@@ -713,7 +573,6 @@ export default function CustomerMenu() {
                     ))}
                 </div>
 
-                {/* Popular Section */}
                 <div className="py-8 px-6 overflow-hidden">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-[#0B3A2E] text-2xl font-black font-serif italic">Nizam's Favorites</h3>
@@ -754,7 +613,6 @@ export default function CustomerMenu() {
                     </div>
                 </div>
 
-                {/* Hero Feature */}
                 <div className="px-6 mb-10 pt-6">
                     <div className="relative h-[240px] rounded-[40px] overflow-hidden shadow-2xl group active:scale-[0.98] transition-all duration-500">
                         {featuredItem?.image && (
@@ -770,7 +628,6 @@ export default function CustomerMenu() {
                     </div>
                 </div>
 
-                {/* Menu Grid */}
                 <div className="px-4 space-y-8 mt-2">
                     {isMenuLoading ? (
                         [1,2,3,4].map(n => (
@@ -786,7 +643,7 @@ export default function CustomerMenu() {
                             </div>
                         ))
                     ) : (
-                        categories.map(cat => (
+                        categoriesData.map(cat => (
                             <div key={cat.id} id={`cat-${cat.name}`} className="space-y-5 pt-2 scroll-mt-24">
                                 <div className="flex items-center gap-4 mb-2">
                                     <h3 className="text-[#0B3A2E] text-xl font-bold font-serif opacity-90">{cat.name}</h3>
@@ -809,7 +666,6 @@ export default function CustomerMenu() {
                                                             <Clock size={20} className="text-white/80 drop-shadow-md" />
                                                         </div>
                                                     )}
-                                                    {/* Kitchen Effects Overlays */}
                                                     {activeEffect?.id === item.id && (
                                                         <div className="absolute inset-0 z-10 pointer-events-none">
                                                             {activeEffect.effect === 'steam' && (
@@ -912,7 +768,6 @@ export default function CustomerMenu() {
                     )}
                 </div>
 
-                {/* Floating Bottom Cart Summary */}
                 {cart.length > 0 && !isCartOpen && (
                     <div className="fixed bottom-[76px] left-4 right-4 z-50 animate-slide-in">
                         <button 
@@ -938,11 +793,9 @@ export default function CustomerMenu() {
         );
     };
 
-
     const renderCartSheet = () => {
         if (!isCartOpen) return null;
         const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
-        const serviceCharge = 0;
         const finalTotal = subtotal;
 
         return (
@@ -1134,7 +987,6 @@ export default function CustomerMenu() {
                         </div>
                     ) : (
                         myOrders.filter(o => ['Pending', 'Order Received', 'Cooking Started', 'Ready to Serve', 'Served', 'Accepted ✓', 'Rejected ✗'].includes(o.status)).map(order => {
-                            // Tracker Logic inside Component
                             const steps = [
                                 { label: 'PREPARING', trigger: ['Pending', 'Order Received', 'Cooking Started', 'Ready to Serve', 'Served', 'Accepted ✓'] },
                                 { label: 'READY', trigger: ['Ready to Serve', 'Served'] },
@@ -1170,7 +1022,6 @@ export default function CustomerMenu() {
                                         ))}
                                     </div>
 
-                                    {/* Swiggy-Style Tracker */}
                                     <div className="mt-8 mb-4 px-2 relative z-10">
                                         {isRejected ? (
                                             <div className="text-red-500 font-bold text-[10px] uppercase tracking-widest text-center bg-red-50 p-4 rounded-2xl border border-red-100">
@@ -1205,13 +1056,8 @@ export default function CustomerMenu() {
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-[10px] font-black uppercase tracking-[0.2em]">
-                                                {currentStepIndex >= 3 ? 'Arrived at table' : 
-                                                 order.prepTime ? `Estimated ready in ~${Math.max(0, order.prepTime - Math.ceil((Date.now() - new Date(order.prepStartedAt).getTime()) / 60000))} mins` : 
-                                                 'Awaiting kitchen timing'}
+                                                {currentStepIndex >= 3 ? 'Arrived at table' : 'Live Kitchen Tracking Active'}
                                             </span>
-                                            {order.prepTime && (
-                                                <span className="text-[8px] font-bold text-[#0B3A2E]/40 uppercase tracking-widest">Live Kitchen Tracking Active</span>
-                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -1319,7 +1165,6 @@ export default function CustomerMenu() {
                                             i.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                                             i.category.toLowerCase().includes(searchQuery.toLowerCase())
                                         ).map(item => {
-                                            const inCart = cart.find(i => i.id === item.id);
                                             return (
                                                 <div 
                                                     key={item.id} 
@@ -1403,7 +1248,7 @@ export default function CustomerMenu() {
                         className="group bg-red-600 text-white w-14 h-14 rounded-full shadow-[0_15px_30px_rgba(220,38,38,0.4)] flex items-center justify-center active:scale-90 transition-all border-4 border-white relative overflow-hidden disabled:bg-red-400"
                     >
                         {assistanceCooldown > 0 ? (
-                            <span className="text-[12px] font-black">{Math.ceil((assistanceCooldown - Date.now())/1000)}s</span>
+                            <span className="text-[12px] font-black">{Math.ceil((assistanceCooldown - now)/1000)}s</span>
                         ) : (
                             <Bell className={`w-6 h-6 ${assistanceStatus === 'notifying' ? 'animate-bounce' : 'group-hover:animate-shake'}`} />
                         )}

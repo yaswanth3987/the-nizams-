@@ -6,7 +6,8 @@ let db, pgPool;
 if (isPg) {
     pgPool = new Pool({
         connectionString: process.env.DATABASE_URL,
-        ssl: { rejectUnauthorized: false }
+        ssl: { rejectUnauthorized: false },
+        max: 30 // Support up to 50-60 concurrent users (assuming short-lived requests)
     });
     console.log('Connected to PostgreSQL cloud database.');
     
@@ -63,6 +64,7 @@ if (isPg) {
         if (err) console.error('Error opening local SQLite database', err.message);
         else {
             console.log('Connected to the local SQLite database.');
+            db.run('PRAGMA journal_mode=WAL'); // Enable WAL mode for better concurrency support (multiple readers, one writer)
             db.run(`CREATE TABLE IF NOT EXISTS menu_items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, price REAL NOT NULL, category TEXT NOT NULL, image TEXT, description TEXT, isAvailable BOOLEAN DEFAULT 1, unavailableUntil DATETIME, isPopular BOOLEAN DEFAULT 0, isRecommended BOOLEAN DEFAULT 0, isBestSeller BOOLEAN DEFAULT 0, isNew BOOLEAN DEFAULT 0, availableFrom TEXT, availableTo TEXT)`);
             db.run(`CREATE TABLE IF NOT EXISTS table_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, tableId TEXT NOT NULL, items TEXT NOT NULL, finalTotal REAL NOT NULL, subtotal REAL DEFAULT 0, serviceCharge REAL DEFAULT 0, status TEXT DEFAULT 'active', createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
             db.run(`ALTER TABLE table_sessions RENAME COLUMN net TO subtotal`, (err) => {});

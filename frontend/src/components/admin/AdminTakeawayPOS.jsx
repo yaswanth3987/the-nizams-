@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingBag, Plus, Minus, Search, UtensilsCrossed, CheckCircle, Info } from 'lucide-react';
 
+const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
+
 export default function AdminTakeawayPOS() {
-    const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
     const [menu, setMenu] = useState({ categories: [], items: [] });
     const [activeCategory, setActiveCategory] = useState('');
     const [cart, setCart] = useState([]);
@@ -102,7 +103,8 @@ export default function AdminTakeawayPOS() {
                 setOrderStatus('error');
                 setTimeout(() => setOrderStatus(null), 3000);
             }
-        } catch (err) {
+        } catch (error) {
+            console.error('POS Checkout Failure:', error);
             setOrderStatus('error');
             setTimeout(() => setOrderStatus(null), 3000);
         } finally {

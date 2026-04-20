@@ -53,7 +53,7 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
         });
     };
 
-    const handleProcessPayment = (method) => {
+    const handleProcessPayment = () => {
         setPaymentModal(p => ({ ...p, status: 'processing' }));
 
         // Simulate hardware / network delay

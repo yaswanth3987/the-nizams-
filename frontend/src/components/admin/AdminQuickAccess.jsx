@@ -6,25 +6,128 @@ import {
     Plus, 
     Smartphone, 
     RotateCcw, 
-    ChevronDown, 
-    MoreHorizontal,
     X,
     Clock
 } from 'lucide-react';
 
 const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
 
+const StatusLegend = () => (
+    <div className="flex flex-wrap items-center gap-6 py-2 mb-8 border-b border-white/5 pb-6">
+        <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-full bg-white/10 border border-white/20"></div>
+            <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">Blank</span>
+        </div>
+        <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]"></div>
+            <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">Running</span>
+        </div>
+        <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]"></div>
+            <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">Printed</span>
+        </div>
+        <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.3)]"></div>
+            <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">Paid</span>
+        </div>
+        <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-full bg-nizam-gold shadow-[0_0_10px_rgba(198,168,124,0.3)]"></div>
+            <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">Ordering</span>
+        </div>
+    </div>
+);
+
+const TableTile = ({ tableId, getTableStatus, getRemainingPrepTime, selectedTable, setSelectedTable }) => {
+    const { status, session, assistance } = getTableStatus(tableId);
+    
+    let bgColor = "bg-white/5 border-white/10 hover:bg-white/10";
+    let statusColor = "bg-white/20";
+    let glow = "";
+    let textColor = "text-white/40";
+
+    if (status === 'ordering') {
+        bgColor = "bg-nizam-gold/10 border-nizam-gold/40 ring-1 ring-nizam-gold/20";
+        textColor = "text-nizam-gold";
+        statusColor = "bg-nizam-gold";
+        glow = "shadow-[0_0_20px_rgba(198,168,124,0.15)]";
+    } else if (status === 'occupied') {
+        bgColor = "bg-blue-500/10 border-blue-500/40 ring-1 ring-blue-500/20";
+        textColor = "text-blue-400";
+        statusColor = "bg-blue-500";
+        glow = "shadow-[0_0_20px_rgba(59,130,246,0.15)]";
+    } else if (status === 'billing') {
+        bgColor = "bg-emerald-500/10 border-emerald-500/40 ring-1 ring-emerald-500/20";
+        textColor = "text-emerald-400";
+        statusColor = "bg-emerald-500";
+        glow = "shadow-[0_0_25px_rgba(16,185,129,0.2)]";
+    }
+
+    return (
+        <div 
+            onClick={() => (session || assistance) && setSelectedTable({ tableId, status, session, assistance })}
+            className={`group relative aspect-square rounded-[2rem] border transition-all duration-500 hover:scale-[1.05] cursor-pointer flex flex-col items-center justify-center gap-3 ${bgColor} ${glow}`}
+        >
+            {/* Status Dot */}
+            <div className={`absolute top-4 left-4 w-2 h-2 rounded-full ${statusColor} ${status !== 'free' ? 'animate-pulse' : ''}`}></div>
+
+            {/* Prep Timer Indicator */}
+            {status === 'occupied' && session?.prepTime && (
+                <div className="absolute top-4 right-4 flex items-center gap-1.5 px-2 py-1 rounded-lg bg-black/40 border border-white/5">
+                    <Clock size={10} className={getRemainingPrepTime(session) < 5 ? 'text-red-500 animate-pulse' : 'text-blue-400'} />
+                    <span className={`text-[10px] font-black ${getRemainingPrepTime(session) < 5 ? 'text-red-500' : 'text-blue-400'}`}>
+                        {getRemainingPrepTime(session)}m
+                    </span>
+                </div>
+            )}
+
+            {/* Table ID */}
+            <div className="flex flex-col items-center">
+                <span className={`text-2xl font-bold font-serif italic ${textColor}`}>
+                    {tableId.replace(/^[TBC]/, '').replace(/^0+/, '')}
+                </span>
+                <span className={`text-[8px] font-black uppercase tracking-[0.2em] transition-colors ${status === 'free' ? 'text-white/10 group-hover:text-white/30' : 'text-white/30'}`}>
+                    Unit
+                </span>
+            </div>
+
+            {/* Action Indicator Row */}
+            <div className="flex gap-2">
+                {assistance && (
+                    <div className="w-6 h-6 rounded-lg bg-red-500 flex items-center justify-center text-white shadow-lg animate-bounce">
+                        <Bell size={10} strokeWidth={3} />
+                    </div>
+                )}
+                {status === 'billing' && (
+                    <div className="w-6 h-6 rounded-lg bg-emerald-500 flex items-center justify-center text-white shadow-lg">
+                        <Printer size={10} strokeWidth={3} />
+                    </div>
+                )}
+                {(status === 'occupied' || status === 'ordering') && (
+                    <div className="w-6 h-6 rounded-lg bg-blue-500 flex items-center justify-center text-white shadow-lg">
+                        <Eye size={10} strokeWidth={3} />
+                    </div>
+                )}
+            </div>
+
+            {/* Selection Highlight */}
+            {selectedTable?.tableId === tableId && (
+                <div className="absolute inset-0 rounded-[2rem] border-2 border-nizam-gold z-10 pointer-events-none shadow-[inset_0_0_20px_rgba(198,168,124,0.2)]"></div>
+            )}
+        </div>
+    );
+};
+
 export default function AdminQuickAccess({ 
     newOrders, 
     sessions, 
     assistanceRequests, 
     updateStatus, 
-    cancelOrder, 
-    printReceipt, 
+    printReceipt,
     clearTable,
     updateAssistance 
 }) {
     const [selectedTable, setSelectedTable] = useState(null);
+    const [now] = useState(() => Date.now());
 
     const zones = [
         { name: 'A/C DINING', prefix: 'T', count: 22 },
@@ -47,134 +150,26 @@ export default function AdminQuickAccess({
         if (!session?.prepTime || !session?.prepStartedAt) return null;
         const start = new Date(session.prepStartedAt).getTime();
         const durationMs = session.prepTime * 60000;
-        const elapsed = Date.now() - start;
+        const elapsed = now - start;
         const remainingMs = durationMs - elapsed;
         return Math.max(0, Math.ceil(remainingMs / 60000));
     };
 
     const handleSetPrepTime = async (id, minutes, type = 'session') => {
         try {
-            const res = await fetch(`${API_URL}/orders/${id}/prep-time`, {
+            await fetch(`${API_URL}/orders/${id}/prep-time`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ minutes, type })
             });
-            if (res.ok) {
-                // Socket will handle UI update
-            }
-        } catch (err) {
-            console.error('Failed to set prep time:', err);
+        } catch (error) {
+            console.error('POS Error:', error);
         }
-    };
-
-    const StatusLegend = () => (
-        <div className="flex flex-wrap items-center gap-6 py-2 mb-8 border-b border-white/5 pb-6">
-            <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-white/10 border border-white/20"></div>
-                <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">Blank</span>
-            </div>
-            <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]"></div>
-                <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">Running</span>
-            </div>
-            <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]"></div>
-                <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">Printed</span>
-            </div>
-            <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.3)]"></div>
-                <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">Paid</span>
-            </div>
-            <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-nizam-gold shadow-[0_0_10px_rgba(198,168,124,0.3)]"></div>
-                <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">Ordering</span>
-            </div>
-        </div>
-    );
-
-    const TableTile = ({ tableId }) => {
-        const { status, session, assistance } = getTableStatus(tableId);
-        
-        let bgColor = "bg-white/5 border-white/10 hover:bg-white/10";
-        let textColor = "text-white/20";
-        let statusColor = "bg-white/20";
-        let glow = "";
-
-        if (status === 'ordering') {
-            bgColor = "bg-nizam-gold/10 border-nizam-gold/40 ring-1 ring-nizam-gold/20";
-            textColor = "text-nizam-gold";
-            statusColor = "bg-nizam-gold";
-            glow = "shadow-[0_0_20px_rgba(198,168,124,0.15)]";
-        } else if (status === 'occupied') {
-            bgColor = "bg-blue-500/10 border-blue-500/40 ring-1 ring-blue-500/20";
-            textColor = "text-blue-400";
-            statusColor = "bg-blue-500";
-            glow = "shadow-[0_0_20px_rgba(59,130,246,0.15)]";
-        } else if (status === 'billing') {
-            bgColor = "bg-emerald-500/10 border-emerald-500/40 ring-1 ring-emerald-500/20";
-            textColor = "text-emerald-400";
-            statusColor = "bg-emerald-500";
-            glow = "shadow-[0_0_25px_rgba(16,185,129,0.2)]";
-        }
-
-        return (
-            <div 
-                onClick={() => (session || assistance) && setSelectedTable({ tableId, status, session, assistance })}
-                className={`group relative aspect-square rounded-[2rem] border transition-all duration-500 hover:scale-[1.05] cursor-pointer flex flex-col items-center justify-center gap-3 ${bgColor} ${glow}`}
-            >
-                {/* Status Dot */}
-                <div className={`absolute top-4 left-4 w-2 h-2 rounded-full ${statusColor} ${status !== 'free' ? 'animate-pulse' : ''}`}></div>
-
-                {/* Prep Timer Indicator */}
-                {status === 'occupied' && session?.prepTime && (
-                    <div className="absolute top-4 right-4 flex items-center gap-1.5 px-2 py-1 rounded-lg bg-black/40 border border-white/5">
-                        <Clock size={10} className={getRemainingPrepTime(session) < 5 ? 'text-red-500 animate-pulse' : 'text-blue-400'} />
-                        <span className={`text-[10px] font-black ${getRemainingPrepTime(session) < 5 ? 'text-red-500' : 'text-blue-400'}`}>
-                            {getRemainingPrepTime(session)}m
-                        </span>
-                    </div>
-                )}
-
-                {/* Table ID */}
-                <div className="flex flex-col items-center">
-                    <span className={`text-2xl font-bold font-serif italic ${status === 'free' ? 'text-white/10' : 'text-white'}`}>
-                        {tableId.replace(/^[TBC]/, '').replace(/^0+/, '')}
-                    </span>
-                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/10 group-hover:text-white/30 transition-colors">
-                        Unit
-                    </span>
-                </div>
-
-                {/* Action Indicator Row */}
-                <div className="flex gap-2">
-                    {assistance && (
-                        <div className="w-6 h-6 rounded-lg bg-red-500 flex items-center justify-center text-white shadow-lg animate-bounce">
-                            <Bell size={10} strokeWidth={3} />
-                        </div>
-                    )}
-                    {status === 'billing' && (
-                        <div className="w-6 h-6 rounded-lg bg-emerald-500 flex items-center justify-center text-white shadow-lg">
-                            <Printer size={10} strokeWidth={3} />
-                        </div>
-                    )}
-                    {(status === 'occupied' || status === 'ordering') && (
-                        <div className="w-6 h-6 rounded-lg bg-blue-500 flex items-center justify-center text-white shadow-lg">
-                            <Eye size={10} strokeWidth={3} />
-                        </div>
-                    )}
-                </div>
-
-                {/* Selection Highlight */}
-                {selectedTable?.tableId === tableId && (
-                    <div className="absolute inset-0 rounded-[2rem] border-2 border-nizam-gold z-10 pointer-events-none shadow-[inset_0_0_20px_rgba(198,168,124,0.2)]"></div>
-                )}
-            </div>
-        );
     };
 
     return (
         <div className="animate-in fade-in duration-700">
-            {/* Standardized Toolbar Alignment */}
+            {/* Toolbar */}
             <div className="flex items-center justify-between mb-10">
                 <div className="flex items-center gap-6">
                     <button className="flex items-center gap-3 px-8 py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl transition-all shadow-[0_10px_30px_rgba(220,38,38,0.2)] active:scale-95 group border border-white/10">
@@ -227,7 +222,16 @@ export default function AdminQuickAccess({
                         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-9 xl:grid-cols-11 gap-6">
                             {Array.from({ length: zone.count }, (_, i) => {
                                 const tableId = `${zone.prefix}${String(i + 1).padStart(2, '0')}`;
-                                return <TableTile key={tableId} tableId={tableId} />;
+                                return (
+                                    <TableTile 
+                                        key={tableId} 
+                                        tableId={tableId} 
+                                        getTableStatus={getTableStatus} 
+                                        getRemainingPrepTime={getRemainingPrepTime}
+                                        selectedTable={selectedTable}
+                                        setSelectedTable={setSelectedTable}
+                                    />
+                                );
                             })}
                         </div>
                     </div>
@@ -236,8 +240,8 @@ export default function AdminQuickAccess({
 
             {/* Selection Drawer */}
             {selectedTable && (
-                <div className="fixed inset-0 bg-[#062c23]/80 backdrop-blur-xl z-50 flex items-center justify-end p-4 animate-in fade-in duration-500">
-                    <div className="w-full max-w-lg h-[92vh] bg-[#0c0d0c] border border-white/10 rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col animate-in slide-in-from-right-12 duration-700">
+                <div className="fixed inset-0 bg-[#062c23]/80 backdrop-blur-xl z-50 flex items-center justify-end p-4">
+                    <div className="w-full max-w-lg h-[92vh] bg-[#0c0d0c] border border-white/10 rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col">
                         <div className="p-10 border-b border-white/5 flex justify-between items-start">
                             <div className="flex items-center gap-6">
                                 <div className="w-16 h-16 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center">

@@ -10,29 +10,24 @@ const API_URL = import.meta.env.DEV
 
 export default function TakeawayMenu() {
     const navigate = useNavigate();
-    const [name, setName] = useState('');
-    const [phone, setPhone] = useState('');
-    const [menu, setMenu] = useState([]);
+    const name = localStorage.getItem('takeaway_name') || '';
+    const phone = localStorage.getItem('takeaway_phone') || '';
+    const [menu, setMenu] = useState(menuData);
     const [cart, setCart] = useState([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [orderStatus, setOrderStatus] = useState(null);
     const [activeCategory, setActiveCategory] = useState(categoriesData[0]?.name);
 
     useEffect(() => {
-        const storedName = localStorage.getItem('takeaway_name');
-        const storedPhone = localStorage.getItem('takeaway_phone');
-        if (!storedName || !storedPhone) {
+        if (!name || !phone) {
             navigate('/');
             return;
         }
-        setName(storedName);
-        setPhone(storedPhone);
 
-        setMenu(menuData);
         fetch(`${API_URL}/menu`)
             .then(res => res.json())
             .then(data => { if(data && data.length > 0) setMenu(data); })
-            .catch(err => console.log("Failed API, using defaults.", err));
+            .catch(() => {});
         
         const handleUpdate = (updatedItem) => setMenu(prev => prev.map(item => item.id === updatedItem.id ? { ...item, ...updatedItem } : item));
         const handleReset = (fullMenu) => setMenu(fullMenu);
@@ -43,7 +38,7 @@ export default function TakeawayMenu() {
             socket.off('menuUpdated', handleUpdate);
             socket.off('menuReset', handleReset);
         };
-    }, [navigate]);
+    }, [navigate, name, phone]);
 
     const handleAddToCart = (item) => {
         setCart(prev => {
@@ -101,7 +96,7 @@ export default function TakeawayMenu() {
                 setOrderStatus('error');
                 setTimeout(() => setOrderStatus(null), 3000);
             }
-        } catch (err) { 
+        } catch { 
             setOrderStatus('error'); 
             setTimeout(() => setOrderStatus(null), 3000);
         }

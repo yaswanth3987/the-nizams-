@@ -1,8 +1,8 @@
 import React from 'react';
-import { Clock, User, Bell, Volume2, VolumeX } from 'lucide-react';
-import { useSound } from '../../context/SoundContext';
+import { Clock, Bell, Volume2, VolumeX } from 'lucide-react';
+import { useSound } from '../../hooks/useSound';
 
-export default function AdminTopHeader({ title, tabs = [], activeTab, onTabChange, unreadAlerts = 0, onClearAlerts }) {
+export default function AdminTopHeader({ activeTab, onTabChange, unreadAlerts = 0, onClearAlerts }) {
     const { soundEnabled, toggleSound } = useSound();
 
     return (

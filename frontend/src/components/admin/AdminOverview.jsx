@@ -1,11 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { TrendingUp, Package, PoundSterling, FileText, Utensils, Calendar as CalendarIcon, Filter } from 'lucide-react';
-import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { TrendingUp, Package, FileText, Filter } from 'lucide-react';
+import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-export default function AdminOverview({ analyticsDaily, itemAnalytics = [], salesList = [] }) {
+export default function AdminOverview({ itemAnalytics = [], salesList = [] }) {
     // --- Date Filtering State ---
     const [datePreset, setDatePreset] = useState('today'); // 'today', 'week', 'month', 'custom', 'all'
-    const todayStr = new Date().toISOString().split('T')[0];
+    const [now] = useState(() => Date.now());
+    const todayStr = useMemo(() => new Date(now).toISOString().split('T')[0], [now]);
     const [startDate, setStartDate] = useState(todayStr);
     const [endDate, setEndDate] = useState(todayStr);
 
@@ -14,15 +15,18 @@ export default function AdminOverview({ analyticsDaily, itemAnalytics = [], sale
         const t = new Date().toISOString().split('T')[0];
         setEndDate(t);
         if (mode === 'today') setStartDate(t);
-        else if (mode === 'week') setStartDate(new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]);
-        else if (mode === 'month') setStartDate(new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0]);
+        else if (mode === 'week') setStartDate(new Date(now - 7 * 86400000).toISOString().split('T')[0]);
+        else if (mode === 'month') setStartDate(new Date(now - 30 * 86400000).toISOString().split('T')[0]);
         else if (mode === 'all') {
-            setStartDate('2020-01-01'); // Arbitrary far past
+            setStartDate('2020-01-01');
         }
     };
 
     // --- Filter Logic ---
     const filteredSalesList = useMemo(() => {
+        const weekMs = 7 * 86400000;
+        const monthMs = 30 * 86400000;
+
         return salesList.filter(order => {
             if (!order.createdAt) return false;
             const orderDateStr = order.createdAt.split('T')[0].split(' ')[0];
@@ -33,11 +37,11 @@ export default function AdminOverview({ analyticsDaily, itemAnalytics = [], sale
             if (datePreset === 'all') return true;
             if (datePreset === 'today') return orderDateStr === endDate;
             if (datePreset === 'custom') return tsOrder >= tsStart && tsOrder <= tsEnd;
-            if (datePreset === 'week') return tsOrder >= new Date(Date.now() - 7 * 86400000).getTime();
-            if (datePreset === 'month') return tsOrder >= new Date(Date.now() - 30 * 86400000).getTime();
+            if (datePreset === 'week') return tsOrder >= (now - weekMs);
+            if (datePreset === 'month') return tsOrder >= (now - monthMs);
             return true;
         });
-    }, [salesList, datePreset, startDate, endDate]);
+    }, [salesList, datePreset, startDate, endDate, now]);
 
     // --- Chart Data Generation ---
     const generatedChartData = useMemo(() => {
@@ -55,7 +59,6 @@ export default function AdminOverview({ analyticsDaily, itemAnalytics = [], sale
     const totalOrders = filteredSalesList.length;
     const totalRevenue = filteredSalesList.reduce((sum, o) => sum + (o.finalTotal || 0), 0);
     const serviceChargeCollected = filteredSalesList.reduce((sum, o) => sum + (o.serviceCharge || 0), 0);
-    const subtotalCollected = filteredSalesList.reduce((sum, o) => sum + (o.subtotal || 0), 0);
     const totalItems = itemAnalytics.reduce((sum, item) => sum + (item.quantitySold || 0), 0);
     const avgTicket = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
 
@@ -220,35 +223,6 @@ function MetricCard({ title, value, subvalue, subIcon, golden = false, currency 
             <div className="flex items-center gap-2">
                 {subIcon}
                 <span className={`text-[10px] font-bold tracking-wider uppercase ${golden ? 'text-accent/40' : 'text-white/20'}`}>{subvalue}</span>
-            </div>
-        </div>
-    );
-}
-
-function UTENSIL_ICON({ idx }) {
-    if (idx === 0) return <TrendingUp size={16} className="text-amber-500" />;
-    if (idx === 1) return <Package size={16} className="text-blue-400" />;
-    return <FileText size={16} className="text-emerald-500" />;
-}
-
-function TopItem({ icon, name, stats, revenue, badge, rank }) {
-    return (
-        <div className="bg-[#111312] border border-nizam-border/50 p-3 rounded-lg flex items-center justify-between hover:border-nizam-gold/30 transition-colors relative overflow-hidden group">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-nizam-border group-hover:bg-nizam-gold/50 transition-colors"></div>
-            <div className="flex items-center gap-4 pl-3">
-                <div className="w-8 h-8 rounded bg-[#1c1e1c] border border-white/5 flex justify-center items-center shadow-inner">
-                    <span className="text-[10px] font-bold text-white/50">{rank}</span>
-                </div>
-                <div>
-                    <h4 className="text-[13px] font-bold text-white whitespace-nowrap overflow-hidden max-w-[140px] text-ellipsis" title={name}>{name}</h4>
-                    <p className="text-[10px] text-[#a8b8b2] mt-0.5">{stats}</p>
-                </div>
-            </div>
-            <div className="text-right">
-                <p className="text-sm font-bold text-emerald-400 tracking-wide">{revenue}</p>
-                <p className={`text-[8px] uppercase font-bold tracking-widest mt-1 ${rank === 1 ? 'text-nizam-gold' : 'text-[#a8b8b2]'}`}>
-                    {badge}
-                </p>
             </div>
         </div>
     );

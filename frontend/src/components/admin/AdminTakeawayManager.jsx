@@ -1,7 +1,7 @@
 import React from 'react';
 import { Package, CheckCircle, Clock, ShoppingBag, ArrowRight, Printer, Check, CreditCard, XCircle, Utensils } from 'lucide-react';
 
-export default function AdminTakeawayManager({ orders: sessions, updateStatus, printReceipt }) {
+export default function AdminTakeawayManager({ orders: sessions, updateStatus }) {
     // Filter only takeaway sessions that aren't completed yet
     const takeawayOrders = sessions.filter(s => s.orderType === 'takeaway' && s.status !== 'completed');
     
