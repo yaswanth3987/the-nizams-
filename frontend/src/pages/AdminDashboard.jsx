@@ -337,6 +337,7 @@ export default function AdminDashboard() {
                             clearTable={clearTable}
                             assistanceRequests={assistanceRequests}
                             updateAssistance={updateAssistance}
+                            onViewChange={setActiveView}
                         />
                     </div>
                 )}

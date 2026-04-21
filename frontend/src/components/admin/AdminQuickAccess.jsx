@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
     Bell, 
     Printer, 
@@ -124,10 +124,19 @@ export default function AdminQuickAccess({
     updateStatus, 
     printReceipt,
     clearTable,
-    updateAssistance 
+    updateAssistance,
+    onViewChange
 }) {
     const [selectedTable, setSelectedTable] = useState(null);
-    const [now] = useState(() => Date.now());
+    const [now, setNow] = useState(Date.now());
+    const [isMoveKotEnabled, setIsMoveKotEnabled] = useState(false);
+    const [orderTypeMode, setOrderTypeMode] = useState('delivery'); // 'delivery' | 'takeaway'
+    const [searchQuery, setSearchQuery] = useState('');
+
+    useEffect(() => {
+        const timer = setInterval(() => setNow(Date.now()), 10000); // Pulse every 10s
+        return () => clearInterval(timer);
+    }, []);
 
     const zones = [
         { name: 'A/C DINING', prefix: 'T', count: 22 },
@@ -172,7 +181,10 @@ export default function AdminQuickAccess({
             {/* Toolbar */}
             <div className="flex items-center justify-between mb-10">
                 <div className="flex items-center gap-6">
-                    <button className="flex items-center gap-3 px-8 py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl transition-all shadow-[0_10px_30px_rgba(220,38,38,0.2)] active:scale-95 group border border-white/10">
+                    <button 
+                        onClick={() => onViewChange?.('pos')}
+                        className="flex items-center gap-3 px-8 py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl transition-all shadow-[0_10px_30px_rgba(220,38,38,0.2)] active:scale-95 group border border-white/10"
+                    >
                         <Plus size={18} strokeWidth={3} className="group-hover:rotate-90 transition-transform" />
                         <span className="text-[11px] font-black uppercase tracking-[0.2em]">New Order</span>
                     </button>
@@ -183,8 +195,10 @@ export default function AdminQuickAccess({
                         </div>
                         <input 
                             type="text" 
-                            placeholder="SEARCH BILL" 
-                            className="bg-white/5 border border-white/10 rounded-2xl px-12 py-4 text-[11px] font-bold text-white placeholder:text-white/10 focus:outline-none focus:ring-1 focus:ring-nizam-gold/40 w-44 transition-all"
+                            placeholder="SEARCH BILL/TABLE" 
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="bg-white/5 border border-white/10 rounded-2xl px-12 py-4 text-[11px] font-bold text-white placeholder:text-white/10 focus:outline-none focus:ring-1 focus:ring-nizam-gold/40 w-44 transition-all focus:w-64"
                         />
                     </div>
                 </div>
@@ -193,14 +207,27 @@ export default function AdminQuickAccess({
                     <div className="flex items-center gap-4 py-2 px-5 bg-white/5 rounded-2xl border border-white/10">
                         <RotateCcw size={14} className="text-white/20" />
                         <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Move KOT</span>
-                        <div className="w-10 h-5 bg-white/10 rounded-full relative p-1 cursor-pointer">
-                            <div className="w-3 h-3 bg-white/20 rounded-full"></div>
+                        <div 
+                            onClick={() => setIsMoveKotEnabled(!isMoveKotEnabled)}
+                            className={`w-10 h-5 rounded-full relative p-1 cursor-pointer transition-colors ${isMoveKotEnabled ? 'bg-emerald-500/20' : 'bg-white/10'}`}
+                        >
+                            <div className={`w-3 h-3 rounded-full transition-all duration-300 ${isMoveKotEnabled ? 'bg-emerald-500 ml-5' : 'bg-white/20'}`}></div>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded-2xl border border-white/10">
-                        <button className="px-6 py-2.5 bg-red-600/20 text-red-500 rounded-xl text-[10px] font-black uppercase tracking-widest border border-red-500/10">Delivery</button>
-                        <button className="px-6 py-2.5 hover:bg-white/5 text-white/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">Take Away</button>
+                        <button 
+                            onClick={() => setOrderTypeMode('delivery')}
+                            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${orderTypeMode === 'delivery' ? 'bg-red-600/20 text-red-500 border-red-500/20' : 'text-white/20 border-transparent hover:bg-white/5'}`}
+                        >
+                            Delivery
+                        </button>
+                        <button 
+                            onClick={() => setOrderTypeMode('takeaway')}
+                            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${orderTypeMode === 'takeaway' ? 'bg-blue-600/20 text-blue-500 border-blue-500/20' : 'text-white/20 border-transparent hover:bg-white/5'}`}
+                        >
+                            Take Away
+                        </button>
                     </div>
                 </div>
             </div>
@@ -222,6 +249,9 @@ export default function AdminQuickAccess({
                         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-9 xl:grid-cols-11 gap-6">
                             {Array.from({ length: zone.count }, (_, i) => {
                                 const tableId = `${zone.prefix}${String(i + 1).padStart(2, '0')}`;
+                                // Basic filtering: if query exists, only show matching table IDs
+                                if (searchQuery && !tableId.toLowerCase().includes(searchQuery.toLowerCase())) return null;
+                                
                                 return (
                                     <TableTile 
                                         key={tableId} 
