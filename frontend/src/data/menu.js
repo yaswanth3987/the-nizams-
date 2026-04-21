@@ -76,8 +76,8 @@ export const menuData = [
     { id: 'mmc5', name: 'MUTTON MASALA', price: 16.99, category: 'Mutton Main Course', spice: 2, veg: false, image: '/mutton masala.jpg' },
 
     // Rice
-    { id: 'r1', name: 'PLAIN RICE', price: 4.99, category: 'Rice', spice: 0, veg: true },
-    { id: 'r2', name: 'ZEERA RICE', price: 5.99, category: 'Rice', spice: 0, veg: true },
+    { id: 'r1', name: 'PLAIN RICE', price: 4.99, category: 'Rice', spice: 0, veg: true, image: '/Instant Pot Basmati Rice.jpg' },
+    { id: 'r2', name: 'ZEERA RICE', price: 5.99, category: 'Rice', spice: 0, veg: true, image: '/Zeera Rice.jpg' },
 
     // Veg Main Course
     { id: 'vmc1', name: 'TADKA DAL', price: 9.99, category: 'Veg Main Course', spice: 1, veg: true, image: '/Dal Tadka.jpg' },
@@ -86,17 +86,17 @@ export const menuData = [
     { id: 'vmc4', name: 'PANEER BUTTER MASALA', price: 12.99, category: 'Veg Main Course', spice: 1, veg: true, image: '/paneer butter masala.jpg' },
 
     // Nizami Mandi
-    { id: 'nm1', name: 'CHICKEN MANDI (1 PERSON)', price: 11.99, category: 'Nizami Mandi', spice: 1, veg: false, group: 1 },
-    { id: 'nm2', name: 'CHICKEN MANDI (2 PERSONS)', price: 18.99, category: 'Nizami Mandi', spice: 1, veg: false, group: 2 },
-    { id: 'nm3', name: 'CHICKEN MANDI JUICY (1 PERSON)', price: 13.99, category: 'Nizami Mandi', spice: 1, veg: false, group: 1 },
-    { id: 'nm4', name: 'CHICKEN MANDI JUICY (2 PERSONS)', price: 20.99, category: 'Nizami Mandi', spice: 1, veg: false, group: 2 },
-    { id: 'nm5', name: 'LAMB MANDI (1 PERSON)', price: 13.99, category: 'Nizami Mandi', spice: 1, veg: false, group: 1 },
-    { id: 'nm6', name: 'LAMB MANDI (2 PERSONS)', price: 21.99, category: 'Nizami Mandi', spice: 1, veg: false, group: 2 },
+    { id: 'nm1', name: 'CHICKEN MANDI (1 PERSON)', price: 11.99, category: 'Nizami Mandi', spice: 1, veg: false, group: 1, image: '/chicken Mandi 1 person.jpg' },
+    { id: 'nm2', name: 'CHICKEN MANDI (2 PERSONS)', price: 18.99, category: 'Nizami Mandi', spice: 1, veg: false, group: 2, image: '/Chicken Mandi 2 persons.jpg' },
+    { id: 'nm3', name: 'CHICKEN MANDI JUICY (1 PERSON)', price: 13.99, category: 'Nizami Mandi', spice: 1, veg: false, group: 1, image: '/chicken juicy mandi 1 person.jpg' },
+    { id: 'nm4', name: 'CHICKEN MANDI JUICY (2 PERSONS)', price: 20.99, category: 'Nizami Mandi', spice: 1, veg: false, group: 2, image: '/chicken juicy mandi 2 persons.jpg' },
+    { id: 'nm5', name: 'LAMB MANDI (1 PERSON)', price: 13.99, category: 'Nizami Mandi', spice: 1, veg: false, group: 1, image: '/Lamb-Mandi-1 person.jpg' },
+    { id: 'nm6', name: 'LAMB MANDI (2 PERSONS)', price: 21.99, category: 'Nizami Mandi', spice: 1, veg: false, group: 2, image: '/Lamb mandi 2 persons.jpg' },
     { id: 'nm7', name: 'LAMB MANDI JUICY (1 PERSON)', price: 15.99, category: 'Nizami Mandi', spice: 1, veg: false, group: 1 },
-    { id: 'nm8', name: 'LAMB MANDI JUICY (2 PERSONS)', price: 23.99, category: 'Nizami Mandi', spice: 1, veg: false, group: 2 },
-    { id: 'nm9', name: 'CHICKEN 65 MANDI', price: 12.99, category: 'Nizami Mandi', spice: 1, veg: false },
-    { id: 'nm10', name: 'CHICKEN TIKKA MANDI', price: 12.99, category: 'Nizami Mandi', spice: 1, veg: false },
-    { id: 'nm11', name: 'FISH MANDI', price: 12.99, category: 'Nizami Mandi', spice: 1, veg: false },
+    { id: 'nm8', name: 'LAMB MANDI JUICY (2 PERSONS)', price: 23.99, category: 'Nizami Mandi', spice: 1, veg: false, group: 2, image: '/amb mandi juicy 2 persons.jpg' },
+    { id: 'nm9', name: 'CHICKEN 65 MANDI', price: 12.99, category: 'Nizami Mandi', spice: 1, veg: false, image: '/chicken 65 mandi.jpg' },
+    { id: 'nm10', name: 'CHICKEN TIKKA MANDI', price: 12.99, category: 'Nizami Mandi', spice: 1, veg: false, image: '/chicken tikka mandi.png' },
+    { id: 'nm11', name: 'FISH MANDI', price: 12.99, category: 'Nizami Mandi', spice: 1, veg: false, image: '/Fish Mandi.jpg' },
 
     // Mandi Platters
     { id: 'mp1', name: 'MINGLED MINI PLATTER (3 PERSONS)', price: 39.99, category: 'Mandi Platters', desc: 'Lamb 1pc, Chicken Leg 1pc, Fish 1pc, Chicken 65', spice: 1, veg: false, group: 3 },
