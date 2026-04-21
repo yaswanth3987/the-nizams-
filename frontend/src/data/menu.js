@@ -80,10 +80,10 @@ export const menuData = [
     { id: 'r2', name: 'ZEERA RICE', price: 5.99, category: 'Rice', spice: 0, veg: true },
 
     // Veg Main Course
-    { id: 'vmc1', name: 'TADKA DAL', price: 9.99, category: 'Veg Main Course', spice: 1, veg: true },
-    { id: 'vmc2', name: 'DAL FRY', price: 12.99, category: 'Veg Main Course', spice: 1, veg: true },
-    { id: 'vmc3', name: 'SHAHI PANEER', price: 12.99, category: 'Veg Main Course', spice: 1, veg: true },
-    { id: 'vmc4', name: 'PANEER BUTTER MASALA', price: 12.99, category: 'Veg Main Course', spice: 1, veg: true },
+    { id: 'vmc1', name: 'TADKA DAL', price: 9.99, category: 'Veg Main Course', spice: 1, veg: true, image: '/Dal Tadka.jpg' },
+    { id: 'vmc2', name: 'DAL FRY', price: 12.99, category: 'Veg Main Course', spice: 1, veg: true, image: '/Dal Fry.jpg' },
+    { id: 'vmc3', name: 'SHAHI PANEER', price: 12.99, category: 'Veg Main Course', spice: 1, veg: true, image: '/shahi paneer.jpg' },
+    { id: 'vmc4', name: 'PANEER BUTTER MASALA', price: 12.99, category: 'Veg Main Course', spice: 1, veg: true, image: '/paneer butter masala.jpg' },
 
     // Nizami Mandi
     { id: 'nm1', name: 'CHICKEN MANDI (1 PERSON)', price: 11.99, category: 'Nizami Mandi', spice: 1, veg: false, group: 1 },
