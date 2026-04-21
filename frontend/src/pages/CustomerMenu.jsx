@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
     ChevronLeft, 
@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { categoriesData, menuData } from '../data/menu.js';
 import { socket } from '../utils/socket';
+import { SoundContext } from '../context/SoundContextDefinition';
 
 const API_URL = import.meta.env.DEV 
     ? `http://${window.location.hostname}:3001/api` 
@@ -66,8 +67,11 @@ export default function CustomerMenu() {
     const [spiceLevel, setSpiceLevel] = useState('');
     const [lastScrollTime, setLastScrollTime] = useState(0);
     const [isMenuLoading, setIsMenuLoading] = useState(true);
+    const [menuError, setMenuError] = useState(null);
 
     const [now, setNow] = useState(() => Date.now());
+
+    const { playSound, soundEnabled } = useContext(SoundContext);
 
     useEffect(() => {
         const timer = setInterval(() => setNow(Date.now()), 1000);
@@ -75,10 +79,13 @@ export default function CustomerMenu() {
     }, []);
 
     const playWhoosh = useCallback(() => {
+        // Use SoundContext logic or a shared audio if we want more control
+        // For now, let's keep it simple but respect soundEnabled
+        if (!soundEnabled) return;
         const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
         audio.volume = 0.05;
         audio.play().catch(() => {});
-    }, []);
+    }, [soundEnabled]);
 
     const handleScroll = () => {
         const currentTime = Date.now();
@@ -99,13 +106,29 @@ export default function CustomerMenu() {
             setCartPulse(false);
         }, 1000);
     }, []);
+
     const [assistanceStatus, setAssistanceStatus] = useState(null);
-    const [assistanceCooldown, setAssistanceCooldown] = useState(() => {
-        const saved = localStorage.getItem(`assist_cooldown_${selectedTable}`);
-        return saved ? parseInt(saved, 10) : 0;
-    });
+    const [assistanceCooldown, setAssistanceCooldown] = useState(0);
     const [sessionError, setSessionError] = useState(false);
-    const [sessionId] = useState(() => generateSessionId(selectedTable));
+    
+    const sessionId = useMemo(() => generateSessionId(selectedTable), [selectedTable]);
+
+    // Handle assistance cooldown per table
+    useEffect(() => {
+        if (!selectedTable) return;
+        const saved = localStorage.getItem(`assist_cooldown_${selectedTable}`);
+        if (saved) {
+            const expire = parseInt(saved, 10);
+            if (expire > Date.now()) {
+                setAssistanceCooldown(expire);
+            } else {
+                setAssistanceCooldown(0);
+                localStorage.removeItem(`assist_cooldown_${selectedTable}`);
+            }
+        } else {
+            setAssistanceCooldown(0);
+        }
+    }, [selectedTable]);
 
     const validateSession = useCallback(async () => {
         if (!selectedTable) return;
@@ -127,16 +150,22 @@ export default function CustomerMenu() {
 
     const fetchRemoteMenu = useCallback(() => {
         setIsMenuLoading(true);
+        setMenuError(null);
         fetch(`${API_URL}/menu`)
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error('Failed to load menu');
+                return res.json();
+            })
             .then(data => {
                 if(data && data.length > 0) {
                     setMenu(data);
                 }
                 setIsMenuLoading(false);
             })
-            .catch(() => {
+            .catch((err) => {
+                console.error('Menu load error:', err);
                 setIsMenuLoading(false);
+                setMenuError('Temporary connection issue. Please refresh.');
             });
     }, []);
 
@@ -240,11 +269,12 @@ export default function CustomerMenu() {
         setOrderStatus('submitting');
         
         const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-        const serviceCharge = 0;
-        const finalTotal = subtotal;
+        const serviceCharge = 0; // Configurable in future
+        const finalTotal = subtotal + serviceCharge;
         
         const formattedTable = /^[A-Z]/.test(selectedTable) ? selectedTable : `T${selectedTable}`;
         const itemsList = cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty }));
+        
         if (specialRequest || spiceLevel) {
             const noteText = [spiceLevel ? `[${spiceLevel}]` : '', specialRequest].filter(Boolean).join(' ');
             itemsList.push({ id: `note_${Date.now()}`, name: `Note: ${noteText}`, price: 0, qty: 1 });
@@ -274,15 +304,16 @@ export default function CustomerMenu() {
                 setSpiceLevel('');
                 setTimeout(() => setOrderStatus(null), 3000);
             } else {
+                const errData = await res.json().catch(() => ({}));
                 if (res.status === 403) {
                     setSessionError(true);
                 }
-                setOrderStatus('error');
+                setOrderStatus(errData.message || 'error');
                 setTimeout(() => setOrderStatus(null), 4000);
             }
         } catch (error) { 
             console.error('Order Submission Failed:', error);
-            setOrderStatus('error'); 
+            setOrderStatus('Network Error. Please try again.'); 
             setTimeout(() => setOrderStatus(null), 4000);
         }
     };
@@ -422,8 +453,16 @@ export default function CustomerMenu() {
                     <div className="absolute inset-0 bg-gradient-to-tr from-[#f09433] via-[#e6683c] via-[#dc2743] to-[#cc2366] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <Instagram size={16} className="text-[#E1306C] group-hover:text-white relative z-10 transition-colors duration-300" strokeWidth={2.5} />
                 </a>
-                <div className="bg-[#0B3A2E] text-white px-4 py-2 rounded-2xl text-[10px] font-black tracking-widest shadow-lg border border-white/10">
-                    TABLE {selectedTable}
+                <div className="flex items-center gap-1 bg-[#0B3A2E] text-white p-1 rounded-2xl shadow-lg border border-white/10">
+                    <div className="px-3 py-1 text-[10px] font-black tracking-widest uppercase">
+                        {selectedTable}
+                    </div>
+                    <button 
+                        onClick={() => setSelectedTable(null)}
+                        className="bg-[#C29958] text-[#0B3A2E] px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-white transition-all active:scale-95"
+                    >
+                        Change
+                    </button>
                 </div>
             </div>
         </header>
@@ -583,6 +622,13 @@ export default function CustomerMenu() {
                         </button>
                     ))}
                 </div>
+
+                {menuError && (
+                    <div className="mx-6 mt-4 p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100 flex items-center gap-3 animate-slide-in">
+                        <AlertTriangle size={18} />
+                        <span className="text-[10px] font-black uppercase tracking-widest leading-relaxed">{menuError}</span>
+                    </div>
+                )}
 
                 <div className="py-8 px-6 overflow-hidden">
                     <div className="flex items-center justify-between mb-6">
@@ -893,11 +939,15 @@ export default function CustomerMenu() {
                                      <span className="font-black text-[#0B3A2E] text-sm min-w-[16px] text-center tabular-nums">{cart.find(i => i.id === 'dr3')?.qty || 0}</span>
                                      <button 
                                          onClick={() => {
-                                             const waterItem = menu.find(i => i.id === 'dr3') || { id: 'dr3', name: 'WATER BOTTLE', price: 0.00, category: 'Drinks' };
-                                             if (!cart.find(i => i.id === 'dr3')) {
-                                                 handleAddToCart(waterItem);
-                                             } else {
-                                                 updateQuantity('dr3', 1);
+                                             const waterId = 'dr3';
+                                             const waterItem = menu.find(i => i.id === waterId) || menuData.find(i => i.id === waterId);
+                                             if (waterItem) {
+                                                 const inCart = cart.find(i => i.id === waterId);
+                                                 if (!inCart) {
+                                                     handleAddToCart(waterItem);
+                                                 } else {
+                                                     updateQuantity(waterId, 1);
+                                                 }
                                              }
                                          }}
                                          className="w-8 h-8 bg-blue-500 text-white rounded-[12px] flex items-center justify-center shadow-md active:scale-75 transition-all"
