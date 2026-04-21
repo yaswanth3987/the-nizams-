@@ -65,15 +65,15 @@ export const menuData = [
     { id: 'bt4', name: 'THAALI FOR 4 (CHICKEN)', price: 54.99, category: 'Biryani Thaali', desc: '2 Double Biryani, 2 Pc Tandoori, 2 Naan, 2 Rumali, 4 Drinks', spice: 2, veg: false, group: 4, image: '/chicken-biryani-thaali-for-4-people.webp' },
 
     // Chicken Main Course
-    { id: 'cmc1', name: 'DUM KA CHICKEN', price: 12.99, category: 'Chicken Main Course', spice: 2, veg: false },
-    { id: 'cmc2', name: 'BUTTER CHICKEN', price: 12.99, category: 'Chicken Main Course', spice: 1, veg: false, isPopular: true, image: '/butter-chicken.webp' },
+    { id: 'cmc1', name: 'DUM KA CHICKEN', price: 12.99, category: 'Chicken Main Course', spice: 2, veg: false, image: '/dum-ka-chicken.jpg' },
+    { id: 'cmc2', name: 'BUTTER CHICKEN', price: 12.99, category: 'Chicken Main Course', spice: 1, veg: false, isPopular: true, image: '/Butter Chicken.jpg' },
 
     // Mutton Main Course
-    { id: 'mmc1', name: 'BHEJA FRY MASALA', price: 14.99, category: 'Mutton Main Course', spice: 2, veg: false },
-    { id: 'mmc2', name: 'GURDA FRY MASALA', price: 14.99, category: 'Mutton Main Course', spice: 2, veg: false },
-    { id: 'mmc3', name: 'KALEJI FRY MASALA', price: 14.99, category: 'Mutton Main Course', spice: 2, veg: false },
-    { id: 'mmc4', name: 'TALAWA GOSHT', price: 16.99, category: 'Mutton Main Course', spice: 2, veg: false, isRecommended: true },
-    { id: 'mmc5', name: 'MUTTON MASALA', price: 16.99, category: 'Mutton Main Course', spice: 2, veg: false },
+    { id: 'mmc1', name: 'BHEJA FRY MASALA', price: 14.99, category: 'Mutton Main Course', spice: 2, veg: false, image: '/Bheja Fry Mumbai.jpg' },
+    { id: 'mmc2', name: 'GURDA FRY MASALA', price: 14.99, category: 'Mutton Main Course', spice: 2, veg: false, image: '/Gurda fry Masal.jpg' },
+    { id: 'mmc3', name: 'KALEJI FRY MASALA', price: 14.99, category: 'Mutton Main Course', spice: 2, veg: false, image: '/Kaleji fry masala.jpg' },
+    { id: 'mmc4', name: 'TALAWA GOSHT', price: 16.99, category: 'Mutton Main Course', spice: 2, veg: false, isRecommended: true, image: '/Talawa Gosht.jpg' },
+    { id: 'mmc5', name: 'MUTTON MASALA', price: 16.99, category: 'Mutton Main Course', spice: 2, veg: false, image: '/mutton masala.jpg' },
 
     // Rice
     { id: 'r1', name: 'PLAIN RICE', price: 4.99, category: 'Rice', spice: 0, veg: true },
