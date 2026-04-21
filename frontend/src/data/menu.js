@@ -35,28 +35,28 @@ export const menuData = [
     { id: 'nvs10', name: 'LAMB SEEKH KEBAB (4 PCS)', price: 11.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/lamb-seekh-kebab.webp' },
     { id: 'nvs11', name: 'LAMB CHOPS (4 PCS)', price: 12.99, category: 'Non Veg Starters', spice: 2, veg: false, image: '/lamb-chops.webp' },
     { id: 'nvs12', name: 'MUTTON HALEEM', price: 14.99, category: 'Non Veg Starters', spice: 1, veg: false, isPopular: true, image: '/mutton-haleem.webp' },
-    { id: 'nvs13', name: 'MUTTON MARAG', price: 14.99, category: 'Non Veg Starters', spice: 1, veg: false },
+    { id: 'nvs13', name: 'MUTTON MARAG', price: 14.99, category: 'Non Veg Starters', spice: 1, veg: false, image: '/mutton marag.png' },
 
     // Sea Food
     { id: 'sf1', name: 'MASALA FISH (1 PC)', price: 7.99, category: 'Sea Food', spice: 2, veg: false, image: '/masala-fish.webp' },
-    { id: 'sf2', name: 'APOLLO FISH', price: 14.99, category: 'Sea Food', spice: 2, veg: false },
+    { id: 'sf2', name: 'APOLLO FISH', price: 14.99, category: 'Sea Food', spice: 2, veg: false, image: '/apollo fish.png' },
     { id: 'sf3', name: 'TANDOORI GRILLED FISH', price: 14.99, category: 'Sea Food', spice: 2, veg: false, image: '/tandoori-grill-fish.webp' },
-    { id: 'sf4', name: 'CHILLI GARLIC PRAWNS', price: 14.99, category: 'Sea Food', spice: 3, veg: false },
+    { id: 'sf4', name: 'CHILLI GARLIC PRAWNS', price: 14.99, category: 'Sea Food', spice: 3, veg: false, image: '/CHILLI GARLIC PRAWNS.png' },
 
     // Veg Starters
-    { id: 'vs1', name: 'VEG SPRING ROLL (6 PCS)', price: 7.99, category: 'Veg Starters', spice: 1, veg: true },
-    { id: 'vs2', name: 'TANDOORI PANEER TIKKA', price: 10.99, category: 'Veg Starters', spice: 2, veg: true },
+    { id: 'vs1', name: 'VEG SPRING ROLL (6 PCS)', price: 7.99, category: 'Veg Starters', spice: 1, veg: true, image: '/VEG SPRING ROLL (6 PCS).png' },
+    { id: 'vs2', name: 'TANDOORI PANEER TIKKA', price: 10.99, category: 'Veg Starters', spice: 2, veg: true, image: '/TANDOORI PANEER TIKKA.png' },
 
     // Biryani
-    { id: 'b1', name: 'VEG DUM BIRYANI (SINGLE)', price: 7.99, category: 'Biryani', spice: 2, veg: true },
-    { id: 'b2', name: 'CHICKEN BIRYANI (SINGLE)', price: 8.99, category: 'Biryani', spice: 2, veg: false, isPopular: true },
-    { id: 'b3', name: 'CHICKEN BIRYANI (DOUBLE)', price: 16.99, category: 'Biryani', spice: 2, veg: false, group: 2 },
-    { id: 'b4', name: 'CHICKEN BIRYANI (FAMILY)', price: 22.99, category: 'Biryani', spice: 2, veg: false, group: 4 },
-    { id: 'b5', name: 'CHICKEN BIRYANI (JUMBO)', price: 29.99, category: 'Biryani', spice: 2, veg: false, group: 6 },
-    { id: 'b6', name: 'LAMB BIRYANI (SINGLE)', price: 11.99, category: 'Biryani', spice: 2, veg: false },
-    { id: 'b7', name: 'LAMB BIRYANI (DOUBLE)', price: 19.99, category: 'Biryani', spice: 2, veg: false, group: 2 },
-    { id: 'b8', name: 'LAMB BIRYANI (FAMILY)', price: 29.99, category: 'Biryani', spice: 2, veg: false, group: 4 },
-    { id: 'b9', name: 'LAMB BIRYANI (JUMBO)', price: 39.99, category: 'Biryani', spice: 2, veg: false, group: 6 },
+    { id: 'b1', name: 'VEG DUM BIRYANI (SINGLE)', price: 7.99, category: 'Biryani', spice: 2, veg: true, image: '/VEG DUM BIRYANI (SINGLE).jpg' },
+    { id: 'b2', name: 'CHICKEN BIRYANI (SINGLE)', price: 8.99, category: 'Biryani', spice: 2, veg: false, isPopular: true, image: '/CHICKEN BIRYANI (SINGLE).jpg' },
+    { id: 'b3', name: 'CHICKEN BIRYANI (DOUBLE)', price: 16.99, category: 'Biryani', spice: 2, veg: false, group: 2, image: '/CHICKEN BIRYANI (DOUBLE).jpg' },
+    { id: 'b4', name: 'CHICKEN BIRYANI (FAMILY)', price: 22.99, category: 'Biryani', spice: 2, veg: false, group: 4, image: '/CHICKEN BIRYANI (FAMILY).jpg' },
+    { id: 'b5', name: 'CHICKEN BIRYANI (JUMBO)', price: 29.99, category: 'Biryani', spice: 2, veg: false, group: 6, image: '/CHICKEN BIRYANI (JUMBO).jpg' },
+    { id: 'b6', name: 'LAMB BIRYANI (SINGLE)', price: 11.99, category: 'Biryani', spice: 2, veg: false, image: '/LAMB BIRYANI (SINGLE).jpg' },
+    { id: 'b7', name: 'LAMB BIRYANI (DOUBLE)', price: 19.99, category: 'Biryani', spice: 2, veg: false, group: 2, image: '/LAMB BIRYANI (DOUBLE).jpg' },
+    { id: 'b8', name: 'LAMB BIRYANI (FAMILY)', price: 29.99, category: 'Biryani', spice: 2, veg: false, group: 4, image: '/LAMB BIRYANI (FAMILY).png' },
+    { id: 'b9', name: 'LAMB BIRYANI (JUMBO)', price: 39.99, category: 'Biryani', spice: 2, veg: false, group: 6, image: '/LAMB BIRYANI (JUMBO).jpg' },
 
     // Biryani Thaali
     { id: 'bt1', name: 'THAALI FOR 2 (LAMB)', price: 29.99, category: 'Biryani Thaali', desc: '1 Double Biryani, Chicken 65, Chilli Chicken, 1 Pc Tandoori, 1 Naan, 1 Rumali, 2 Drinks', spice: 2, veg: false, group: 2, isRecommended: true, image: '/lamb-biryani-thaali-for-2-people.webp' },
@@ -66,7 +66,7 @@ export const menuData = [
 
     // Chicken Main Course
     { id: 'cmc1', name: 'DUM KA CHICKEN', price: 12.99, category: 'Chicken Main Course', spice: 2, veg: false },
-    { id: 'cmc2', name: 'BUTTER CHICKEN', price: 12.99, category: 'Chicken Main Course', spice: 1, veg: false, isPopular: true },
+    { id: 'cmc2', name: 'BUTTER CHICKEN', price: 12.99, category: 'Chicken Main Course', spice: 1, veg: false, isPopular: true, image: '/butter chicken.webp' },
 
     // Mutton Main Course
     { id: 'mmc1', name: 'BHEJA FRY MASALA', price: 14.99, category: 'Mutton Main Course', spice: 2, veg: false },
@@ -118,9 +118,9 @@ export const menuData = [
 
     // Breads (Naan & Roti)
     { id: 'br1', name: 'PLAIN NAAN / PLAIN ROTI', price: 1.99, category: 'Breads (Naan & Roti)', spice: 0, veg: true },
-    { id: 'br2', name: 'BUTTER NAAN / BUTTER ROTI', price: 2.49, category: 'Breads (Naan & Roti)', spice: 0, veg: true },
+    { id: 'br2', name: 'BUTTER NAAN / BUTTER ROTI', price: 2.49, category: 'Breads (Naan & Roti)', spice: 0, veg: true, image: '/butter naan.webp' },
     { id: 'br3', name: 'GARLIC NAAN', price: 2.99, category: 'Breads (Naan & Roti)', spice: 0, veg: true },
-    { id: 'br4', name: 'CHEESE NAAN', price: 2.99, category: 'Breads (Naan & Roti)', spice: 0, veg: true },
+    { id: 'br4', name: 'CHEESE NAAN', price: 2.99, category: 'Breads (Naan & Roti)', spice: 0, veg: true, image: '/cheese naan.webp' },
     { id: 'br5', name: 'CHILLI CHEESE NAAN', price: 2.99, category: 'Breads (Naan & Roti)', spice: 1, veg: true },
     { id: 'br6', name: 'CHILLI GARLIC NAAN', price: 3.49, category: 'Breads (Naan & Roti)', spice: 1, veg: true },
     { id: 'br7', name: 'CHEESE GARLIC NAAN', price: 3.49, category: 'Breads (Naan & Roti)', spice: 0, veg: true },
