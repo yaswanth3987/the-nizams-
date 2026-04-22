@@ -4,7 +4,7 @@ import {
     Plus, Minus, X, Utensils, CreditCard, ArrowLeft,
     Check, LayoutGrid, ListOrdered, Settings, User, 
     ArrowUpRight, Flame, Sparkles, Filter, MoreVertical,
-    Coffee, Wine
+    Coffee, Wine, UtensilsCrossed
 } from 'lucide-react';
 import { socket } from '../utils/socket';
 
