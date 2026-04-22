@@ -375,7 +375,6 @@ export default function CustomerMenu() {
             };
 
             const formattedSessions = (Array.isArray(sessionsData) ? sessionsData : [])
-                .filter(s => s.sessionId === sessionId)
                 .map(s => ({
                 id: s.id,
                 items: Array.isArray(s.items) ? s.items : (typeof s.items === 'string' ? (() => { try { return JSON.parse(s.items) } catch(e) { return [] } })() : []),
@@ -391,7 +390,6 @@ export default function CustomerMenu() {
             };
 
             const formattedNew = (Array.isArray(newOrdersData) ? newOrdersData : [])
-                .filter(o => o.sessionId === sessionId)
                 .map(o => ({
                 id: o.id,
                 items: Array.isArray(o.items) ? o.items : (typeof o.items === 'string' ? (() => { try { return JSON.parse(o.items) } catch(e) { return [] } })() : []),
