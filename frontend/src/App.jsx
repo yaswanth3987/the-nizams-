@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import CustomerMenu from './pages/CustomerMenu';
 import AdminDashboard from './pages/AdminDashboard';
 import KitchenDisplay from './pages/KitchenDisplay';
+import WaitersPortal from './pages/WaitersPortal';
 import ErrorBoundary from './components/ErrorBoundary';
 import { SoundProvider } from './context/SoundContext';
 
@@ -15,6 +16,7 @@ function App() {
             <Route path="/" element={<CustomerMenu />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/kitchen" element={<KitchenDisplay />} />
+            <Route path="/waiter" element={<WaitersPortal />} />
             {/* Default catch-all */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
