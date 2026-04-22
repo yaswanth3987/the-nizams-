@@ -277,21 +277,17 @@ const updateOrderStatus = async (id, status) => {
         const items = typeof oldOrder.items === 'string' ? JSON.parse(oldOrder.items) : oldOrder.items;
         const today = new Date().toISOString().split('T')[0];
         for (const item of items) {
-            if (isPg) {
-                await runQuery(
-                    `INSERT INTO item_sales (date, "itemName", "quantitySold", "totalRevenue") VALUES (?, ?, ?, ?) ON CONFLICT(date, "itemName") DO UPDATE SET "quantitySold" = item_sales."quantitySold" + EXCLUDED."quantitySold", "totalRevenue" = item_sales."totalRevenue" + EXCLUDED."totalRevenue"`,
-                    [today, item.name, item.qty, item.price * item.qty]
-                ).catch(e => console.error(e));
-            } else {
-                await runQuery(
-                    `INSERT INTO item_sales (date, itemName, quantitySold, totalRevenue) VALUES (?, ?, ?, ?) ON CONFLICT(date, itemName) DO UPDATE SET quantitySold = quantitySold + excluded.quantitySold, totalRevenue = totalRevenue + excluded.totalRevenue`,
-                    [today, item.name, item.qty, item.price * item.qty]
-                ).catch(e => console.error(e));
-            }
+            const itemSql = isPg
+                ? `INSERT INTO item_sales (date, "itemName", "quantitySold", "totalRevenue") VALUES (?, ?, ?, ?) ON CONFLICT(date, "itemName") DO UPDATE SET "quantitySold" = item_sales."quantitySold" + EXCLUDED."quantitySold", "totalRevenue" = item_sales."totalRevenue" + EXCLUDED."totalRevenue"`
+                : `INSERT INTO item_sales (date, itemName, quantitySold, totalRevenue) VALUES (?, ?, ?, ?) ON CONFLICT(date, itemName) DO UPDATE SET quantitySold = quantitySold + excluded.quantitySold, totalRevenue = totalRevenue + excluded.totalRevenue`;
+            await runQuery(itemSql, [today, item.name, item.qty, item.price * item.qty]).catch(e => console.error(e));
         }
     }
+    
+    // Refresh only if not deleted
     const newOrderRes = await runQuery(`SELECT * FROM orders WHERE id = ?`, [id]);
     const row = newOrderRes.rows[0];
+    if (!row) return { id, status, transitioned: true }; // Return status if row was deleted during transition
     return { ...row, items: typeof row.items === 'string' ? JSON.parse(row.items) : row.items };
 };
 

@@ -20,8 +20,7 @@ async function runTest() {
         const helpRes = await fetch(`${API_BASE}/assistance`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ tableId: "T05", type: "staff" }),
-            signal: AbortSignal.timeout(10000)
+            body: JSON.stringify({ tableId: "T05", type: "staff" })
         });
         console.log("Response Status:", helpRes.status);
         const helpData = await helpRes.json();
@@ -61,8 +60,7 @@ async function runTest() {
                 status: "new",
                 orderType: "dine-in",
                 isStaff: true
-            }),
-            signal: AbortSignal.timeout(15000)
+            })
         });
         const orderData = await orderRes.json();
         console.log("✅ Staff Order Created ID:", orderData.id);
@@ -72,8 +70,7 @@ async function runTest() {
         const acceptRes = await fetch(`${API_BASE}/new-orders/${orderData.id}/status`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: "accepted" }),
-            signal: AbortSignal.timeout(15000)
+            body: JSON.stringify({ status: "accepted" })
         });
         if (acceptRes.ok) {
             console.log("✅ Order Accepted & Transitioned!");
