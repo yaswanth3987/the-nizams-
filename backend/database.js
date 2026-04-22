@@ -196,13 +196,13 @@ const createOrder = async (orderData) => {
     const calcFinalTotal = calcSubtotal + calcServiceCharge;
 
     if (isPg) {
-        const sql = `INSERT INTO orders ("tableId", items, "finalTotal", subtotal, "serviceCharge", status, "orderType", "customerName", "phone", "sessionId") VALUES (?, ?, ?, ?, ?, 'new', ?, ?, ?, ?) RETURNING *`;
-        const res = await runQuery(sql, [tableId.toString(), itemsJson, calcFinalTotal, calcSubtotal, calcServiceCharge, ot, cName, pNum, sId]);
+        const sql = `INSERT INTO orders ("tableId", items, "finalTotal", subtotal, "serviceCharge", status, "orderType", "customerName", "phone", "sessionId") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`;
+        const res = await runQuery(sql, [tableId.toString(), itemsJson, calcFinalTotal, calcSubtotal, calcServiceCharge, orderData.status || 'new', ot, cName, pNum, sId]);
         const row = res.rows[0];
         return { ...row, items: typeof row.items === 'string' ? JSON.parse(row.items) : row.items };
     } else {
-        const sql = `INSERT INTO orders (tableId, items, finalTotal, subtotal, serviceCharge, status, orderType, customerName, phone, sessionId) VALUES (?, ?, ?, ?, ?, 'new', ?, ?, ?, ?)`;
-        const res = await runQuery(sql, [tableId.toString(), itemsJson, calcFinalTotal, calcSubtotal, calcServiceCharge, ot, cName, pNum, sId]);
+        const sql = `INSERT INTO orders (tableId, items, finalTotal, subtotal, serviceCharge, status, orderType, customerName, phone, sessionId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        const res = await runQuery(sql, [tableId.toString(), itemsJson, calcFinalTotal, calcSubtotal, calcServiceCharge, orderData.status || 'new', ot, cName, pNum, sId]);
         const selectRes = await runQuery(`SELECT * FROM orders WHERE id = ?`, [res.lastID]);
         const row = selectRes.rows[0];
         return { ...row, items: JSON.parse(row.items) };
@@ -216,7 +216,13 @@ const allocateSession = async (tableId, sessionId) => {
             return existing.session_token === sessionId;
         }
         
-        // No active session, create one
+        // No active session. Check if table is currently in a state that blocks new QR sessions
+        const tStatus = await getTableStatus(tableId);
+        if (tStatus && ['billing', 'ordering', 'cooking', 'ready', 'served'].includes(tStatus.status)) {
+            return false;
+        }
+        
+        // No active session and table is not in a blocking state (e.g. 'free' or 'occupied'), create one
         await runQuery(`INSERT INTO qr_sessions (seating_id, session_token, status) VALUES (?, ?, 'ACTIVE')`, [tableId.toString(), sessionId]);
         return true;
     } catch (e) {
@@ -596,6 +602,11 @@ const getTableStatuses = async () => {
     return res.rows;
 };
 
+const getTableStatus = async (tableId) => {
+    const res = await runQuery(`SELECT * FROM table_status WHERE tableId = ?`, [tableId.toString()]);
+    return res.rows[0];
+};
+
 const updateTableStatus = async (tableId, status) => {
     const today = new Date().toISOString();
     console.log(`[DB] Updating Table ${tableId} to status: ${status}`);
@@ -789,7 +800,7 @@ module.exports = {
     getEmployees, createEmployee, updateEmployee, deleteEmployee, markAttendance, getAttendanceToday,
     getMenuItems, addMenuItem, updateMenuItem, deleteMenuItem, seedMenu,
     updateMenuItemStatus, checkMenuAvailabilityReset, getSessionsByStatus, updateSessionStatus, updateCategoryItemStatus,
-    getTableStatuses, updateTableStatus, getSessionsByTable, getOrdersByTable,
+    getTableStatuses, getTableStatus, updateTableStatus, getSessionsByTable, getOrdersByTable,
     allocateSession, getActiveSession, clearSession, updatePrepTime, updateOrderItems,
     getUnavailabilitySchedules, createUnavailabilitySchedule, updateUnavailabilitySchedule, deleteUnavailabilitySchedule, processSchedulesTask
 };

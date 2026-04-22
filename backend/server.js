@@ -129,16 +129,23 @@ app.post('/api/orders', async (req, res) => {
             }
         }
         
-        const order = await createOrder(req.body);
-        
+        let order;
+        if (req.body.status === 'confirmed' || req.body.status === 'accepted') {
+            order = await addOrderToSession(req.body);
+            // This is a pre-confirmed order (e.g. from Admin POS)
+            io.emit('sessionUpdated', order);
+        } else {
+            order = await createOrder(req.body);
+            // This is a NEW order from customer, admin uses 'orderCreated' listener
+            io.emit('orderCreated', order); 
+        }
+
         // Auto-update table status to ordering when new order arrives
         if (order.tableId && orderType !== 'takeaway' && order.tableId !== 'TAKEAWAY') {
             const tStatus = await updateTableStatus(order.tableId, 'ordering');
             io.emit('tableStatusUpdated', tStatus);
         }
 
-        // This is a NEW order from customer, admin uses 'orderCreated' listener
-        io.emit('orderCreated', order); 
         res.status(201).json(order);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -151,9 +158,11 @@ app.put('/api/orders/:id/status', async (req, res) => {
         
         // Auto-update table status on billing/completion
         if (req.body.status === 'billed') {
+            await clearSession(updatedSession.tableId);
             const tStatus = await updateTableStatus(updatedSession.tableId, 'billing');
             io.emit('tableStatusUpdated', tStatus);
         } else if (req.body.status === 'completed') {
+            await clearSession(updatedSession.tableId);
             const tStatus = await updateTableStatus(updatedSession.tableId, 'free');
             io.emit('tableStatusUpdated', tStatus);
         }
@@ -234,7 +243,7 @@ app.put('/api/new-orders/:id/status', async (req, res) => {
         const row = await updateOrderStatus(req.params.id, status);
         
         // Auto-update table status when admin confirms order
-        if ((status === 'accepted' || status === 'confirmed') && row && row.tableId) {
+        if ((status === 'accepted' || status === 'confirmed') && row && row.tableId && row.tableId !== 'TAKEAWAY') {
             const tStatus = await updateTableStatus(row.tableId, 'occupied');
             io.emit('tableStatusUpdated', tStatus);
         }
