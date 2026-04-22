@@ -28,7 +28,8 @@ import {
     Trophy,
     Sparkles,
     Users,
-    Info
+    Info,
+    PoundSterling
 } from 'lucide-react';
 import { categoriesData, menuData } from '../data/menu.js';
 import { socket } from '../utils/socket';
