@@ -349,7 +349,7 @@ app.put('/api/assistance/:id/status', async (req, res) => {
     try {
         const request = await updateAssistanceStatus(req.params.id, req.body.status);
         if (request) {
-            io.emit('assistanceUpdated', { id: request.id, status: request.status });
+            io.emit('assistanceUpdated', request);
             res.json(request);
         } else {
             res.status(404).json({ error: 'Request not found' });

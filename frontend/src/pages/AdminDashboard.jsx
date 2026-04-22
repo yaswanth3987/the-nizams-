@@ -82,7 +82,7 @@ export default function AdminDashboard() {
     }, []);
 
     // Sound System Integration
-    const hasUnattendedAssistance = assistanceRequests.some(r => r.status === 'new');
+    const hasUnattendedAssistance = assistanceRequests.some(r => r.status === 'pending');
     const { playSound } = useSoundSystem(hasUnattendedAssistance);
 
     // --- Effects next ---
