@@ -39,7 +39,7 @@ export default function WaitersPortal() {
                 fetch(`${API_URL}/new-orders`),
                 fetch(`${API_URL}/assistance`),
                 fetch(`${API_URL}/menu`),
-                fetch(`${API_URL}/orders`)
+                fetch(`${API_URL}/orders?statuses=confirmed,active,ready,served,billed`)
             ]);
             
             const [tablesData, ordersData, helpData, menuData, sessionsData] = await Promise.all([

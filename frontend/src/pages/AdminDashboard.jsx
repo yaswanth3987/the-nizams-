@@ -38,7 +38,7 @@ export default function AdminDashboard() {
 
     // --- Define Callbacks first for Hook Stability ---
     const fetchSessions = useCallback(() => {
-        return fetch(`${API_URL}/orders`)
+        return fetch(`${API_URL}/orders?statuses=confirmed,active,ready,served,billed`)
             .then(res => {
                 if(!res.ok) throw new Error("Orders API Failed");
                 return res.json();
