@@ -432,6 +432,19 @@ app.get('/api/attendance/today', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+app.post('/api/attendance', async (req, res) => {
+    try {
+        const { employeeId } = req.body;
+        if (!employeeId) return res.status(400).json({ error: 'employeeId required' });
+        
+        const { markAttendance } = require('./database');
+        const log = await markAttendance(employeeId);
+        res.status(201).json(log);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
 app.post('/api/attendance/request-otp', (req, res) => {
     const { employeeId } = req.body;
     if (!employeeId) return res.status(400).json({ error: 'employeeId required' });
