@@ -1192,17 +1192,17 @@ export default function CustomerMenu() {
                                     <div className="absolute -top-10 -right-10 w-48 h-48 bg-[#C29958]/5 blur-[60px] rounded-full pointer-events-none"></div>
                                     <div className="flex justify-between items-start mb-6 relative z-10">
                                         <div className="bg-[#0B3A2E]/5 px-5 py-2.5 rounded-2xl">
-                                            <p className="text-[#0B3A2E] text-[10px] font-black uppercase tracking-[0.15em] opacity-50 mb-0.5">Order #NIZ-{order.id.toString().slice(-4)}</p>
+                                            <p className="text-[#0B3A2E] text-[10px] font-black uppercase tracking-[0.15em] opacity-50 mb-0.5">Order #NIZ-{order.id?.toString().slice(-4) || '0000'}</p>
                                             <h4 className="text-[#0B3A2E] text-xl font-bold font-serif leading-none italic">Royal Order</h4>
                                         </div>
                                     </div>
                                     
                                     <div className="space-y-3 mb-8 relative z-10">
-                                        {order.items.map((item, idx) => (
+                                        {(order.items || []).map((item, idx) => (
                                             <div key={idx} className="flex justify-between items-center text-sm border-b border-[#0B3A2E]/5 pb-3 last:border-0 last:pb-0">
                                                 <div className="flex items-center gap-3">
-                                                    <span className="w-5 h-5 bg-[#C29958]/10 text-[#C29958] flex items-center justify-center rounded text-[10px] font-black">x{item.qty}</span>
-                                                    <span className="font-bold text-[#0B3A2E] opacity-90">{item.name}</span>
+                                                    <span className="w-5 h-5 bg-[#C29958]/10 text-[#C29958] flex items-center justify-center rounded text-[10px] font-black">x{item?.qty || 1}</span>
+                                                    <span className="font-bold text-[#0B3A2E] opacity-90">{item?.name || 'Item'}</span>
                                                 </div>
                                             </div>
                                         ))}
@@ -1263,17 +1263,17 @@ export default function CustomerMenu() {
                         ) : myOrders.filter(o => ['Ready to Pay', 'Completed', 'Billed'].includes(o.status)).map(order => (
                             <div key={order.id} className="bg-white rounded-[35px] p-5 flex gap-6 items-center border border-white shadow-sm hover:shadow-md transition-all active:scale-[0.98]">
                                 <div className="w-20 h-20 rounded-[28px] overflow-hidden bg-gray-50 shadow-md shrink-0 border border-white">
-                                    <img src={order.items[0]?.image || '/logo-icon.png'} alt="Order" className="w-full h-full object-cover" />
+                                    <img src={(order.items && order.items[0]?.image) || '/logo-icon.png'} alt="Order" className="w-full h-full object-cover" />
                                 </div>
                                 <div className="flex-1 min-w-0 pr-2">
                                     <div className="flex items-center gap-2 text-green-600 text-[9px] font-black uppercase tracking-[0.2em] mb-1.5 opacity-80">
                                         <CheckCircle size={10} strokeWidth={3} /> CONFIRMED
                                     </div>
-                                    <h4 className="text-[#0B3A2E] font-black text-base leading-tight mb-1 truncate">{order.items[0]?.name}{order.items.length > 1 ? ` & ${order.items.length - 1} more` : ''}</h4>
-                                    <p className="text-[#6D5D4B] text-[10px] font-black opacity-40 uppercase tracking-widest">{new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long' })} • {order.items.length} Items</p>
+                                    <h4 className="text-[#0B3A2E] font-black text-base leading-tight mb-1 truncate">{(order.items && order.items[0]?.name) || 'Royal Feast'}{(order.items && order.items.length > 1) ? ` & ${order.items.length - 1} more` : ''}</h4>
+                                    <p className="text-[#6D5D4B] text-[10px] font-black opacity-40 uppercase tracking-widest">{new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long' })} • {(order.items && order.items.length) || 0} Items</p>
                                 </div>
                                 <div className="text-[#0B3A2E] font-black text-lg tabular-nums bg-[#F5E6CC]/20 px-4 py-2 rounded-2xl">
-                                    £{order.total.toFixed(2)}
+                                    £{(order.total || 0).toFixed(2)}
                                 </div>
                             </div>
                         ))}
