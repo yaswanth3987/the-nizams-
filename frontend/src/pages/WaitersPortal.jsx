@@ -7,6 +7,7 @@ import {
     Coffee, Wine, UtensilsCrossed
 } from 'lucide-react';
 import { socket } from '../utils/socket';
+import { useSoundSystem } from '../hooks/useSoundSystem';
 
 const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
 
@@ -23,6 +24,7 @@ export default function WaitersPortal() {
     const [searchQuery, setSearchQuery] = useState('');
     const [cart, setCart] = useState([]);
     const [now, setNow] = useState(Date.now());
+    const { playSound } = useSoundSystem(assistanceRequests.length > 0);
 
     useEffect(() => {
         const timer = setInterval(() => setNow(Date.now()), 1000);
@@ -59,7 +61,13 @@ export default function WaitersPortal() {
 
     useEffect(() => {
         fetchData();
-        const refresh = () => fetchData();
+        const refresh = (data) => {
+            fetchData();
+            // Play notification sounds based on event
+            if (data?.type === 'bill') playSound('bill');
+            else if (data?.status === 'ready') playSound('ready');
+            else playSound('newOrder');
+        };
         socket.on('tableStatusUpdated', refresh);
         socket.on('orderCreated', refresh);
         socket.on('orderUpdated', refresh);
@@ -117,7 +125,7 @@ export default function WaitersPortal() {
                 ].map(item => (
                     <button 
                         key={item.id}
-                        onClick={() => { setActiveTab(item.id); setView('dashboard'); }}
+                        onClick={() => { setActiveTab(item.id); setView('dashboard'); if("vibrate" in navigator) navigator.vibrate(20); }}
                         className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 group ${activeTab === item.id ? 'bg-[#FFD700]/10 text-[#FFD700]' : 'text-[#86a69d] hover:bg-white/5'}`}
                     >
                         <item.icon size={20} strokeWidth={activeTab === item.id ? 2.5 : 2} />
