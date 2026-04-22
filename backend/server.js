@@ -115,12 +115,10 @@ app.get('/api/orders', async (req, res) => {
     }
 });
 
-app.post('/api/orders', async (req, res) => {
-    try {
-        const { orderType, tableId, sessionId } = req.body;
+        const { orderType, tableId, sessionId, isStaff } = req.body;
         
-        // Validate session for dine-in orders
-        if (orderType !== 'takeaway' && tableId && tableId !== 'TAKEAWAY') {
+        // Validate session for dine-in orders (skip if placed by staff)
+        if (!isStaff && orderType !== 'takeaway' && tableId && tableId !== 'TAKEAWAY') {
             const activeSession = await getActiveSession(tableId);
             const tokenToMatch = activeSession ? (activeSession.session_token || activeSession.sessionId) : null;
             
