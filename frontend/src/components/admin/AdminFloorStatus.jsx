@@ -1,48 +1,10 @@
 import React from 'react';
 import { Sparkles, UtensilsCrossed, Monitor } from 'lucide-react';
 
-export default function AdminFloorStatus({ orders: sessions, updateStatus }) {
+export default function AdminFloorStatus({ orders: sessions, updateStatus, API_URL }) {
     const confirmedSessions = sessions.filter(s => ['confirmed', 'active', 'ready', 'served'].includes(s.status) && s.orderType !== 'takeaway');
 
-    // Group multiple sessions for the same table into one UI card
-    const groupedSessions = confirmedSessions.reduce((acc, current) => {
-        const tableId = current.tableId;
-        if (!acc[tableId]) {
-            acc[tableId] = {
-                tableId: current.tableId,
-                status: 'confirmed',
-                subtotal: current.subtotal || 0,
-                serviceCharge: current.serviceCharge || 0,
-                finalTotal: current.finalTotal || 0,
-                orderType: current.orderType,
-                customerName: current.customerName,
-                phone: current.phone,
-                ids: [current.id],
-                shards: [current],
-                items: [...current.items] // For synthetic receipt printing
-            };
-        } else {
-            const existing = acc[tableId];
-            existing.subtotal += (current.subtotal || 0);
-            existing.serviceCharge += (current.serviceCharge || 0);
-            existing.finalTotal += (current.finalTotal || 0);
-            existing.ids.push(current.id);
-            existing.shards.push(current);
-
-            // Merge items just for the synthetic receipt payload
-            current.items.forEach(newItem => {
-                const found = existing.items.find(i => i.name === newItem.name);
-                if (found) {
-                    found.qty += newItem.qty;
-                } else {
-                    existing.items.push({ ...newItem });
-                }
-            });
-        }
-        return acc;
-    }, {});
-
-    const displaySessions = Object.values(groupedSessions);
+    const displaySessions = confirmedSessions;
     
     return (
         <div className="flex flex-col h-full animate-in fade-in duration-700 font-sans">
@@ -57,11 +19,11 @@ export default function AdminFloorStatus({ orders: sessions, updateStatus }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                     {displaySessions.map((session, idx) => {
                         const isVip = session.tableId?.toString().toUpperCase().includes('VIP');
-                        const hasReady = session.shards.some(s => s.status === 'ready');
-                        const hasServed = session.shards.some(s => s.status === 'served');
+                        const isReady = session.status === 'ready';
+                        const isServed = session.status === 'served';
 
                         return (
-                            <div key={session.tableId} className={`rounded-3xl border p-8 flex flex-col shadow-2xl relative overflow-hidden h-[480px] ${isVip ? 'bg-secondary/40 border-accent/30' : 'bg-white/5 border-white/10'}`}>
+                            <div key={session.id} className={`rounded-[40px] border p-8 flex flex-col shadow-2xl relative overflow-hidden transition-all duration-500 hover:scale-[1.02] ${isVip ? 'bg-secondary/40 border-accent/30' : 'bg-white/5 border-white/10'}`}>
                                 <div className="flex justify-between items-start mb-8">
                                     <div>
                                         <div className={`text-[10px] font-bold tracking-widest uppercase mb-1 ${isVip ? 'text-accent' : 'text-white/40'}`}>
@@ -72,17 +34,17 @@ export default function AdminFloorStatus({ orders: sessions, updateStatus }) {
                                         </h3>
                                     </div>
                                     <div className="flex flex-col items-end gap-2">
-                                        {hasReady && (
+                                        {isReady && (
                                             <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 bg-accent text-black rounded-lg animate-pulse shadow-[0_0_15px_rgba(255,215,0,0.5)]">
                                                 Ready to Serve
                                             </span>
                                         )}
-                                        {hasServed && !hasReady && (
+                                        {isServed && (
                                             <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 bg-emerald-500 text-white rounded-lg">
                                                 Served
                                             </span>
                                         )}
-                                        {!hasReady && !hasServed && (
+                                        {!isReady && !isServed && (
                                             <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-lg bg-white/10 text-white/60 border border-white/10">
                                                 Preparing
                                             </span>
@@ -107,14 +69,21 @@ export default function AdminFloorStatus({ orders: sessions, updateStatus }) {
                                     </div>
 
                                 <div className="grid grid-cols-2 gap-4">
-                                    <button className="py-3 rounded-xl font-bold text-xs bg-white/5 text-white/60 uppercase border border-white/10 hover:bg-white hover:text-black transition-all">
-                                        View Bill
-                                    </button>
                                     <button 
-                                        onClick={() => session.ids.forEach(id => updateStatus(id, 'billed'))}
-                                        className="py-3 rounded-xl font-black text-xs bg-accent text-black uppercase shadow-lg hover:bg-[#FFC300] transition-all glow-gold"
+                                        onClick={() => updateStatus(session.id, 'billed')}
+                                        className="py-4 rounded-2xl font-black text-xs bg-accent text-black uppercase shadow-lg hover:bg-[#FFC300] transition-all glow-gold"
                                     >
                                         Ready Bill
+                                    </button>
+                                    <button 
+                                        onClick={() => {
+                                            if (confirm('Permanently delete this order from Admin?')) {
+                                                fetch(`${API_URL.replace('/api','')}/api/orders/${session.id}`, { method: 'DELETE' });
+                                            }
+                                        }}
+                                        className="py-4 rounded-2xl font-bold text-xs bg-red-900/20 text-red-400 uppercase border border-red-900/30 hover:bg-red-900/40 transition-all"
+                                    >
+                                        Delete
                                     </button>
                                 </div>
                             </div>

@@ -249,6 +249,17 @@ app.put('/api/orders/:id/prep-time', async (req, res) => {
     }
 });
 
+app.put('/api/orders/:id/items', async (req, res) => {
+    try {
+        const { items, finalTotal, type } = req.body;
+        const updated = await updateOrderItems(req.params.id, items, finalTotal, type);
+        io.emit(type === 'session' ? 'sessionUpdated' : 'orderUpdated', updated);
+        res.json(updated);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.put('/api/menu/category/:category/availability', async (req, res) => {
     try {
         const { isAvailable, until } = req.body;

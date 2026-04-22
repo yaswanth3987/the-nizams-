@@ -650,6 +650,18 @@ const updatePrepTime = async (id, minutes, type = 'session') => {
     return { ...row, items };
 };
 
+const updateOrderItems = async (id, items, total, type = 'session') => {
+    const table = type === 'session' ? 'table_sessions' : 'orders';
+    const itemsJson = JSON.stringify(items);
+    
+    await runQuery(`UPDATE ${table} SET items = ?, "finalTotal" = ? WHERE id = ?`, [itemsJson, total, id]);
+    const res = await runQuery(`SELECT * FROM ${table} WHERE id = ?`, [id]);
+    const row = res.rows[0];
+    if (!row) throw new Error(`${type} with id ${id} not found`);
+    
+    return { ...row, items: typeof row.items === 'string' ? JSON.parse(row.items) : row.items };
+};
+
 const getUnavailabilitySchedules = async () => {
     const res = await runQuery(`SELECT * FROM unavailability_schedules ORDER BY id DESC`);
     return res.rows;
@@ -772,6 +784,6 @@ module.exports = {
     getMenuItems, addMenuItem, updateMenuItem, deleteMenuItem, seedMenu,
     updateMenuItemStatus, checkMenuAvailabilityReset, getSessionsByStatus, updateSessionStatus, updateCategoryItemStatus,
     getTableStatuses, updateTableStatus, getSessionsByTable, getOrdersByTable,
-    allocateSession, getActiveSession, clearSession, updatePrepTime,
+    allocateSession, getActiveSession, clearSession, updatePrepTime, updateOrderItems,
     getUnavailabilitySchedules, createUnavailabilitySchedule, updateUnavailabilitySchedule, deleteUnavailabilitySchedule, processSchedulesTask
 };

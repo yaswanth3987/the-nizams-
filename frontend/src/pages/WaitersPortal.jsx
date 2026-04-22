@@ -4,7 +4,7 @@ import {
     Plus, Minus, X, Utensils, CreditCard, ArrowLeft,
     Check, LayoutGrid, ListOrdered, Settings, User, 
     ArrowUpRight, Flame, Sparkles, Filter, MoreVertical,
-    Coffee, Wine, UtensilsCrossed
+    Coffee, Wine, UtensilsCrossed, Trash2
 } from 'lucide-react';
 import { socket } from '../utils/socket';
 import { useSoundSystem } from '../hooks/useSoundSystem';
@@ -23,6 +23,7 @@ export default function WaitersPortal() {
     // Order entry state
     const [searchQuery, setSearchQuery] = useState('');
     const [cart, setCart] = useState([]);
+    const [editingOrder, setEditingOrder] = useState(null); // { id, type }
     const [now, setNow] = useState(Date.now());
     const { playSound } = useSoundSystem(assistanceRequests.length > 0);
 
@@ -342,6 +343,7 @@ export default function WaitersPortal() {
                                                     onClick={() => {
                                                         setSelectedTable(order.tableId);
                                                         setCart(order.items || []);
+                                                        setEditingOrder({ id: order.id, type: order._source });
                                                         setView('order_entry');
                                                         if("vibrate" in navigator) navigator.vibrate(50);
                                                     }}
@@ -489,14 +491,30 @@ export default function WaitersPortal() {
                                             <span className="bg-[#FFD700]/10 text-[#FFD700] text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest mb-2 inline-block">ORDER #{order.id}</span>
                                             <div className="text-white font-bold text-lg capitalize">{order.status}</div>
                                         </div>
-                                        {order.status === 'ready' && (
-                                            <button 
-                                                onClick={() => handleUpdateOrderStatus(order.id, 'served', order._source)}
-                                                className="bg-green-600 hover:bg-green-500 text-white px-8 py-3 rounded-2xl font-black uppercase text-xs tracking-widest active:scale-95 shadow-xl flex items-center gap-2"
-                                            >
-                                                <Check size={18} strokeWidth={3} /> Mark Served
-                                            </button>
-                                        )}
+                                        <div className="flex gap-2">
+                                            {order.status === 'ready' && (
+                                                <button 
+                                                    onClick={() => handleUpdateOrderStatus(order.id, 'served', order._source)}
+                                                    className="bg-green-600 hover:bg-green-500 text-white px-8 py-3 rounded-2xl font-black uppercase text-xs tracking-widest active:scale-95 shadow-xl flex items-center gap-2"
+                                                >
+                                                    <Check size={18} strokeWidth={3} /> Mark Served
+                                                </button>
+                                            )}
+                                            {['new', 'pending', 'accepted', 'confirmed', 'active'].includes(order.status) && (
+                                                <button 
+                                                    onClick={() => {
+                                                        setSelectedTable(order.tableId);
+                                                        setCart(order.items || []);
+                                                        setEditingOrder({ id: order.id, type: order._source });
+                                                        setView('order_entry');
+                                                        if("vibrate" in navigator) navigator.vibrate(50);
+                                                    }}
+                                                    className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all"
+                                                >
+                                                    Modify Order
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="space-y-3">
                                         {(Array.isArray(order.items) ? order.items : []).map((item, i) => (
@@ -543,24 +561,47 @@ export default function WaitersPortal() {
         const submitOrder = async () => {
             if (cart.length === 0) return;
             const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-            const orderData = { 
-                tableId: selectedTable, 
-                items: cart, 
-                finalTotal: subtotal, 
-                status: 'new', 
-                orderType: 'dine-in',
-                isStaff: true // Bypass session validation
-            };
+            
             try {
-                const res = await fetch(`${API_URL}/orders`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(orderData)
-                });
-                if (res.ok) { setCart([]); setView('dashboard'); }
-                else {
-                    const err = await res.json();
-                    alert(`Error: ${err.error || 'Failed to record order'}`);
+                if (editingOrder) {
+                    // Update existing order
+                    const res = await fetch(`${API_URL}/orders/${editingOrder.id}/items`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            items: cart, 
+                            finalTotal: subtotal,
+                            type: editingOrder.type
+                        })
+                    });
+                    if (res.ok) { 
+                        setCart([]); 
+                        setEditingOrder(null);
+                        setView('dashboard'); 
+                    } else {
+                        const err = await res.json();
+                        alert(`Error: ${err.error || 'Failed to update order'}`);
+                    }
+                } else {
+                    // Create new order
+                    const orderData = { 
+                        tableId: selectedTable, 
+                        items: cart, 
+                        finalTotal: subtotal, 
+                        status: 'new', 
+                        orderType: 'dine-in',
+                        isStaff: true
+                    };
+                    const res = await fetch(`${API_URL}/orders`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(orderData)
+                    });
+                    if (res.ok) { setCart([]); setView('dashboard'); }
+                    else {
+                        const err = await res.json();
+                        alert(`Error: ${err.error || 'Failed to record order'}`);
+                    }
                 }
             } catch (error) { console.error(error); }
         };
@@ -605,10 +646,18 @@ export default function WaitersPortal() {
                                     <div className="text-white font-bold text-sm truncate">{item.name}</div>
                                     <div className="text-[#FFD700] font-black text-xs mt-1">£{(item.price * item.qty).toFixed(2)}</div>
                                 </div>
-                                <div className="flex items-center gap-3 bg-black/40 rounded-xl p-1 shrink-0">
-                                    <button onClick={() => setCart(prev => prev.map(i => i.id === item.id ? { ...i, qty: Math.max(0, i.qty - 1) } : i).filter(i => i.qty > 0))} className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white"><Minus size={14} /></button>
-                                    <span className="text-white font-black text-sm w-4 text-center">{item.qty}</span>
-                                    <button onClick={() => addToCart(item)} className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white"><Plus size={14} /></button>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-3 bg-black/40 rounded-xl p-1 shrink-0">
+                                        <button onClick={() => setCart(prev => prev.map(i => i.id === item.id ? { ...i, qty: Math.max(0, i.qty - 1) } : i).filter(i => i.qty > 0))} className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white"><Minus size={14} /></button>
+                                        <span className="text-white font-black text-sm w-4 text-center">{item.qty}</span>
+                                        <button onClick={() => addToCart(item)} className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white"><Plus size={14} /></button>
+                                    </div>
+                                    <button 
+                                        onClick={() => setCart(prev => prev.filter(i => i.id !== item.id))}
+                                        className="w-10 h-10 flex items-center justify-center text-red-500/40 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
                                 </div>
                             </div>
                         ))}

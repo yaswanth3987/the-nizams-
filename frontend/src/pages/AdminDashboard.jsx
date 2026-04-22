@@ -404,6 +404,7 @@ export default function AdminDashboard() {
                         orders={sessions}
                         updateStatus={updateStatus}
                         printReceipt={printReceipt}
+                        API_URL={API_URL}
                     />
                 )}
                 
