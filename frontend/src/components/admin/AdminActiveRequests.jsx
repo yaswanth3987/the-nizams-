@@ -18,8 +18,9 @@ export default function AdminActiveRequests({ assistanceRequests = [], updateAss
         return {
             id: r.id,
             table: r.tableId,
+            type: r.type || 'staff',
             state: state,
-            label: label,
+            label: r.type === 'bill' ? 'BILL REQUEST' : label,
             timeLabel: isAttended ? 'ATTENDED AT' : 'REQUEST TIME',
             time: createdTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
             pending: isAttended ? 'Assisted by Floor Mgr' : `Pending for ${diffMins}m`,
@@ -125,6 +126,7 @@ function RequestCard({ req, onAttend, onClear }) {
             <div className="flex justify-between items-start mb-6">
                 <div className="flex items-center gap-3">
                     <span className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-lg border ${
+                        req.type === 'bill' ? 'bg-nizam-gold text-black border-transparent shadow-[0_0_15px_rgba(198,168,124,0.3)]' :
                         isCritical ? 'bg-red-500 text-white border-transparent' :
                         isUrgent ? 'bg-accent text-black border-transparent' :
                         isAttended ? 'bg-white/5 text-white/40 border-white/10' :
@@ -149,9 +151,9 @@ function RequestCard({ req, onAttend, onClear }) {
             <h3 className="text-4xl font-serif text-white mb-8 font-bold italic">Table {req.table}</h3>
 
             <div className="bg-white/5 rounded-2xl py-4 px-6 flex items-center gap-4 mb-8 border border-white/10">
-                {isAttended ? <CheckCircle className="w-5 h-5 text-emerald-400" /> : isCritical ? <AlertTriangle className="w-5 h-5 text-red-500" /> : <Hourglass className="w-5 h-5 text-accent" />}
+                {req.type === 'bill' ? <CheckCircle className="w-5 h-5 text-nizam-gold" /> : isAttended ? <CheckCircle className="w-5 h-5 text-emerald-400" /> : isCritical ? <AlertTriangle className="w-5 h-5 text-red-500" /> : <Hourglass className="w-5 h-5 text-accent" />}
                 <span className="font-bold text-xs text-white/70 uppercase tracking-wide">
-                    {req.pending}
+                    {req.type === 'bill' ? 'Customer requesting bill' : req.pending}
                 </span>
             </div>
 

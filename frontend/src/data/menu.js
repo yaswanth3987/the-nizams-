@@ -99,10 +99,10 @@ export const menuData = [
     { id: 'nm11', name: 'FISH MANDI', price: 12.99, category: 'Nizami Mandi', spice: 1, veg: false, image: '/Fish Mandi.jpg' },
 
     // Mandi Platters
-    { id: 'mp1', name: 'MINGLED MINI PLATTER (3 PERSONS)', price: 39.99, category: 'Mandi Platters', desc: 'Lamb 1pc, Chicken Leg 1pc, Fish 1pc, Chicken 65', spice: 1, veg: false, group: 3 },
-    { id: 'mp2', name: 'BLENDED PLATTER (5 PERSONS)', price: 64.99, category: 'Mandi Platters', desc: 'Lamb 2pcs, Chicken Leg 2pcs, Fish 2pcs, Chicken Tikka 2pcs, Chicken 65, Lamb Chops 2pcs', spice: 1, veg: false, group: 5 },
-    { id: 'mp3', name: 'JUMBLED PLATTER (7 PERSONS)', price: 84.99, category: 'Mandi Platters', desc: 'Lamb 3pcs, Chicken Leg 3pcs, Fish 3pcs, Chicken Tikka 3pcs, Chicken 65, Lamb Chops 3pcs', spice: 1, veg: false, group: 7 },
-    { id: 'mp4', name: "NIZAMI'S SPECIAL PLATTER", price: 119.00, category: 'Mandi Platters', desc: 'Lamb 3pcs, Chicken Legs 3pcs, Fish 3pcs, Chicken Tikka 3pcs, Chicken 65, Lamb Chops 3pcs, Half Faham', spice: 1, veg: false, group: 8 },
+    { id: 'mp1', name: 'MINGLED MINI PLATTER (3 PERSONS)', price: 39.99, category: 'Mandi Platters', desc: 'Lamb 1pc, Chicken Leg 1pc, Fish 1pc, Chicken 65', spice: 1, veg: false, group: 3, platterItems: [{name: 'Lamb', qty: '1pc'}, {name: 'Chicken Leg', qty: '1pc'}, {name: 'Fish', qty: '1pc'}, {name: 'Chicken 65', qty: 'Portion'}] },
+    { id: 'mp2', name: 'BLENDED PLATTER (5 PERSONS)', price: 64.99, category: 'Mandi Platters', desc: 'Lamb 2pcs, Chicken Leg 2pcs, Fish 2pcs, Chicken Tikka 2pcs, Chicken 65, Lamb Chops 2pcs', spice: 1, veg: false, group: 5, platterItems: [{name: 'Lamb', qty: '2pcs'}, {name: 'Chicken Leg', qty: '2pcs'}, {name: 'Fish', qty: '2pcs'}, {name: 'Chicken Tikka', qty: '2pcs'}, {name: 'Chicken 65', qty: 'Portion'}, {name: 'Lamb Chops', qty: '2pcs'}] },
+    { id: 'mp3', name: 'JUMBLED PLATTER (7 PERSONS)', price: 84.99, category: 'Mandi Platters', desc: 'Lamb 3pcs, Chicken Leg 3pcs, Fish 3pcs, Chicken Tikka 3pcs, Chicken 65, Lamb Chops 3pcs', spice: 1, veg: false, group: 7, platterItems: [{name: 'Lamb', qty: '3pcs'}, {name: 'Chicken Leg', qty: '3pcs'}, {name: 'Fish', qty: '3pcs'}, {name: 'Chicken Tikka', qty: '3pcs'}, {name: 'Chicken 65', qty: 'Portion'}, {name: 'Lamb Chops', qty: '3pcs'}] },
+    { id: 'mp4', name: "NIZAMI'S SPECIAL PLATTER", price: 119.00, category: 'Mandi Platters', desc: 'Lamb 3pcs, Chicken Legs 3pcs, Fish 3pcs, Chicken Tikka 3pcs, Chicken 65, Lamb Chops 3pcs, Half Faham', spice: 1, veg: false, group: 8, platterItems: [{name: 'Lamb', qty: '3pcs'}, {name: 'Chicken Leg', qty: '3pcs'}, {name: 'Fish', qty: '3pcs'}, {name: 'Chicken Tikka', qty: '3pcs'}, {name: 'Chicken 65', qty: 'Portion'}, {name: 'Lamb Chops', qty: '3pcs'}, {name: 'Half Faham', qty: '1pc'}] },
 
     // Extra's
     { id: 'ex1', name: 'SOUP', price: 2.49, category: "Extra's", spice: 0, veg: true },

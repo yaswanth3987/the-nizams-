@@ -4,7 +4,8 @@ import { useSound } from './useSound';
 const SOUNDS = {
     assistance: 'https://assets.mixkit.co/active_storage/sfx/2856/2856-preview.mp3', // Service Bell
     newOrder: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3',    // Minimal Bubble/Ping
-    ready: 'https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3'       // Short Digital Chime
+    ready: 'https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3',       // Short Digital Chime
+    bill: 'https://assets.mixkit.co/active_storage/sfx/2208/2208-preview.mp3'        // Cash Register
 };
 
 export const useSoundSystem = (hasActiveAssistance = false) => {

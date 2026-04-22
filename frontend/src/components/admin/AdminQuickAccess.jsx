@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     Bell, 
     Printer, 
@@ -128,7 +128,7 @@ export default function AdminQuickAccess({
     onViewChange
 }) {
     const [selectedTable, setSelectedTable] = useState(null);
-    const [now, setNow] = useState(Date.now());
+    const [now, setNow] = useState(() => Date.now());
     const [isMoveKotEnabled, setIsMoveKotEnabled] = useState(false);
     const [orderTypeMode, setOrderTypeMode] = useState('delivery'); // 'delivery' | 'takeaway'
     const [searchQuery, setSearchQuery] = useState('');
@@ -145,13 +145,18 @@ export default function AdminQuickAccess({
     ];
 
     const getTableStatus = (tableId) => {
-        const assistance = assistanceRequests.find(r => r.tableId === tableId && r.status === 'pending');
-        const session = sessions.find(s => s.tableId === tableId && s.status !== 'completed' && s.status !== 'archived');
-        const newOrder = newOrders.find(o => o.tableId === tableId && (o.status === 'new' || o.status === 'pending'));
+        const assistance = (assistanceRequests || []).find(r => r.tableId === tableId && r.status === 'pending');
+        const session = (sessions || []).find(s => s.tableId === tableId && s.status !== 'completed' && s.status !== 'archived');
+        const newOrder = (newOrders || []).find(o => o.tableId === tableId && (o.status === 'new' || o.status === 'pending'));
 
+        // Prioritize active billing sessions
         if (session?.status === 'billed') return { status: 'billing', session, assistance };
         if (session) return { status: 'occupied', session, assistance };
+        
+        // Treat as ordering if there's a new request
         if (newOrder) return { status: 'ordering', session: newOrder, assistance };
+        
+        // Final fallback: check if there's assistance even if table is 'free'
         return { status: 'free', session: null, assistance };
     };
 

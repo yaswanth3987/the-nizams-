@@ -43,6 +43,8 @@ export default function AdminSidebar({ activeView, onViewChange, counts = {} }) 
                             className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group relative ${
                                 activeView === item.id 
                                 ? 'bg-accent/10 text-accent ring-1 ring-accent' 
+                                : item.id === 'assistance' && counts.hasBillRequest
+                                ? 'bg-nizam-gold/10 text-nizam-gold animate-pulse-gold ring-1 ring-nizam-gold/30'
                                 : 'text-white/60 hover:bg-white/5 hover:text-white'
                             }`}
                         >

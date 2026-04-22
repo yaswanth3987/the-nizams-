@@ -26,7 +26,9 @@ import {
     Menu as MenuIcon,
     ShoppingBag,
     Trophy,
-    Sparkles
+    Sparkles,
+    Users,
+    Info
 } from 'lucide-react';
 import { categoriesData, menuData } from '../data/menu.js';
 import { socket } from '../utils/socket';
@@ -65,13 +67,15 @@ export default function CustomerMenu() {
     const [previewItem, setPreviewItem] = useState(null);
     const [specialRequest, setSpecialRequest] = useState('');
     const [spiceLevel, setSpiceLevel] = useState('');
+    const [billRequestStatus, setBillRequestStatus] = useState(null); // 'notifying', 'success', 'error'
     const [lastScrollTime, setLastScrollTime] = useState(0);
     const [isMenuLoading, setIsMenuLoading] = useState(true);
     const [menuError, setMenuError] = useState(null);
+    const [expandedPlatters, setExpandedPlatters] = useState({}); // { id: boolean }
 
     const [now, setNow] = useState(() => Date.now());
 
-    const { playSound, soundEnabled } = useContext(SoundContext);
+    const { soundEnabled } = useContext(SoundContext);
 
     useEffect(() => {
         const timer = setInterval(() => setNow(Date.now()), 1000);
@@ -115,19 +119,20 @@ export default function CustomerMenu() {
 
     // Handle assistance cooldown per table
     useEffect(() => {
-        if (!selectedTable) return;
-        const saved = localStorage.getItem(`assist_cooldown_${selectedTable}`);
+        const saved = selectedTable ? localStorage.getItem(`assist_cooldown_${selectedTable}`) : null;
+        let expire = 0;
         if (saved) {
-            const expire = parseInt(saved, 10);
-            if (expire > Date.now()) {
-                setAssistanceCooldown(expire);
+            const parsed = parseInt(saved, 10);
+            if (parsed > Date.now()) {
+                expire = parsed;
             } else {
-                setAssistanceCooldown(0);
                 localStorage.removeItem(`assist_cooldown_${selectedTable}`);
             }
-        } else {
-            setAssistanceCooldown(0);
         }
+        
+        // Use a functional update or just the value; the key is reducing nesting if possible
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setAssistanceCooldown(expire);
     }, [selectedTable]);
 
     const validateSession = useCallback(async () => {
@@ -219,7 +224,32 @@ export default function CustomerMenu() {
             setTimeout(() => setAssistanceStatus(null), 3000);
         }
     };
-
+    const requestBill = async () => {
+        if (!selectedTable || assistanceCooldown > 0) return;
+        setBillRequestStatus('notifying');
+        try {
+            const formattedTable = /^[A-Z]/.test(selectedTable) ? selectedTable : `T${selectedTable}`;
+            const res = await fetch(`${API_URL}/assistance`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tableId: formattedTable, type: 'bill' })
+            });
+            if (res.ok) {
+                setBillRequestStatus('success');
+                const expire = Date.now() + 180000;
+                setAssistanceCooldown(expire);
+                localStorage.setItem(`assist_cooldown_${selectedTable}`, expire);
+                setTimeout(() => setBillRequestStatus(null), 4000);
+            } else {
+                setBillRequestStatus('error');
+                setTimeout(() => setBillRequestStatus(null), 3000);
+            }
+        } catch (error) {
+            console.error('Bill Request Failed:', error);
+            setBillRequestStatus('error');
+            setTimeout(() => setBillRequestStatus(null), 3000);
+        }
+    };
     useEffect(() => {
         setTimeout(() => fetchRemoteMenu(), 0);
 
@@ -344,12 +374,12 @@ export default function CustomerMenu() {
                 return 'Processing';
             };
 
-            const formattedSessions = sessionsData
+            const formattedSessions = (Array.isArray(sessionsData) ? sessionsData : [])
                 .filter(s => s.sessionId === sessionId)
                 .map(s => ({
                 id: s.id,
-                items: s.items,
-                total: s.subtotal || s.finalTotal,
+                items: Array.isArray(s.items) ? s.items : (typeof s.items === 'string' ? (() => { try { return JSON.parse(s.items) } catch(e) { return [] } })() : []),
+                total: s.subtotal || s.finalTotal || 0,
                 status: statusLabel(s.status),
                 createdAt: s.createdAt
             }));
@@ -360,12 +390,12 @@ export default function CustomerMenu() {
                 return 'Pending';
             };
 
-            const formattedNew = newOrdersData
+            const formattedNew = (Array.isArray(newOrdersData) ? newOrdersData : [])
                 .filter(o => o.sessionId === sessionId)
                 .map(o => ({
                 id: o.id,
-                items: o.items,
-                total: o.subtotal || o.finalTotal,
+                items: Array.isArray(o.items) ? o.items : (typeof o.items === 'string' ? (() => { try { return JSON.parse(o.items) } catch(e) { return [] } })() : []),
+                total: o.subtotal || o.finalTotal || 0,
                 status: rawStatusLabel(o.status),
                 createdAt: o.createdAt
             }));
@@ -453,16 +483,10 @@ export default function CustomerMenu() {
                     <div className="absolute inset-0 bg-gradient-to-tr from-[#f09433] via-[#e6683c] via-[#dc2743] to-[#cc2366] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <Instagram size={16} className="text-[#E1306C] group-hover:text-white relative z-10 transition-colors duration-300" strokeWidth={2.5} />
                 </a>
-                <div className="flex items-center gap-1 bg-[#0B3A2E] text-white p-1 rounded-2xl shadow-lg border border-white/10">
-                    <div className="px-3 py-1 text-[10px] font-black tracking-widest uppercase">
+                <div className="flex items-center bg-[#0B3A2E] text-white px-4 py-2 rounded-2xl shadow-lg border border-white/10">
+                    <span className="text-[10px] font-black tracking-widest uppercase">
                         {selectedTable}
-                    </div>
-                    <button 
-                        onClick={() => setSelectedTable(null)}
-                        className="bg-[#C29958] text-[#0B3A2E] px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-white transition-all active:scale-95"
-                    >
-                        Change
-                    </button>
+                    </span>
                 </div>
             </div>
         </header>
@@ -517,7 +541,7 @@ export default function CustomerMenu() {
         </div>
     );
 
-    const ItemBadge = ({ item }) => {
+    const renderItemBadge = (item) => {
         const badges = [];
         if (item.isPopular) badges.push({ 
             label: 'Popular', 
@@ -559,11 +583,11 @@ export default function CustomerMenu() {
         );
     };
 
-    const ImagePreviewModal = () => {
+    const renderImagePreviewModal = () => {
         if (!previewItem) return null;
         return (
             <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-fade-in">
-                <div className="absolute inset-0 bg-black/95 backdrop-blur-xl" onClick={() => setPreviewItem(null)}></div>
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setPreviewItem(null)}></div>
                 <div className="relative bg-white rounded-[40px] overflow-hidden max-w-sm w-full shadow-2xl animate-zoom-in">
                     <button 
                         onClick={() => setPreviewItem(null)}
@@ -583,15 +607,110 @@ export default function CustomerMenu() {
                             <h3 className="text-[#0B3A2E] text-2xl font-black font-serif uppercase tracking-tight">{previewItem.name}</h3>
                             <span className="text-2xl font-black text-[#0B3A2E]">£{previewItem.price.toFixed(2)}</span>
                         </div>
-                        <ItemBadge item={previewItem} />
-                        <p className="text-[#6D5D4B] text-sm leading-relaxed mb-8 opacity-80 italic font-medium mt-2">"{previewItem.desc || previewItem.description}"</p>
+                        {renderItemBadge(previewItem)}
+                        <p className="text-[#6D5D4B] text-sm leading-relaxed mb-4 opacity-80 italic font-medium mt-2">"{previewItem.desc || previewItem.description}"</p>
+                        
+                        {previewItem.category === 'Mandi Platters' && previewItem.platterItems && (
+                            <div className="mb-6 bg-[#F6EFE6]/50 rounded-2xl p-4 border border-[#C29958]/10">
+                                <h4 className="text-[10px] font-black text-[#C29958] uppercase tracking-[0.2em] mb-3">Complete Feast Includes:</h4>
+                                <div className="grid grid-cols-1 gap-2">
+                                    {previewItem.platterItems.map((pi, idx) => (
+                                        <div key={idx} className="flex justify-between items-center text-xs">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-[#C29958]"></div>
+                                                <span className="text-[#0B3A2E] font-bold">{pi.name}</span>
+                                            </div>
+                                            <span className="text-[#C29958] font-black">{pi.qty}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         <button 
                             onClick={() => { handleAddToCart(previewItem); setPreviewItem(null); }}
                             className="w-full bg-[#0B3A2E] text-white py-5 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-xl active:scale-95 transition-all"
                         >
-                            Add to Tray
+                            Add to Feast
                         </button>
                     </div>
+                </div>
+            </div>
+        );
+    };
+
+    const renderPlatterDetails = (item) => {
+        const isExpanded = expandedPlatters[item.id];
+        const toggleExpand = (e) => {
+            e.stopPropagation();
+            setExpandedPlatters(prev => ({ ...prev, [item.id]: !prev[item.id] }));
+        };
+
+        if (!item.platterItems) return null;
+
+        return (
+            <div className="mt-2 mb-4 space-y-3">
+                {/* Highlight Badges */}
+                <div className="flex flex-wrap gap-1.5">
+                    {item.group && (
+                        <div className="flex items-center gap-1 bg-[#0B3A2E]/5 border border-[#0B3A2E]/10 px-2 py-0.5 rounded-md">
+                            <Users size={8} className="text-[#0B3A2E]" />
+                            <span className="text-[7px] font-black text-[#0B3A2E] uppercase">Serves {item.group}</span>
+                        </div>
+                    )}
+                    <div className="bg-[#C29958]/10 border border-[#C29958]/20 px-2 py-0.5 rounded-md">
+                        <span className="text-[7px] font-black text-[#C29958] uppercase">Mixed Platter</span>
+                    </div>
+                    <div className="bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-md">
+                        <span className="text-[7px] font-black text-red-600 uppercase">Non-Veg Feast</span>
+                    </div>
+                </div>
+
+                {/* Includes Section */}
+                <div className="bg-[#F6EFE6]/40 rounded-xl p-3 border border-black/5">
+                    <div className="text-[8px] font-black text-[#C29958] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <Info size={10} />
+                        What's Included?
+                    </div>
+                    
+                    <ul className="grid grid-cols-1 gap-1.5">
+                        {item.platterItems.slice(0, 3).map((pi, idx) => (
+                            <li key={idx} className="flex items-center justify-between text-[9px] text-[#6D5D4B] font-bold">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-1 h-1 rounded-full bg-[#C29958]"></div>
+                                    <span>{pi.name}</span>
+                                </div>
+                                <span className="text-[#0B3A2E] opacity-60">x {pi.qty}</span>
+                            </li>
+                        ))}
+                    </ul>
+
+                    {isExpanded && (
+                        <div className="mt-1.5 pt-1.5 border-t border-black/5 space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-300">
+                            {item.platterItems.slice(3).map((pi, idx) => (
+                                <li key={idx} className="flex items-center justify-between text-[9px] text-[#6D5D4B] font-bold list-none">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1 h-1 rounded-full bg-[#C29958]"></div>
+                                        <span>{pi.name}</span>
+                                    </div>
+                                    <span className="text-[#0B3A2E] opacity-60">x {pi.qty}</span>
+                                </li>
+                            ))}
+                        </div>
+                    )}
+
+                    {item.platterItems.length > 3 && (
+                        <button 
+                            onClick={toggleExpand}
+                            className="mt-3 w-full flex items-center justify-center gap-1 text-[8px] font-black uppercase tracking-widest text-[#0B3A2E] bg-white/50 py-1.5 rounded-lg border border-black/5 hover:bg-white transition-all shadow-sm"
+                        >
+                            {isExpanded ? (
+                                <>View Less <ChevronUp size={10} /></>
+                            ) : (
+                                <>View Full Contents ({item.platterItems.length} items) <ChevronDown size={10} /></>
+                            )}
+                        </button>
+                    )}
                 </div>
             </div>
         );
@@ -655,7 +774,7 @@ export default function CustomerMenu() {
                                     )}
                                 </div>
                                 <h4 className="text-[#0B3A2E] font-black text-[12px] uppercase tracking-tight leading-none mb-1.5 truncate">{item.name}</h4>
-                                <ItemBadge item={item} />
+                                {renderItemBadge(item)}
                                 <div className="flex justify-between items-center mt-auto pt-1">
                                     <span className="text-[#C29958] text-xs font-black">£{item.price.toFixed(2)}</span>
                                     <button 
@@ -671,7 +790,10 @@ export default function CustomerMenu() {
                 </div>
 
                 <div className="px-6 mb-10 pt-6">
-                    <div className="relative h-[240px] rounded-[40px] overflow-hidden shadow-2xl group active:scale-[0.98] transition-all duration-500">
+                    <div 
+                        className="relative h-[240px] rounded-[40px] overflow-hidden shadow-2xl group active:scale-[0.98] transition-[transform,shadow] duration-300 select-none touch-manipulation"
+                        style={{ WebkitTapHighlightColor: 'transparent', willChange: 'transform' }}
+                    >
                         {featuredItem?.image && (
                             <img src={featuredItem.image} alt={featuredItem.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                         )}
@@ -712,11 +834,12 @@ export default function CustomerMenu() {
                                         return (
                                             <div 
                                                 key={item.id} 
-                                                className={`flex gap-4 p-4 rounded-[20px] transition-all duration-500 bg-white premium-shadow border border-black/5 hover:-translate-y-1 hover:shadow-[0_20px_40px_-15px_rgba(11,58,46,0.15)] ${inCart ? 'ring-2 ring-[#C29958] bg-gradient-to-br from-white to-[#F6EFE6]' : ''}`}
+                                                className={`flex gap-4 p-4 rounded-[20px] bg-white premium-shadow border border-black/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-15px_rgba(11,58,46,0.15)] ${inCart ? 'ring-2 ring-[#C29958] bg-gradient-to-br from-white to-[#F6EFE6]' : ''}`}
                                             >
                                                 <div 
                                                     onClick={() => !item.isTemporarilyUnavailable && setPreviewItem(item)}
-                                                    className={`relative w-24 h-24 shrink-0 rounded-[18px] overflow-hidden bg-[#F6EFE6]/30 border border-black/5 ${activeEffect?.id === item.id ? 'animate-item-pop' : ''} ${item.isTemporarilyUnavailable ? 'grayscale ring-1 ring-red-500/20' : ''}`}
+                                                    className={`relative w-24 h-24 shrink-0 rounded-[18px] overflow-hidden bg-[#F6EFE6]/30 border border-black/5 select-none touch-manipulation active:scale-[0.96] transition-transform duration-200 cursor-pointer ${activeEffect?.id === item.id ? 'animate-item-pop' : ''} ${item.isTemporarilyUnavailable ? 'grayscale ring-1 ring-red-500/20' : ''}`}
+                                                    style={{ WebkitTapHighlightColor: 'transparent', willChange: 'transform' }}
                                                 >
                                                     {item.isTemporarilyUnavailable && (
                                                         <div className="absolute inset-0 bg-red-950/20 flex items-center justify-center z-10">
@@ -773,8 +896,12 @@ export default function CustomerMenu() {
                                                             <h4 className="font-extrabold text-[#0B3A2E] text-[14px] leading-tight flex-1">{item.name}</h4>
                                                             <span className="font-black text-[#0B3A2E] text-sm">£{item.price.toFixed(2)}</span>
                                                         </div>
-                                                        <ItemBadge item={item} />
-                                                        <p className="text-[#6D5D4B] text-[10px] leading-relaxed line-clamp-2 font-medium opacity-70 mb-3">{item.desc}</p>
+                                                        {renderItemBadge(item)}
+                                                        {item.category === 'Mandi Platters' ? (
+                                                            renderPlatterDetails(item)
+                                                        ) : (
+                                                            <p className="text-[#6D5D4B] text-[10px] leading-relaxed line-clamp-2 font-medium opacity-70 mb-3">{item.desc}</p>
+                                                        )}
                                                     </div>
                                                     <div className="flex justify-start">
                                                         {inCart ? (
@@ -1154,6 +1281,45 @@ export default function CustomerMenu() {
                         ))}
                     </div>
                 </section>
+                <section className="mt-8">
+                    <div className="bg-[#0B3A2E] rounded-[45px] p-8 shadow-2xl relative overflow-hidden border border-white/10 group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#C29958]/10 blur-3xl rounded-full"></div>
+                        <div className="relative z-10 flex flex-col items-center text-center">
+                            <div className="w-16 h-16 bg-[#C29958] rounded-full flex items-center justify-center text-[#0B3A2E] mb-6 shadow-xl group-hover:scale-110 transition-transform duration-500">
+                                <PoundSterling size={32} strokeWidth={2.5} />
+                            </div>
+                            <h3 className="text-white text-2xl font-black font-serif italic mb-2 tracking-tight">Ready for Settlement?</h3>
+                            <p className="text-white/50 text-[10px] font-black uppercase tracking-[0.2em] mb-8 leading-relaxed px-4">Our stewards will arrive with your royal bill<br/>and preferred payment unit.</p>
+                            
+                            <button 
+                                onClick={requestBill}
+                                disabled={assistanceCooldown > 0 || billRequestStatus === 'notifying'}
+                                className={`w-full py-5 rounded-[28px] font-black uppercase tracking-[0.25em] text-[11px] transition-all duration-500 active:scale-95 flex items-center justify-center gap-3 ${
+                                    billRequestStatus === 'success' 
+                                    ? 'bg-green-500 text-white shadow-[0_0_30px_rgba(34,197,94,0.4)]' 
+                                    : 'bg-[#C29958] text-[#0B3A2E] shadow-[0_15px_30px_rgba(194,153,88,0.3)] hover:bg-white'
+                                }`}
+                            >
+                                {billRequestStatus === 'notifying' ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-[#0B3A2E]/20 border-t-[#0B3A2E] rounded-full animate-spin"></div>
+                                        <span>CALLING STEWARD...</span>
+                                    </>
+                                ) : billRequestStatus === 'success' ? (
+                                    <>
+                                        <CheckCircle size={18} strokeWidth={3} />
+                                        <span>STEWARD NOTIFIED</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span>REQUEST FINAL BILL</span>
+                                        <ChevronRight size={18} strokeWidth={3} />
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </section>
             </div>
 
             <button 
@@ -1276,7 +1442,7 @@ export default function CustomerMenu() {
                     {renderTabs()}
                 </div>
                 {renderCartSheet()}
-                <ImagePreviewModal />
+                {renderImagePreviewModal()}
                 
                 {/* Visual Feedback Overlays */}
                 {orderStatus === 'success' && (

@@ -313,10 +313,10 @@ app.get('/api/assistance', async (req, res) => {
 
 app.post('/api/assistance', async (req, res) => {
     try {
-        const { tableId } = req.body;
+        const { tableId, type } = req.body;
         if (!tableId) return res.status(400).json({ error: 'tableId is required' });
         
-        const request = await createAssistanceRequest(tableId);
+        const request = await createAssistanceRequest(tableId, type || 'staff');
         io.emit('assistanceRequested', request);
         res.status(201).json(request);
     } catch (err) {

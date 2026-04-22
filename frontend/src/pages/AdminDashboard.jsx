@@ -137,8 +137,10 @@ export default function AdminDashboard() {
         });
 
         socket.on('orderUpdated', () => {
+             console.log('[Socket] Order updated - refreshing all states');
              fetchNewOrders();
              fetchSessions();
+             fetchAssistance();
         });
 
         socket.on('tableReset', fetchSessions);
@@ -148,6 +150,8 @@ export default function AdminDashboard() {
                 if (prev.some(r => r.id === req.id)) return prev;
                 setTimeout(() => {
                     setUnreadAlerts(u => u + 1);
+                    if (req.type === 'bill') playSound('bill');
+                    else playSound('assistance');
                 }, 0);
                 return [req, ...prev];
             });
@@ -159,6 +163,13 @@ export default function AdminDashboard() {
 
         socket.on('assistanceDeleted', ({ id }) => {
             setAssistanceRequests(prev => prev.filter(r => r.id !== id));
+            fetchSessions(); // Refresh sessions in case assistance was tied to a bill closure
+        });
+
+        socket.on('forceRefresh', () => {
+            fetchNewOrders();
+            fetchSessions();
+            fetchAssistance();
         });
 
         return () => {
@@ -303,7 +314,8 @@ export default function AdminDashboard() {
         billed: sessions.filter(s => s.status === 'billed' && s.orderType !== 'takeaway').length,
         completed: sessions.filter(s => s.status === 'completed' && s.orderType !== 'takeaway').length,
         'takeaway-manager': sessions.filter(s => s.orderType === 'takeaway' && s.status !== 'completed').length,
-        assistance: assistanceRequests.length
+        assistance: assistanceRequests.length,
+        hasBillRequest: assistanceRequests.some(r => r.type === 'bill' && r.status === 'pending')
     };
 
     return (
