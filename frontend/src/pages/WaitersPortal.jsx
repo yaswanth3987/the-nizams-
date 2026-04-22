@@ -45,7 +45,13 @@ export default function WaitersPortal() {
                 tablesRes.json(), ordersRes.json(), helpRes.json(), menuRes.json(), sessionsRes.json()
             ]);
 
-            setTables(tablesData);
+            const statusMap = {};
+            if (Array.isArray(tablesData)) {
+                tablesData.forEach(t => {
+                    if (t.tableId) statusMap[t.tableId.toUpperCase()] = t.status;
+                });
+            }
+            setTables(statusMap);
             setAssistanceRequests(helpData.filter(r => r.status === 'pending'));
             setMenu(menuData);
             
