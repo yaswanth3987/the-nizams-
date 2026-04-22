@@ -374,13 +374,20 @@ export default function WaitersPortal() {
         const cTables = Array.from({length: 13}, (_, i) => `C${String(i+1).padStart(2, '0')}`);
         
     const getTableColor = (tableId) => {
-        const needsHelp = assistanceRequests.some(r => r.tableId === tableId);
+        const normalizedId = tableId.toString().toUpperCase();
+        const needsHelp = assistanceRequests.some(r => r.tableId.toString().toUpperCase() === normalizedId);
         if (needsHelp) return 'bg-blue-600 border-blue-400 text-white animate-pulse shadow-[0_0_20px_rgba(37,99,235,0.4)]';
         
-        const hasReadyOrder = activeOrders.some(o => o.tableId === tableId && o.status === 'ready');
+        const hasReadyOrder = activeOrders.some(o => o.tableId.toString().toUpperCase() === normalizedId && o.status === 'ready');
         if (hasReadyOrder) return 'bg-[#FFD700] border-[#FFD700] text-[#0F3A2F] animate-pulse shadow-[0_0_25px_rgba(255,215,0,0.6)]';
 
-        const status = tables[tableId] || 'free';
+        // Normalize keys in tables object for lookup
+        const normalizedTables = Object.keys(tables).reduce((acc, key) => {
+            acc[key.toUpperCase()] = tables[key];
+            return acc;
+        }, {});
+
+        const status = normalizedTables[normalizedId] || 'free';
         switch (status) {
             case 'free': return 'bg-white/5 border-white/10 text-[#86a69d] hover:bg-white/10';
             case 'ordering': return 'bg-[#FFD700]/10 border-[#FFD700]/30 text-[#FFD700]';
