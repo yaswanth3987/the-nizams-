@@ -138,12 +138,15 @@ export default function AdminDashboard() {
 
         socket.on('orderUpdated', () => {
              console.log('[Socket] Order updated - refreshing all states');
-             fetchNewOrders();
              fetchSessions();
-             fetchAssistance();
+             fetchNewOrders();
         });
 
-        socket.on('tableReset', fetchSessions);
+        socket.on('tableReset', () => {
+            fetchSessions();
+            fetchNewOrders();
+            fetchAssistance();
+        });
 
         socket.on('assistanceRequested', (req) => {
             setAssistanceRequests(prev => {
