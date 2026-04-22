@@ -1,7 +1,18 @@
 const API_BASE = "https://the-nizams.onrender.com/api";
 
 async function runTest() {
-    console.log("🚀 Starting Automated System Test...");
+    console.log("⏳ Waiting for server to wake up...");
+    let attempts = 0;
+    while (attempts < 20) {
+        try {
+            const check = await fetch(`${API_BASE}/menu`, { signal: AbortSignal.timeout(10000) });
+            if (check.ok) break;
+        } catch (e) {}
+        attempts++;
+        process.stdout.write(".");
+        await new Promise(r => setTimeout(r, 10000));
+    }
+    console.log("\n🚀 Server is UP. Starting Automated System Test...");
 
     try {
         // 1. Create a Test Assistance Request

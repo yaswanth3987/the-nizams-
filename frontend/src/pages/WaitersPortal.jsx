@@ -312,6 +312,17 @@ export default function WaitersPortal() {
                                                     Accept
                                                 </button>
                                                 <button 
+                                                    onClick={() => {
+                                                        setSelectedTable(order.tableId);
+                                                        setCart(order.items || []);
+                                                        setView('order_entry');
+                                                        if("vibrate" in navigator) navigator.vibrate(50);
+                                                    }}
+                                                    className="flex-1 bg-white/10 text-white py-3 rounded-xl font-black uppercase text-[9px] tracking-widest active:scale-95 transition-all"
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button 
                                                     onClick={() => handleUpdateOrderStatus(order.id, 'rejected', order._source)}
                                                     className="flex-1 bg-red-900/20 text-red-400 border border-red-900/30 py-3 rounded-xl font-black uppercase text-[9px] tracking-widest active:scale-95 transition-all"
                                                 >
@@ -320,8 +331,21 @@ export default function WaitersPortal() {
                                             </>
                                         )}
                                         {(order.status === 'accepted' || order.status === 'confirmed') && (
-                                            <div className="flex-1 text-center py-2 text-[#86a69d] text-[10px] font-black uppercase tracking-widest border border-white/5 rounded-xl">
-                                                In Kitchen
+                                            <div className="flex w-full gap-2">
+                                                <div className="flex-1 text-center py-3 text-[#86a69d] text-[10px] font-black uppercase tracking-widest border border-white/5 rounded-xl flex items-center justify-center">
+                                                    In Kitchen
+                                                </div>
+                                                <button 
+                                                    onClick={() => {
+                                                        setSelectedTable(order.tableId);
+                                                        setCart(order.items || []);
+                                                        setView('order_entry');
+                                                        if("vibrate" in navigator) navigator.vibrate(50);
+                                                    }}
+                                                    className="flex-1 bg-white/10 text-white py-3 rounded-xl font-black uppercase text-[9px] tracking-widest active:scale-95 transition-all"
+                                                >
+                                                    Modify
+                                                </button>
                                             </div>
                                         )}
                                     </div>
