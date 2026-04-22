@@ -607,26 +607,26 @@ export default function WaitersPortal() {
         };
 
         return (
-            <div className="flex-1 flex overflow-hidden">
-                <div className="flex-1 flex flex-col min-w-0">
-                    <header className="px-8 py-6 border-b border-white/5 flex items-center justify-between">
-                        <div className="flex items-center gap-4">
+            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+                <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+                    <header className="px-4 md:px-8 py-6 border-b border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-4 w-full sm:w-auto">
                             <button onClick={() => setView('table_details')} className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white"><ArrowLeft size={20} /></button>
-                            <h1 className="text-xl font-black text-white">Menu Selection • {selectedTable}</h1>
+                            <h1 className="text-xl font-black text-white truncate">Menu • {selectedTable}</h1>
                         </div>
-                        <div className="relative w-72">
+                        <div className="relative w-full sm:w-72">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />
                             <input 
                                 type="text" 
-                                placeholder="Search royal dishes..." 
+                                placeholder="Search dishes..." 
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full bg-black/30 border border-white/10 rounded-2xl pl-12 pr-4 py-3 text-sm text-white focus:outline-none focus:border-[#FFD700]/50"
                             />
                         </div>
                     </header>
-                    <div className="flex-1 overflow-y-auto p-8 no-scrollbar">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <div className="flex-1 overflow-y-auto p-4 md:p-8 no-scrollbar">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                             {filteredMenu.map(item => (
                                 <button key={item.id} onClick={() => addToCart(item)} className="bg-white/5 border border-white/5 rounded-[32px] p-6 text-left hover:bg-[#FFD700]/5 transition-all group active:scale-95">
                                     <h3 className="text-white font-bold mb-1 group-hover:text-[#FFD700] transition-colors">{item.name}</h3>
@@ -637,32 +637,44 @@ export default function WaitersPortal() {
                         </div>
                     </div>
                 </div>
-                <div className="w-80 lg:w-96 bg-black/40 border-l border-white/5 flex flex-col">
-                    <div className="p-8 border-b border-white/5 font-black text-sm uppercase tracking-widest text-[#86a69d]">Order Basket</div>
-                    <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
-                        {cart.map(item => (
-                            <div key={item.id} className="bg-white/5 rounded-3xl p-4 flex items-center justify-between">
-                                <div className="min-w-0">
-                                    <div className="text-white font-bold text-sm truncate">{item.name}</div>
-                                    <div className="text-[#FFD700] font-black text-xs mt-1">£{(item.price * item.qty).toFixed(2)}</div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="flex items-center gap-3 bg-black/40 rounded-xl p-1 shrink-0">
-                                        <button onClick={() => setCart(prev => prev.map(i => i.id === item.id ? { ...i, qty: Math.max(0, i.qty - 1) } : i).filter(i => i.qty > 0))} className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white"><Minus size={14} /></button>
-                                        <span className="text-white font-black text-sm w-4 text-center">{item.qty}</span>
-                                        <button onClick={() => addToCart(item)} className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white"><Plus size={14} /></button>
-                                    </div>
-                                    <button 
-                                        onClick={() => setCart(prev => prev.filter(i => i.id !== item.id))}
-                                        className="w-10 h-10 flex items-center justify-center text-red-500/40 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
+                
+                {/* Order Basket - Collapsible/Responsive */}
+                <div className="w-full lg:w-96 bg-black/40 border-t lg:border-t-0 lg:border-l border-white/5 flex flex-col h-[40vh] lg:h-full">
+                    <div className="px-8 py-4 border-b border-white/5 font-black text-[10px] uppercase tracking-widest text-[#86a69d] flex justify-between items-center">
+                        <span>Order Basket</span>
+                        <span className="bg-[#FFD700] text-[#0F3A2F] px-2 py-0.5 rounded-full text-[9px]">{cart.length} ITEMS</span>
                     </div>
-                    <div className="p-8 bg-black/40 border-t border-white/5">
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
+                        {cart.length === 0 ? (
+                            <div className="h-full flex flex-col items-center justify-center opacity-20 italic text-sm">
+                                <Utensils size={32} className="mb-2" />
+                                <p>Basket is empty</p>
+                            </div>
+                        ) : (
+                            cart.map(item => (
+                                <div key={item.id} className="bg-white/5 rounded-3xl p-4 flex items-center justify-between">
+                                    <div className="min-w-0 mr-4">
+                                        <div className="text-white font-bold text-sm truncate">{item.name}</div>
+                                        <div className="text-[#FFD700] font-black text-xs mt-1">£{(item.price * item.qty).toFixed(2)}</div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-3 bg-black/40 rounded-xl p-1 shrink-0">
+                                            <button onClick={() => setCart(prev => prev.map(i => i.id === item.id ? { ...i, qty: Math.max(0, i.qty - 1) } : i).filter(i => i.qty > 0))} className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white"><Minus size={14} /></button>
+                                            <span className="text-white font-black text-sm w-4 text-center">{item.qty}</span>
+                                            <button onClick={() => addToCart(item)} className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white"><Plus size={14} /></button>
+                                        </div>
+                                        <button 
+                                            onClick={() => setCart(prev => prev.filter(i => i.id !== item.id))}
+                                            className="w-10 h-10 flex items-center justify-center text-red-500/40 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                    <div className="p-6 md:p-8 bg-black/40 border-t border-white/5">
                         <button onClick={submitOrder} disabled={cart.length === 0} className="w-full bg-[#FFD700] text-[#0F3A2F] py-5 rounded-[24px] font-black uppercase tracking-[0.2em] text-sm active:scale-95 shadow-[0_0_30px_rgba(255,215,0,0.25)] disabled:opacity-50">
                             Dispatch to Kitchen
                         </button>
