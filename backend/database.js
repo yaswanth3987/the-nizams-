@@ -253,7 +253,7 @@ const updateOrderStatus = async (id, status) => {
 
     await runQuery(`UPDATE orders SET status = ? WHERE id = ?`, [status, id]);
 
-    // Handle session merging on acceptance
+    // Transition order to session table on acceptance
     if (status === 'accepted' || status === 'confirmed') {
         const orderData = {
             tableId: oldOrder.tableId,
@@ -267,6 +267,9 @@ const updateOrderStatus = async (id, status) => {
             sessionId: oldOrder.sessionId
         };
         await addOrderToSession(orderData);
+        // Remove from raw orders table to prevent duplication/confusion
+        await runQuery(`DELETE FROM orders WHERE id = ?`, [id]);
+        return { ...orderData, status: 'confirmed', id: 'transitioned' }; // Return dummy for sync
     }
 
     if ((status === 'completed' || status === 'billed' || status === 'archived') && 
