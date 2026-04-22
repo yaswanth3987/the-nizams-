@@ -102,12 +102,10 @@ export default function WaitersPortal() {
     const Sidebar = () => (
         <aside className="w-64 bg-[#0a261f] border-r border-white/5 flex flex-col p-6 hidden lg:flex">
             <div className="flex items-center gap-3 mb-12">
-                <div className="w-10 h-10 bg-[#FFD700] rounded-xl flex items-center justify-center text-[#0F3A2F]">
-                    <Utensils size={24} strokeWidth={3} />
-                </div>
+                <img src="/logo-icon.png" className="w-12 h-12 object-contain" alt="Logo" />
                 <div>
-                    <h2 className="text-white font-serif font-black text-xl leading-none">The Nizam</h2>
-                    <span className="text-[#86a69d] text-[10px] font-black uppercase tracking-widest">Floor Captain</span>
+                    <h2 className="text-white font-serif font-black text-xl leading-none italic tracking-tight">The Nizam</h2>
+                    <span className="text-[#86a69d] text-[10px] font-black uppercase tracking-widest opacity-60">Floor Captain</span>
                 </div>
             </div>
 
@@ -230,8 +228,8 @@ export default function WaitersPortal() {
                                 const itemsArray = Array.isArray(order.items) ? order.items : [];
                                 return (
                                     <div key={order.id} className="bg-white/5 border border-white/5 rounded-[32px] p-6 flex gap-6 hover:bg-white/[0.07] transition-all">
-                                        <div className="w-24 h-24 rounded-3xl bg-black/40 overflow-hidden shrink-0 border border-white/10">
-                                            <img src="/logo-icon.png" className="w-full h-full object-cover opacity-50 grayscale" alt="ready" />
+                                        <div className="w-24 h-24 rounded-3xl bg-black/40 overflow-hidden shrink-0 border border-white/10 flex items-center justify-center">
+                                            <img src="/logo-icon.png" className="w-16 h-16 object-contain opacity-20" alt="ready" />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-start mb-2">
