@@ -39,15 +39,18 @@ export default function WaitersPortal() {
                 fetch(`${API_URL}/orders`)
             ]);
             
-            const [tablesData, helpData, menuData, sessionsData, ordersData] = await Promise.all([
-                tablesRes.json(), helpRes.json(), menuRes.json(), sessionsRes.json(), ordersRes.json()
+            const [tablesData, ordersData, helpData, menuData, sessionsData] = await Promise.all([
+                tablesRes.json(), ordersRes.json(), helpRes.json(), menuRes.json(), sessionsRes.json()
             ]);
 
             setTables(tablesData);
             setAssistanceRequests(helpData.filter(r => r.status === 'pending'));
             setMenu(menuData);
             
-            const allOrders = [...(Array.isArray(ordersData)?ordersData:[]), ...(Array.isArray(sessionsData)?sessionsData:[])];
+            const allOrders = [
+                ...(Array.isArray(ordersData) ? ordersData.map(o => ({...o, _source: 'new'})) : []), 
+                ...(Array.isArray(sessionsData) ? sessionsData.map(o => ({...o, _source: 'session'})) : [])
+            ];
             setActiveOrders(allOrders);
         } catch (error) {
             console.error('Failed to fetch data:', error);
@@ -76,9 +79,10 @@ export default function WaitersPortal() {
         };
     }, [fetchData]);
 
-    const handleUpdateOrderStatus = async (orderId, newStatus) => {
+    const handleUpdateOrderStatus = async (orderId, newStatus, source = 'session') => {
         try {
-            await fetch(`${API_URL}/orders/${orderId}/status`, {
+            const endpoint = source === 'new' ? 'new-orders' : 'orders';
+            await fetch(`${API_URL}/${endpoint}/${orderId}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus })
@@ -247,7 +251,7 @@ export default function WaitersPortal() {
                                                     <span className="text-[10px] font-bold">Passed: 2m ago</span>
                                                 </div>
                                                 <button 
-                                                    onClick={() => handleUpdateOrderStatus(order.id, 'served')}
+                                                    onClick={() => handleUpdateOrderStatus(order.id, 'served', order._source)}
                                                     className="bg-[#86a69d]/20 hover:bg-[#86a69d]/30 text-white px-8 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all"
                                                 >
                                                     Mark as Served
@@ -389,7 +393,7 @@ export default function WaitersPortal() {
                                         </div>
                                         {order.status === 'ready' && (
                                             <button 
-                                                onClick={() => handleUpdateOrderStatus(order.id, 'served')}
+                                                onClick={() => handleUpdateOrderStatus(order.id, 'served', order._source)}
                                                 className="bg-green-600 hover:bg-green-500 text-white px-8 py-3 rounded-2xl font-black uppercase text-xs tracking-widest active:scale-95 shadow-xl flex items-center gap-2"
                                             >
                                                 <Check size={18} strokeWidth={3} /> Mark Served
@@ -413,7 +417,10 @@ export default function WaitersPortal() {
                 </div>
 
                 <footer className="p-8 border-t border-white/5 flex gap-4">
-                    <button className="flex-1 bg-white/5 hover:bg-white/10 text-white py-5 rounded-3xl font-black uppercase text-xs tracking-[0.2em] active:scale-95 transition-all flex items-center justify-center gap-3 border border-white/10">
+                    <button 
+                        onClick={() => handleUpdateOrderStatus(tableOrders[0]?.id, 'billed', tableOrders[0]?._source)}
+                        className="flex-1 bg-white/5 hover:bg-white/10 text-white py-5 rounded-3xl font-black uppercase text-xs tracking-[0.2em] active:scale-95 transition-all flex items-center justify-center gap-3 border border-white/10"
+                    >
                         <CreditCard size={20} /> Request Final Bill
                     </button>
                     <button className="flex-1 bg-red-900/20 hover:bg-red-900/40 text-red-400 py-5 rounded-3xl font-black uppercase text-xs tracking-[0.2em] active:scale-95 transition-all flex items-center justify-center gap-3 border border-red-500/30">
