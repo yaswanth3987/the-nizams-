@@ -310,7 +310,7 @@ export default function AdminDashboard() {
 
     const categoryCounts = {
         orders: newOrders.filter(o => (o.status === 'new' || o.status === 'pending') && o.orderType !== 'takeaway').length,
-        confirmed: sessions.filter(s => s.status === 'confirmed' && s.orderType !== 'takeaway').length,
+        confirmed: sessions.filter(s => ['confirmed', 'active', 'ready', 'served'].includes(s.status) && s.orderType !== 'takeaway').length,
         billed: sessions.filter(s => s.status === 'billed' && s.orderType !== 'takeaway').length,
         completed: sessions.filter(s => s.status === 'completed' && s.orderType !== 'takeaway').length,
         'takeaway-manager': sessions.filter(s => s.orderType === 'takeaway' && s.status !== 'completed').length,

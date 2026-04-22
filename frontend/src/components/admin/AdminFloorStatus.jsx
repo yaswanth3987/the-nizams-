@@ -56,7 +56,9 @@ export default function AdminFloorStatus({ orders: sessions, updateStatus }) {
             <div className="flex-1 px-10 pb-32">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                     {displaySessions.map((session, idx) => {
-                        const isVip = session.tableId?.toString().toUpperCase().includes('VIP') || idx === 2; // Mocking VIP for Royal-01 style
+                        const isVip = session.tableId?.toString().toUpperCase().includes('VIP');
+                        const hasReady = session.shards.some(s => s.status === 'ready');
+                        const hasServed = session.shards.some(s => s.status === 'served');
 
                         return (
                             <div key={session.tableId} className={`rounded-3xl border p-8 flex flex-col shadow-2xl relative overflow-hidden h-[480px] ${isVip ? 'bg-secondary/40 border-accent/30' : 'bg-white/5 border-white/10'}`}>
@@ -69,16 +71,23 @@ export default function AdminFloorStatus({ orders: sessions, updateStatus }) {
                                             {isVip ? 'Royal-01' : `Nizam-${session.tableId.toString().padStart(2, '0')}`}
                                         </h3>
                                     </div>
-                                    {isVip ? (
-                                        <div className="flex items-center gap-2 text-accent glow-gold">
-                                            <Sparkles size={12} />
-                                            <span className="text-[9px] font-black uppercase tracking-widest">LOYALTY VIP</span>
-                                        </div>
-                                    ) : (
-                                        <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-lg bg-white/10 text-white/60 border border-white/10">
-                                            ACTIVE
-                                        </span>
-                                    )}
+                                    <div className="flex flex-col items-end gap-2">
+                                        {hasReady && (
+                                            <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 bg-accent text-black rounded-lg animate-pulse shadow-[0_0_15px_rgba(255,215,0,0.5)]">
+                                                Ready to Serve
+                                            </span>
+                                        )}
+                                        {hasServed && !hasReady && (
+                                            <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 bg-emerald-500 text-white rounded-lg">
+                                                Served
+                                            </span>
+                                        )}
+                                        {!hasReady && !hasServed && (
+                                            <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-lg bg-white/10 text-white/60 border border-white/10">
+                                                Preparing
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div className="flex-1 space-y-3 overflow-y-auto no-scrollbar mb-8">

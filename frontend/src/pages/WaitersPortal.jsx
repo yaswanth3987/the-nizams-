@@ -376,18 +376,22 @@ export default function WaitersPortal() {
         const bTables = Array.from({length: 6}, (_, i) => `B${String(i+1).padStart(2, '0')}`);
         const cTables = Array.from({length: 13}, (_, i) => `C${String(i+1).padStart(2, '0')}`);
         
-        const getTableColor = (tableId) => {
-            const needsHelp = assistanceRequests.some(r => r.tableId === tableId);
-            if (needsHelp) return 'bg-blue-600 border-blue-400 text-white animate-pulse shadow-[0_0_20px_rgba(37,99,235,0.4)]';
-            const status = tables[tableId] || 'free';
-            switch (status) {
-                case 'free': return 'bg-white/5 border-white/10 text-[#86a69d] hover:bg-white/10';
-                case 'ordering': return 'bg-[#FFD700]/10 border-[#FFD700]/30 text-[#FFD700]';
-                case 'occupied': return 'bg-red-500/10 border-red-500/30 text-red-400';
-                case 'billing': return 'bg-purple-500/10 border-purple-500/30 text-purple-400';
-                default: return 'bg-white/5 border-white/10 text-[#86a69d]';
-            }
-        };
+    const getTableColor = (tableId) => {
+        const needsHelp = assistanceRequests.some(r => r.tableId === tableId);
+        if (needsHelp) return 'bg-blue-600 border-blue-400 text-white animate-pulse shadow-[0_0_20px_rgba(37,99,235,0.4)]';
+        
+        const hasReadyOrder = activeOrders.some(o => o.tableId === tableId && o.status === 'ready');
+        if (hasReadyOrder) return 'bg-[#FFD700] border-[#FFD700] text-[#0F3A2F] animate-pulse shadow-[0_0_25px_rgba(255,215,0,0.6)]';
+
+        const status = tables[tableId] || 'free';
+        switch (status) {
+            case 'free': return 'bg-white/5 border-white/10 text-[#86a69d] hover:bg-white/10';
+            case 'ordering': return 'bg-[#FFD700]/10 border-[#FFD700]/30 text-[#FFD700]';
+            case 'occupied': return 'bg-red-500/10 border-red-500/30 text-red-400';
+            case 'billing': return 'bg-purple-500/10 border-purple-500/30 text-purple-400';
+            default: return 'bg-white/5 border-white/10 text-[#86a69d]';
+        }
+    };
 
         return (
             <div className="flex-1 flex flex-col h-full overflow-hidden">
