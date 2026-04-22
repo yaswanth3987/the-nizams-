@@ -168,6 +168,15 @@ export default function AdminDashboard() {
             setAssistanceRequests(prev => prev.filter(r => r.id !== id));
             fetchSessions(); // Refresh sessions in case assistance was tied to a bill closure
         });
+        
+        socket.on('orderDeleted', ({ id }) => {
+            setNewOrders(prev => prev.filter(o => o.id !== id));
+        });
+
+        socket.on('sessionDeleted', ({ id }) => {
+            setSessions(prev => prev.filter(s => s.id !== id));
+            fetchSessions();
+        });
 
         socket.on('forceRefresh', () => {
             fetchNewOrders();
@@ -316,7 +325,10 @@ export default function AdminDashboard() {
         confirmed: sessions.filter(s => ['confirmed', 'active', 'ready', 'served'].includes(s.status) && s.orderType !== 'takeaway').length,
         billed: sessions.filter(s => s.status === 'billed' && s.orderType !== 'takeaway').length,
         completed: sessions.filter(s => s.status === 'completed' && s.orderType !== 'takeaway').length,
-        'takeaway-manager': sessions.filter(s => s.orderType === 'takeaway' && s.status !== 'completed').length,
+        'takeaway-manager': [
+            ...sessions.filter(s => s.orderType === 'takeaway' && s.status !== 'completed'),
+            ...newOrders.filter(o => o.orderType === 'takeaway' && (o.status === 'new' || o.status === 'pending'))
+        ].length,
         assistance: assistanceRequests.length,
         hasBillRequest: assistanceRequests.some(r => r.type === 'bill' && r.status === 'pending')
     };
@@ -359,7 +371,8 @@ export default function AdminDashboard() {
 
                 {activeView === 'takeaway-manager' && (
                     <AdminTakeawayManager 
-                        orders={sessions}
+                        sessions={sessions}
+                        newOrders={newOrders}
                         updateStatus={updateStatus}
                         printReceipt={printReceipt}
                     />

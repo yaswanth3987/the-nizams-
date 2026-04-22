@@ -310,7 +310,7 @@ export default function WaitersPortal() {
                                         {order.status === 'ready' ? (
                                             <button 
                                                 onClick={() => handleUpdateOrderStatus(order.id, 'served', order._source)}
-                                                className="w-full bg-[#FFD700] text-[#0F3A2F] py-3 rounded-xl font-black uppercase text-[9px] tracking-widest active:scale-95 transition-all shadow-lg"
+                                                className="w-full bg-[#FFD700] text-[#0F3A2F] py-3 rounded-xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all shadow-lg"
                                             >
                                                 Mark as Served
                                             </button>
@@ -318,7 +318,7 @@ export default function WaitersPortal() {
                                             <>
                                                 <button 
                                                     onClick={() => handleUpdateOrderStatus(order.id, 'confirmed', order._source)}
-                                                    className="flex-1 bg-[#FFD700] text-[#0F3A2F] py-3 rounded-xl font-black uppercase text-[9px] tracking-widest active:scale-95 transition-all"
+                                                    className="flex-1 bg-[#FFD700] text-[#0F3A2F] py-3 rounded-xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all"
                                                 >
                                                     Accept
                                                 </button>
@@ -329,7 +329,7 @@ export default function WaitersPortal() {
                                                         setView('order_entry');
                                                         if("vibrate" in navigator) navigator.vibrate(50);
                                                     }}
-                                                    className="flex-1 bg-white/10 text-white py-3 rounded-xl font-black uppercase text-[9px] tracking-widest active:scale-95 transition-all"
+                                                    className="flex-1 bg-white/10 text-white py-3 rounded-xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all"
                                                 >
                                                     Edit
                                                 </button>
@@ -347,7 +347,7 @@ export default function WaitersPortal() {
                                                         setView('order_entry');
                                                         if("vibrate" in navigator) navigator.vibrate(50);
                                                     }}
-                                                    className="flex-1 bg-white/10 text-white py-3 rounded-xl font-black uppercase text-[9px] tracking-widest active:scale-95 transition-all"
+                                                    className="flex-1 bg-white/10 text-white py-3 rounded-xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all"
                                                 >
                                                     Modify
                                                 </button>
@@ -626,7 +626,7 @@ export default function WaitersPortal() {
                         </div>
                     </header>
                     <div className="flex-1 overflow-y-auto p-8 no-scrollbar">
-                        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                             {filteredMenu.map(item => (
                                 <button key={item.id} onClick={() => addToCart(item)} className="bg-white/5 border border-white/5 rounded-[32px] p-6 text-left hover:bg-[#FFD700]/5 transition-all group active:scale-95">
                                     <h3 className="text-white font-bold mb-1 group-hover:text-[#FFD700] transition-colors">{item.name}</h3>
@@ -637,7 +637,7 @@ export default function WaitersPortal() {
                         </div>
                     </div>
                 </div>
-                <div className="w-96 bg-black/40 border-l border-white/5 flex flex-col">
+                <div className="w-80 lg:w-96 bg-black/40 border-l border-white/5 flex flex-col">
                     <div className="p-8 border-b border-white/5 font-black text-sm uppercase tracking-widest text-[#86a69d]">Order Basket</div>
                     <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
                         {cart.map(item => (

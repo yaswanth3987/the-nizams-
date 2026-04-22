@@ -78,7 +78,11 @@ export default function AdminFloorStatus({ orders: sessions, updateStatus, API_U
                                     <button 
                                         onClick={() => {
                                             if (confirm('Permanently delete this order from Admin?')) {
-                                                fetch(`${API_URL.replace('/api','')}/api/orders/${session.id}`, { method: 'DELETE' });
+                                                fetch(`${API_URL.replace('/api','')}/api/sessions/${session.id}`, { method: 'DELETE' })
+                                                    .then(res => {
+                                                        if (!res.ok) alert('Delete failed');
+                                                    })
+                                                    .catch(err => console.error(err));
                                             }
                                         }}
                                         className="py-4 rounded-2xl font-bold text-xs bg-red-900/20 text-red-400 uppercase border border-red-900/30 hover:bg-red-900/40 transition-all"

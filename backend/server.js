@@ -176,6 +176,16 @@ app.delete('/api/orders/:id', async (req, res) => {
     }
 });
 
+app.delete('/api/sessions/:id', async (req, res) => {
+    try {
+        await deleteSession(req.params.id);
+        io.emit('sessionDeleted', { id: parseInt(req.params.id, 10) });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.delete('/api/tables/:tableId/orders', async (req, res) => {
     try {
         await clearTableOrders(req.params.tableId);
@@ -230,9 +240,9 @@ app.put('/api/new-orders/:id/status', async (req, res) => {
         }
 
         // Broadcast event to refresh New Orders and Table Sessions tabs
-        io.emit('orderUpdated', { id: req.params.id, status });
+        io.emit('orderUpdated', { id: parseInt(req.params.id, 10), status });
         // The frontend 'orderUpdated' listener handles fetching the updated sessions cleanly.
-        res.json({ success: true });
+        res.json({ success: true, status });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -338,8 +348,12 @@ app.post('/api/assistance', async (req, res) => {
 app.put('/api/assistance/:id/status', async (req, res) => {
     try {
         const request = await updateAssistanceStatus(req.params.id, req.body.status);
-        if (request) io.emit('assistanceUpdated', request);
-        res.json(request);
+        if (request) {
+            io.emit('assistanceUpdated', { id: request.id, status: request.status });
+            res.json(request);
+        } else {
+            res.status(404).json({ error: 'Request not found' });
+        }
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

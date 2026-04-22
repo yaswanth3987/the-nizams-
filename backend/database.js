@@ -296,6 +296,11 @@ const deleteOrder = async (id) => {
     return { id };
 };
 
+const deleteSession = async (id) => {
+    await runQuery(`DELETE FROM table_sessions WHERE id = ?`, [id]);
+    return { id };
+};
+
 const clearTableOrders = async (tableId) => {
     const colName = isPg ? '"tableId"' : 'tableId';
     // Archive orders
@@ -354,8 +359,9 @@ const createAssistanceRequest = async (tableId, type = 'staff') => {
 };
 
 const updateAssistanceStatus = async (id, status) => {
-    await runQuery(`UPDATE assistance_requests SET status = ? WHERE id = ?`, [status, id]);
-    const res = await runQuery(`SELECT * FROM assistance_requests WHERE id = ?`, [id]);
+    const safeId = parseInt(id, 10);
+    await runQuery(`UPDATE assistance_requests SET status = ? WHERE id = ?`, [status, safeId]);
+    const res = await runQuery(`SELECT * FROM assistance_requests WHERE id = ?`, [safeId]);
     return res.rows[0];
 };
 
@@ -778,7 +784,7 @@ const processSchedulesTask = async () => {
 
 module.exports = {
     db, pgPool, runQuery, isPg, getOrdersByStatus, createOrder, addOrderToSession, updateOrderStatus,
-    deleteOrder, clearTableOrders, getAnalyticsDaily, getItemAnalytics,
+    deleteOrder, deleteSession, clearTableOrders, getAnalyticsDaily, getItemAnalytics,
     getAssistanceRequests, createAssistanceRequest, updateAssistanceStatus, deleteAssistanceRequest,
     getEmployees, createEmployee, updateEmployee, deleteEmployee, markAttendance, getAttendanceToday,
     getMenuItems, addMenuItem, updateMenuItem, deleteMenuItem, seedMenu,
