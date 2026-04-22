@@ -38,40 +38,49 @@ async function runTest() {
             console.log("✅ Successfully marked as attended!");
         }
 
-        // 4. Create a Test Order
-        console.log("\n4️⃣  Placing Test Order for Table T05...");
+        // 4. Create a Test Order (Staff Order)
+        console.log("\n4️⃣  Placing Staff Test Order for Table T05...");
         const orderRes = await fetch(`${API_BASE}/orders`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 tableId: "T05",
-                items: [{ id: 1, name: "Test Biryani", price: 15.0, qty: 1 }],
+                items: [{ id: 1, name: "Staff Test Biryani", price: 15.0, qty: 1 }],
                 finalTotal: 15.0,
                 status: "new",
-                orderType: "dine-in"
-            })
+                orderType: "dine-in",
+                isStaff: true
+            }),
+            signal: AbortSignal.timeout(15000)
         });
         const orderData = await orderRes.json();
-        console.log("✅ Order Created ID:", orderData.id);
+        console.log("✅ Staff Order Created ID:", orderData.id);
 
-        // 5. Update Order to 'ready' (Kitchen Action)
-        console.log("\n5️⃣  Marking Order as READY (Kitchen Action)...");
-        // Using new-orders endpoint since status is 'new'
-        const readyRes = await fetch(`${API_BASE}/new-orders/${orderData.id}/status`, {
+        // 5. Accept the Order (Simulate Waiter/Admin Action)
+        console.log("\n5️⃣  Accepting Order (Transitioning to Session)...");
+        const acceptRes = await fetch(`${API_BASE}/new-orders/${orderData.id}/status`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: "ready" })
+            body: JSON.stringify({ status: "accepted" }),
+            signal: AbortSignal.timeout(15000)
         });
-        if (readyRes.ok) console.log("✅ Order is now READY!");
+        if (acceptRes.ok) {
+            console.log("✅ Order Accepted & Transitioned!");
+        } else {
+            const err = await acceptRes.json();
+            throw new Error(`❌ Acceptance failed: ${err.error}`);
+        }
 
-        // 6. Mark Order as 'served' (Waiter Action)
-        console.log("\n6️⃣  Marking Order as SERVED (Waiter Action)...");
-        const servedRes = await fetch(`${API_BASE}/orders/${orderData.id}/status`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: "served" })
-        });
-        if (servedRes.ok) console.log("✅ Order successfully SERVED!");
+        // 6. Verify it's now in Sessions
+        console.log("\n6️⃣  Verifying Order in Sessions Feed...");
+        const sessionRes = await fetch(`${API_BASE}/orders`);
+        const sessions = await sessionRes.json();
+        const transitioned = sessions.find(s => s.tableId === "T05");
+        if (transitioned) {
+            console.log("✅ Order successfully found in Sessions table!");
+        } else {
+            throw new Error("❌ Order DISAPPEARED after transition!");
+        }
 
         console.log("\n✨ ALL TESTS PASSED! System integration is healthy.");
 

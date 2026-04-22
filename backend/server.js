@@ -115,6 +115,8 @@ app.get('/api/orders', async (req, res) => {
     }
 });
 
+app.post('/api/orders', async (req, res) => {
+    try {
         const { orderType, tableId, sessionId, isStaff } = req.body;
         
         // Validate session for dine-in orders (skip if placed by staff)
