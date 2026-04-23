@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Plus, Minus, Search, UtensilsCrossed, CheckCircle, Info, Printer } from 'lucide-react';
+import { ShoppingBag, Plus, Minus, Search, UtensilsCrossed, CheckCircle, Info, Printer, CreditCard } from 'lucide-react';
 
 const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
 
