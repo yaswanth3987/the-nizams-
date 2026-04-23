@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Plus, Minus, Search, UtensilsCrossed, CheckCircle, Info } from 'lucide-react';
+import { ShoppingBag, Plus, Minus, Search, UtensilsCrossed, CheckCircle, Info, Printer } from 'lucide-react';
 
 const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
 
@@ -12,6 +12,7 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
     const [customerName, setCustomerName] = useState(initialOrder?.customerName || '');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [orderStatus, setOrderStatus] = useState(null);
+    const [lastOrderId, setLastOrderId] = useState(null);
 
     const getRemainingTime = (until) => {
         if (!until) return null;
@@ -69,11 +70,6 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
 
     const submitOrder = async () => {
         if (cart.length === 0) return;
-        if (!customerName) {
-            alert('Please enter Customer Name.');
-            return;
-        }
-
         setIsSubmitting(true);
         const orderData = {
             tableId: 'TAKEAWAY',
@@ -99,15 +95,12 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
             });
             
             if (res.ok) {
+                const result = await res.json();
+                setLastOrderId(result.id);
                 setOrderStatus('success');
                 if (!initialOrder) {
                     setCart([]);
-                    setCustomerName('');
                 }
-                setTimeout(() => {
-                    setOrderStatus(null);
-                    onComplete?.();
-                }, 1500);
             } else {
                 setOrderStatus('error');
                 setTimeout(() => setOrderStatus(null), 3000);
@@ -119,6 +112,44 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleInstantPrint = () => {
+        if (!lastOrderId) return;
+        const printWindow = window.open('', '_blank', 'width=450,height=600');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Order #${lastOrderId}</title>
+                    <style>
+                        body { font-family: sans-serif; padding: 20px; color: #0B3A2E; text-align: center; }
+                        .header { border-bottom: 2px solid #0B3A2E; padding-bottom: 10px; margin-bottom: 20px; }
+                        .id-box { background: #0B3A2E; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1 style="margin: 0;">THE GREAT NIZAM</h1>
+                        <p style="margin: 5px 0; font-size: 10px; font-weight: 800; letter-spacing: 0.2em;">TAKEAWAY BILL</p>
+                    </div>
+                    <div class="id-box">
+                        <div style="font-size: 10px; text-transform: uppercase;">Order ID</div>
+                        <div style="font-size: 32px; font-weight: 900;">#${lastOrderId}</div>
+                    </div>
+                    <p style="font-weight: bold;">Guest: ${customerName || 'VALUED PATRON'}</p>
+                    <p style="font-size: 12px; opacity: 0.6;">${new Date().toLocaleString('en-GB')}</p>
+                    <div style="border-top: 1px solid #0B3A2E; margin-top: 20px; padding-top: 10px; font-size: 20px; font-weight: 900;">
+                        TOTAL: £${Number(finalTotal).toFixed(2)}
+                    </div>
+                    <script>window.onload = () => { window.print(); setTimeout(() => window.close(), 500); };</script>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        setLastOrderId(null);
+        setOrderStatus(null);
+        setCustomerName('');
+        onComplete?.();
     };
 
     if (isLoading) {
@@ -255,13 +286,30 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
                         </div>
                     </div>
 
-                    <button 
-                        onClick={submitOrder}
-                        disabled={cart.length === 0 || isSubmitting}
-                        className="w-full bg-accent text-black py-5 rounded-xl font-bold text-sm uppercase transition-all shadow-xl disabled:opacity-20 flex items-center justify-center gap-3 h-16 group"
-                    >
-                        {isSubmitting ? 'Processing...' : orderStatus === 'success' ? <><CheckCircle size={20} /> Settled</> : 'Authorize Order'}
-                    </button>
+                    {orderStatus === 'success' ? (
+                        <div className="flex gap-3">
+                            <button 
+                                onClick={handleInstantPrint}
+                                className="flex-1 bg-white text-black py-5 rounded-xl font-bold text-sm uppercase transition-all shadow-xl flex items-center justify-center gap-3 h-16"
+                            >
+                                <Printer size={20} /> Print Receipt
+                            </button>
+                            <button 
+                                onClick={() => { setOrderStatus(null); onComplete?.(); }}
+                                className="flex-1 bg-accent text-black py-5 rounded-xl font-bold text-sm uppercase transition-all shadow-xl flex items-center justify-center gap-3 h-16"
+                            >
+                                Next Order
+                            </button>
+                        </div>
+                    ) : (
+                        <button 
+                            onClick={submitOrder}
+                            disabled={cart.length === 0 || isSubmitting}
+                            className="w-full bg-accent text-black py-5 rounded-xl font-bold text-sm uppercase transition-all shadow-xl disabled:opacity-20 flex items-center justify-center gap-3 h-16 group"
+                        >
+                            {isSubmitting ? 'Processing...' : 'Authorize Order'}
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

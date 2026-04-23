@@ -196,7 +196,8 @@ export default function KitchenDisplay() {
                                                     {displayTableId(order.tableId)}
                                                 </h4>
                                                 <p className="text-[#64766f] text-xs font-mono font-bold">
-                                                    ID: #NZ-{order.id.toString().padStart(4, '0')} • {formatTime(order.createdAt)}
+                                                    ID: #NZ-{order.id.toString().padStart(4, '0')}
+                                                    {order.customerName && <span className="text-[#d4af37] ml-2">({order.customerName})</span>}
                                                 </p>
                                             </div>
                                             {order.status === 'confirmed' && (
@@ -276,7 +277,8 @@ export default function KitchenDisplay() {
                                                     {displayTableId(order.tableId)}
                                                 </h4>
                                                 <p className="text-[#64766f] text-xs font-mono font-bold">
-                                                    ID: #NZ-{order.id.toString().padStart(4, '0')} • {formatTime(order.createdAt)}
+                                                    ID: #NZ-{order.id.toString().padStart(4, '0')}
+                                                    {order.customerName && <span className="text-[#d4af37] ml-2">({order.customerName})</span>}
                                                 </p>
                                             </div>
                                         </div>
