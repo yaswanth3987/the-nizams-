@@ -28,6 +28,7 @@ export default function WaitersPortal() {
     const { playSound } = useSoundSystem(assistanceRequests.length > 0);
 
     useEffect(() => {
+        document.title = "Waiter - The Great Nizam";
         const timer = setInterval(() => setNow(Date.now()), 1000);
         return () => clearInterval(timer);
     }, []);
@@ -120,7 +121,7 @@ export default function WaitersPortal() {
                 <img src="/logo-icon.png" className="w-12 h-12 object-contain" alt="Logo" />
                 <div>
                     <h2 className="text-white font-serif font-black text-xl leading-none italic tracking-tight">The Nizam</h2>
-                    <span className="text-[#86a69d] text-[10px] font-black uppercase tracking-widest opacity-60">Floor Captain</span>
+                    <span className="text-[#86a69d] text-[10px] font-black uppercase tracking-widest opacity-60">Waiter</span>
                 </div>
             </div>
 

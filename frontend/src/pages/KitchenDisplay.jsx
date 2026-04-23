@@ -24,6 +24,7 @@ export default function KitchenDisplay() {
     }, []);
 
     useEffect(() => {
+        document.title = "Kitchen - The Great Nizam";
         fetchKitchenOrders();
 
         socket.on('sessionUpdated', (updatedSession) => {
@@ -105,7 +106,7 @@ export default function KitchenDisplay() {
                 </div>
                 <h2 className="text-[#d4af37] font-serif text-2xl font-black mb-1">The Great</h2>
                 <h2 className="text-[#d4af37] font-serif text-2xl font-black mb-1">Nizam</h2>
-                <p className="text-[#849a91] text-[10px] font-black tracking-[0.2em] mb-12 uppercase">Kitchen Console</p>
+                <p className="text-[#849a91] text-[10px] font-black tracking-[0.2em] mb-12 uppercase">Kitchen</p>
 
                 <nav className="w-full px-6 flex flex-col gap-2 relative">
                     <button onClick={() => setActiveTab('live')} className={`w-full flex items-center gap-4 px-5 py-3.5 rounded-lg border border-transparent font-bold text-sm tracking-wide transition-all ${activeTab === 'live' ? 'bg-[#153428] text-[#d4af37] border-[#d4af37]/20 shadow-[0_4px_20px_rgba(0,0,0,0.3)]' : 'text-[#849a91] hover:bg-[#0c2419] hover:text-[#e0e8e4]'}`}>

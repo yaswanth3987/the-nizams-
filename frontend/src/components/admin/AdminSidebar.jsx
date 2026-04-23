@@ -8,7 +8,7 @@ export default function AdminSidebar({ activeView, onViewChange, counts = {} }) 
         { id: 'assistance', label: 'ASSISTANCE', icon: HelpCircle },
         { id: 'orders', label: 'ORDERS', icon: FileText },
         { id: 'confirmed', label: 'CONFIRMED', icon: CheckCircle },
-        { id: 'billed', label: 'PAYMENT', icon: PoundSterling },
+        { id: 'billed', label: 'BILLING', icon: PoundSterling },
         { id: 'completed', label: 'COMPLETED', icon: CheckSquare },
         { id: 'tables', label: 'TABLES', icon: LayoutGrid },
         { id: 'menu', label: 'MENU', icon: Utensils },
@@ -26,7 +26,7 @@ export default function AdminSidebar({ activeView, onViewChange, counts = {} }) 
                     </div>
                     <div>
                         <h2 className="text-xl font-serif text-white leading-tight font-bold">The Great Nizam</h2>
-                        <p className="text-[10px] font-black tracking-[0.3em] text-accent uppercase glow-gold">Admin Suite</p>
+                        <p className="text-[10px] font-black tracking-[0.3em] text-accent uppercase glow-gold">Admin</p>
                     </div>
                 </div>
             </div>

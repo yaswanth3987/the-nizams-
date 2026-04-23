@@ -28,6 +28,11 @@ export default function AdminDashboard() {
     const [editingTakeaway, setEditingTakeaway] = useState(null);
     const [assistanceRequests, setAssistanceRequests] = useState([]);
     const [activeView, setActiveView] = useState('orders');
+
+    useEffect(() => {
+        document.title = "Admin - The Great Nizam";
+    }, []);
+
     const [selectedSessionForReceipt, setSelectedSessionForReceipt] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMsg, setErrorMsg] = useState(null);
