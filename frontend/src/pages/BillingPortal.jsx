@@ -13,10 +13,15 @@ export default function BillingPortal() {
     }, []);
 
     const fetchBillingSessions = useCallback(() => {
-        // Fetch sessions in any active or ready status to ensure they show in Billing
-        fetch(`${API_URL}/orders?statuses=billed,active,ready,served,accepted,confirmed`)
+        // SUPER-FETCH: Fetch all possible active/pending statuses to ensure NO orders are hidden
+        const allActiveStatuses = 'billed,active,ready,served,accepted,confirmed,new,pending';
+        fetch(`${API_URL}/orders?statuses=${allActiveStatuses}`)
             .then(res => res.json())
-            .then(data => setSessions(data))
+            .then(data => {
+                // Only show takeaway or dine-in that aren't completed
+                const activeOnes = data.filter(s => s.status !== 'completed');
+                setSessions(activeOnes);
+            })
             .catch(err => console.error("Error fetching billing orders:", err));
     }, []);
 
