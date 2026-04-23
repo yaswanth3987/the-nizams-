@@ -212,25 +212,23 @@ const createOrder = async (orderData) => {
 const allocateSession = async (tableId, sessionId) => {
     try {
         const existing = await getActiveSession(tableId);
-        if (existing && existing.session_token === sessionId) {
+        // Normalize token field because legacy table uses 'sessionId' and new uses 'session_token'
+        const existingToken = existing ? (existing.session_token || existing.sessionId) : null;
+
+        if (existingToken === sessionId) {
             return true;
         }
         
         // Check table status
         const tStatus = await getTableStatus(tableId);
+        const statusStr = (tStatus?.status || 'free').toLowerCase();
         
-        // If table is in any active dining state, we allow starting/joining a session 
-        // We only block if it's explicitly in 'billing' (awaiting payment) to prevent double-billing confusion
-        if (!tStatus || ['free', 'occupied', 'ordering', 'cooking', 'ready', 'served'].includes(tStatus.status)) {
-            // If it's a NEW session token for a busy table, we just record it. 
-            // We don't necessarily want to clearSession if orders are cooking, 
-            // but for QR-based flow, the latest session token is the "owner".
-            await runQuery(`INSERT INTO qr_sessions (seating_id, session_token, status) VALUES (?, ?, 'ACTIVE')`, [tableId.toString(), sessionId]);
-            return true;
-        }
-        
-        // If it's billing, it might be an old session. 
-        return false;
+        // We allow accessing the table in ALMOST any state if it's a new session scan.
+        // The only reason to block is if we want to prevent hijacking an active 'billing' session,
+        // but often 'billing' is just a stale state from a departed guest.
+        // We now allow ALL states to be accessible via a fresh scan to prevent lockouts.
+        await runQuery(`INSERT INTO qr_sessions (seating_id, session_token, status) VALUES (?, ?, 'ACTIVE')`, [tableId.toString(), sessionId]);
+        return true;
     } catch (e) {
         console.error('Error allocating session:', e);
         return false;
@@ -239,13 +237,16 @@ const allocateSession = async (tableId, sessionId) => {
 
 const getActiveSession = async (tableId) => {
     try {
+        // Try new table first
         const res = await runQuery(`SELECT * FROM qr_sessions WHERE seating_id = ? AND status = 'ACTIVE' ORDER BY id DESC LIMIT 1`, [tableId.toString()]);
-        return res.rows[0];
-    } catch (e) {
-        // Fallback for previous active_sessions if table schema is messed up momentarily
+        if (res.rows[0]) return res.rows[0];
+
+        // Fallback to legacy active_sessions
         const colTableId = isPg ? '"tableId"' : 'tableId';
-        const res = await runQuery(`SELECT * FROM active_sessions WHERE ${colTableId} = ?`, [tableId.toString()]);
-        return res.rows[0];
+        const res2 = await runQuery(`SELECT * FROM active_sessions WHERE ${colTableId} = ?`, [tableId.toString()]);
+        return res2.rows[0];
+    } catch (e) {
+        return null;
     }
 };
 
