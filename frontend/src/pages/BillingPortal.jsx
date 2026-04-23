@@ -152,8 +152,8 @@ export default function BillingPortal() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {filtered.map(session => (
                             <div key={session.id} className="bg-white rounded-[40px] p-8 shadow-2xl border border-[#0B3A2E]/5 flex flex-col relative overflow-hidden group hover:-translate-y-2 transition-all duration-500">
-                                <div className={`absolute top-0 right-0 px-6 py-2 rounded-bl-3xl font-black text-[10px] uppercase tracking-widest ${session.status === 'billed' || (session.tableId === 'TAKEAWAY' && session.status === 'ready') ? 'bg-[#C29958] text-white' : 'bg-[#0B3A2E]/5 text-[#0B3A2E]/40'}`}>
-                                    {session.status === 'billed' || (session.tableId === 'TAKEAWAY' && session.status === 'ready') ? 'READY TO PAY' : (session.status === 'confirmed' ? 'CONFIRMED' : 'ACTIVE')}
+                                <div className={`absolute top-0 right-0 px-6 py-2 rounded-bl-3xl font-black text-[10px] uppercase tracking-widest ${session.status === 'billed' || session.status === 'served' || (session.tableId === 'TAKEAWAY' && session.status === 'ready') ? 'bg-[#C29958] text-white' : 'bg-[#0B3A2E]/5 text-[#0B3A2E]/40'}`}>
+                                    {session.status === 'billed' || session.status === 'served' || (session.tableId === 'TAKEAWAY' && session.status === 'ready') ? 'READY TO PAY' : (session.status === 'confirmed' ? 'CONFIRMED' : 'ACTIVE')}
                                 </div>
 
                                 <div className="mb-8">
