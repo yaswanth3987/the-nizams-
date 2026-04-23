@@ -80,7 +80,7 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
             finalTotal,
             subtotal,
             serviceCharge: 0,
-            status: initialOrder?.status || 'confirmed'
+            status: initialOrder?.status || 'active'
         };
 
         try {
@@ -98,9 +98,7 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
                 const result = await res.json();
                 setLastOrderId(result.id);
                 setOrderStatus('success');
-                if (!initialOrder) {
-                    setCart([]);
-                }
+                // Cart will be cleared in handleInstantPrint or Next Order
             } else {
                 setOrderStatus('error');
                 setTimeout(() => setOrderStatus(null), 3000);
