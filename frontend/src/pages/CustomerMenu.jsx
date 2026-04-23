@@ -1351,7 +1351,8 @@ export default function CustomerMenu() {
 
     const renderPremiumContent = () => {
         if (!selectedTable) return renderTableSelection();
-        if (sessionError) return renderSessionError();
+        // EMERGENCY BYPASS: Ignore sessionError for today's opening to prevent any lockout.
+        // if (sessionError) return renderSessionError();
         return (
             <div className="fixed inset-0 bg-[#F6EFE6] flex flex-col font-sans animate-fade-in no-scrollbar overflow-hidden select-none">
                 {renderHeader()}
