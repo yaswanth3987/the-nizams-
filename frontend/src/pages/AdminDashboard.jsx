@@ -13,6 +13,7 @@ import AdminAttendance from '../components/admin/AdminAttendance';
 import AdminMenuManagement from '../components/admin/AdminMenuManagement';
 import AdminTableOverview from '../components/admin/AdminTableOverview';
 import AdminQuickAccess from '../components/admin/AdminQuickAccess';
+import AdminTakeawayPOS from '../components/admin/AdminTakeawayPOS';
 import AdminTakeawayManager from '../components/admin/AdminTakeawayManager';
 import InventoryDashboard from '../components/InventoryDashboard';
 import { useSoundSystem } from '../hooks/useSoundSystem';
@@ -280,6 +281,7 @@ export default function AdminDashboard() {
     const getHeaderConfig = () => {
         switch(activeView) {
             case 'all-in-one': return { title: 'Quick Access', active: 'all-in-one', tabs: [] };
+            case 'pos': return { title: 'New Order Entry', active: 'pos', tabs: [] };
             case 'inventory': return { title: 'The Great Nizam', active: 'inv', tabs: [{id:'dashboard', label:'DASHBOARD'}, {id:'inv', label:'INVENTORY'}, {id:'reports', label:'REPORTS'}] };
             case 'assistance': return { title: 'The Great Nizam', active: 'ast', tabs: [{id:'live', label:'LIVE VIEW'}, {id:'reports', label:'REPORTS'}, {id:'ast', label:'ASSISTANCE'}] };
             case 'tables': return { title: 'The Great Nizam', active: 'grid', tabs: [{id:'grid', label:'TABLE OVERVIEW'}] };
@@ -394,7 +396,12 @@ export default function AdminDashboard() {
                         sessions={sessions}
                         newOrders={newOrders}
                         updateStatus={updateStatus}
+                        onViewChange={setActiveView}
                     />
+                )}
+
+                {activeView === 'pos' && (
+                    <AdminTakeawayPOS />
                 )}
 
                 {activeView === 'tables' && (

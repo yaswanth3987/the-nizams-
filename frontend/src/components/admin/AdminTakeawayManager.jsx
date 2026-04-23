@@ -1,7 +1,7 @@
 import React from 'react';
-import { Package, CheckCircle, Clock, ShoppingBag, ArrowRight, Printer, Check, CreditCard, XCircle, Utensils } from 'lucide-react';
+import { Package, CheckCircle, Clock, ShoppingBag, ArrowRight, Printer, Check, CreditCard, XCircle, Utensils, Plus } from 'lucide-react';
 
-export default function AdminTakeawayManager({ sessions, newOrders, updateStatus }) {
+export default function AdminTakeawayManager({ sessions, newOrders, updateStatus, onViewChange }) {
     // Filter only takeaway sessions that aren't completed yet
     const activeSessions = sessions.filter(s => s.orderType === 'takeaway' && s.status !== 'completed');
     const incomingTakeaways = newOrders.filter(o => o.orderType === 'takeaway' && (o.status === 'new' || o.status === 'pending'));
@@ -20,9 +20,18 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                         Track and manage active takeaway orders for pick-up.
                     </p>
                 </div>
-                <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-xl">
-                    <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Queue Size</p>
-                    <p className="text-xl font-serif font-bold text-emerald-500">{activeSessions.length + incomingTakeaways.length} Total Orders</p>
+                <div className="flex items-center gap-6">
+                    <button 
+                        onClick={() => onViewChange?.('pos')}
+                        className="h-14 px-8 rounded-xl bg-accent text-black font-bold text-sm flex items-center gap-3 transition-all hover:bg-white shadow-xl"
+                    >
+                        <Plus size={20} /> 
+                        New Takeaway
+                    </button>
+                    <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-xl">
+                        <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Queue Size</p>
+                        <p className="text-xl font-serif font-bold text-emerald-500">{activeSessions.length + incomingTakeaways.length} Total Orders</p>
+                    </div>
                 </div>
             </div>
 
