@@ -169,13 +169,13 @@ const addOrderToSession = async (orderData) => {
     // Always create a new session (shard) for each incoming order round 
     // This satisfies the requirement to "show the difference" in the admin dashboard
     if (isPg) {
-        const sql = `INSERT INTO table_sessions ("tableId", items, "finalTotal", subtotal, "serviceCharge", status, "orderType", "customerName", "phone", "sessionId") VALUES (?, ?, ?, ?, ?, 'confirmed', ?, ?, ?, ?) RETURNING *`;
-        const res = await runQuery(sql, [tableId.toString(), itemsJson, calcFinalTotal, calcSubtotal, calcServiceCharge, ot, cName, pNum, sId]);
+        const sql = `INSERT INTO table_sessions ("tableId", items, "finalTotal", subtotal, "serviceCharge", status, "orderType", "customerName", "phone", "sessionId") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`;
+        const res = await runQuery(sql, [tableId.toString(), itemsJson, calcFinalTotal, calcSubtotal, calcServiceCharge, orderData.status || 'confirmed', ot, cName, pNum, sId]);
         const row = res.rows[0];
         return { ...row, items: typeof row.items === 'string' ? JSON.parse(row.items) : row.items };
     } else {
-        const sql = `INSERT INTO table_sessions (tableId, items, finalTotal, subtotal, serviceCharge, status, orderType, customerName, phone, sessionId) VALUES (?, ?, ?, ?, ?, 'confirmed', ?, ?, ?, ?)`;
-        const res = await runQuery(sql, [tableId.toString(), itemsJson, calcFinalTotal, calcSubtotal, calcServiceCharge, ot, cName, pNum, sId]);
+        const sql = `INSERT INTO table_sessions (tableId, items, finalTotal, subtotal, serviceCharge, status, orderType, customerName, phone, sessionId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        const res = await runQuery(sql, [tableId.toString(), itemsJson, calcFinalTotal, calcSubtotal, calcServiceCharge, orderData.status || 'confirmed', ot, cName, pNum, sId]);
         const selectRes = await runQuery(`SELECT * FROM table_sessions WHERE id = ?`, [res.lastID]);
         const row = selectRes.rows[0];
         return { ...row, items: JSON.parse(row.items) };
