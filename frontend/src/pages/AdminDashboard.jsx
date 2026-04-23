@@ -13,6 +13,7 @@ import AdminAttendance from '../components/admin/AdminAttendance';
 import AdminMenuManagement from '../components/admin/AdminMenuManagement';
 import AdminTableOverview from '../components/admin/AdminTableOverview';
 import AdminQuickAccess from '../components/admin/AdminQuickAccess';
+import AdminTakeawayManager from '../components/admin/AdminTakeawayManager';
 import InventoryDashboard from '../components/InventoryDashboard';
 import { useSoundSystem } from '../hooks/useSoundSystem';
 
@@ -286,6 +287,7 @@ export default function AdminDashboard() {
             case 'billed': return { title: 'The Great Nizam', active: 'bill', tabs: [{id:'orders', label:'ORDERS'}, {id:'conf', label:'CONFIRMED'}, {id:'bill', label:'PAYMENT'}, {id:'comp', label:'COMPLETED'}, {id:'inv2', label:'INVENTORY'}] };
             case 'orders': return { title: 'The Great Nizam', active: 'new', tabs: [{id:'new', label:'NEW ORDERS'}, {id:'all', label:'ALL ORDERS'}] };
             case 'completed': return { title: 'The Great Nizam', active: 'today', tabs: [{id:'today', label:'TODAY'}, {id:'past', label:'PAST 7 DAYS'}] };
+            case 'takeaway': return { title: 'Takeaway Management', active: 'live', tabs: [{id:'live', label:'LIVE ORDERS'}, {id:'history', label:'HISTORY'}] };
             case 'attendance': return { title: 'Staff Attendance', active: 'attendance', tabs: [] };
             case 'menu': return { title: 'Menu Management', active: 'menu', tabs: [] };
             case 'scheduler': return { title: 'Temporal Scheduler', active: 'scheduler', tabs: [] };
@@ -322,6 +324,7 @@ export default function AdminDashboard() {
         confirmed: sessions.filter(s => ['confirmed', 'active', 'ready', 'served'].includes(s.status) && s.orderType !== 'takeaway').length,
         billed: sessions.filter(s => s.status === 'billed' && s.orderType !== 'takeaway').length,
         completed: sessions.filter(s => s.status === 'completed' && s.orderType !== 'takeaway').length,
+        takeaway: newOrders.filter(o => o.orderType === 'takeaway' && (o.status === 'new' || o.status === 'pending')).length + sessions.filter(s => s.orderType === 'takeaway' && s.status !== 'completed').length,
         assistance: assistanceRequests.length,
         hasBillRequest: assistanceRequests.some(r => r.type === 'bill' && r.status === 'pending')
     };
@@ -384,6 +387,14 @@ export default function AdminDashboard() {
 
                 {activeView === 'scheduler' && (
                     <AdminUnavailabilityScheduler />
+                )}
+
+                {activeView === 'takeaway' && (
+                    <AdminTakeawayManager 
+                        sessions={sessions}
+                        newOrders={newOrders}
+                        updateStatus={updateStatus}
+                    />
                 )}
 
                 {activeView === 'tables' && (

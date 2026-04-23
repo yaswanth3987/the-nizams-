@@ -37,7 +37,7 @@ const StatusLegend = () => (
     </div>
 );
 
-const TableTile = ({ tableId, getTableStatus, getRemainingPrepTime, selectedTable, setSelectedTable }) => {
+const TableTile = ({ tableId, getTableStatus, getRemainingPrepTime, selectedTableId, setSelectedTableId }) => {
     const { status, session, assistance } = getTableStatus(tableId);
     
     let bgColor = "bg-white/5 border-white/10 hover:bg-white/10";
@@ -66,7 +66,7 @@ const TableTile = ({ tableId, getTableStatus, getRemainingPrepTime, selectedTabl
         <div 
             onClick={() => {
                 const status = getTableStatus(tableId);
-                if (status.session || status.assistance) setSelectedTable(tableId);
+                if (status.session || status.assistance) setSelectedTableId(tableId);
             }}
             className={`group relative aspect-square rounded-[2rem] border transition-all duration-500 hover:scale-[1.05] cursor-pointer flex flex-col items-center justify-center gap-3 ${bgColor} ${glow}`}
         >
@@ -113,12 +113,13 @@ const TableTile = ({ tableId, getTableStatus, getRemainingPrepTime, selectedTabl
             </div>
 
             {/* Selection Highlight */}
-            {selectedTable === tableId && (
+            {selectedTableId === tableId && (
                 <div className="absolute inset-0 rounded-[2rem] border-2 border-nizam-gold z-10 pointer-events-none shadow-[inset_0_0_20px_rgba(198,168,124,0.2)]"></div>
             )}
         </div>
     );
 };
+
 
 export default function AdminQuickAccess({ 
     newOrders, 
@@ -230,6 +231,12 @@ export default function AdminQuickAccess({
                         >
                             Delivery
                         </button>
+                        <button 
+                            onClick={() => setOrderTypeMode('takeaway')}
+                            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${orderTypeMode === 'takeaway' ? 'bg-orange-600/20 text-orange-500 border-orange-500/20' : 'text-white/20 border-transparent hover:bg-white/5'}`}
+                        >
+                            Takeaway
+                        </button>
                     </div>
                 </div>
             </div>
@@ -260,8 +267,8 @@ export default function AdminQuickAccess({
                                         tableId={tableId} 
                                         getTableStatus={getTableStatus} 
                                         getRemainingPrepTime={getRemainingPrepTime}
-                                        selectedTable={selectedTable}
-                                        setSelectedTable={setSelectedTable}
+                                        selectedTableId={selectedTableId}
+                                        setSelectedTableId={setSelectedTableId}
                                     />
                                 );
                             })}

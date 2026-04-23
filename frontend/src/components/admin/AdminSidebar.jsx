@@ -9,6 +9,7 @@ export default function AdminSidebar({ activeView, onViewChange, counts = {} }) 
         { id: 'confirmed', label: 'CONFIRMED', icon: CheckCircle },
         { id: 'billed', label: 'PAYMENT', icon: PoundSterling },
         { id: 'completed', label: 'COMPLETED', icon: CheckSquare },
+        { id: 'takeaway', label: 'TAKEAWAY', icon: ShoppingBag },
         { id: 'tables', label: 'TABLES', icon: LayoutGrid },
         { id: 'menu', label: 'MENU', icon: Utensils },
         { id: 'scheduler', label: 'SCHEDULER', icon: Clock },
