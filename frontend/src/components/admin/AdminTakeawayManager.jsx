@@ -8,7 +8,7 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
     
     // Grouping by status for management columns
     const incoming = incomingTakeaways;
-    const preparing = activeSessions.filter(o => o.status === 'confirmed' || o.status === 'active' || o.status === 'ready');
+    const preparing = activeSessions.filter(o => o.status === 'confirmed' || o.status === 'active' || o.status === 'ready' || o.status === 'accepted');
     const billed = activeSessions.filter(o => o.status === 'billed');
     
     return (
