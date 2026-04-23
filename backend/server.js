@@ -126,9 +126,9 @@ app.post('/api/orders', async (req, res) => {
         }
         
         let order;
-        if (req.body.status === 'confirmed' || req.body.status === 'accepted') {
+        if (req.body.status === 'confirmed' || req.body.status === 'accepted' || req.body.status === 'active' || req.body.orderType === 'takeaway') {
             order = await addOrderToSession(req.body);
-            // This is a pre-confirmed order (e.g. from Admin POS)
+            // This is a pre-confirmed or active takeaway order
             io.emit('sessionUpdated', order);
         } else {
             order = await createOrder(req.body);
