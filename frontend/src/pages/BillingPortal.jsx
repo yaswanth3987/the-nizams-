@@ -78,10 +78,13 @@ export default function BillingPortal() {
                         <h1 style="margin: 0; font-size: 24px; letter-spacing: -0.02em;">THE GREAT NIZAM</h1>
                         <p style="margin: 5px 0; font-size: 10px; font-weight: 800; letter-spacing: 0.3em; color: #C29958;">ROYAL DINING SINCE 1954</p>
                     </div>
-                    <div style="margin-bottom: 20px;">
-                        <div class="meta">Order ID: #${session.id}</div>
-                        <div class="meta">Table: ${session.tableId === 'TAKEAWAY' ? 'TAKEAWAY' : session.tableId}</div>
-                        ${session.customerName ? `<div class="meta">Guest: ${session.customerName}</div>` : ''}
+                    <div style="margin-bottom: 25px; text-align: center; background: #0B3A2E; color: white; padding: 15px; border-radius: 10px;">
+                        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 4px; opacity: 0.8;">Order ID</div>
+                        <div style="font-size: 32px; font-weight: 900; letter-spacing: -0.02em;">#${session.id}</div>
+                    </div>
+                    <div style="margin-bottom: 20px; border-bottom: 1px solid #0B3A2E; padding-bottom: 15px;">
+                        <div class="meta">Target: ${session.tableId === 'TAKEAWAY' ? 'TAKEAWAY' : `TABLE ${session.tableId}`}</div>
+                        ${session.customerName ? `<div class="meta">Guest: ${session.customerName}</div>` : `<div class="meta">Guest: VALUED PATRON</div>`}
                         <div class="meta" style="font-size: 10px; opacity: 0.6;">Date: ${new Date().toLocaleString('en-GB')}</div>
                     </div>
                     <div class="items">
