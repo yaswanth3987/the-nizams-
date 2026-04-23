@@ -173,10 +173,10 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                                         Edit
                                     </button>
                                     <button 
-                                        onClick={() => updateStatus(order.id, 'completed')}
+                                        onClick={() => updateStatus(order.id, 'billed')}
                                         className="flex-[2] py-4 rounded-xl font-bold text-xs bg-white/10 text-emerald-400 border border-emerald-400/20 uppercase hover:bg-emerald-500 hover:text-black transition-all"
                                     >
-                                        Close Order
+                                        Send to Billing
                                     </button>
                                 </div>
                             </div>
