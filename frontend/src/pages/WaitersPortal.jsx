@@ -333,54 +333,56 @@ export default function WaitersPortal() {
                                                 ))}
                                             </div>
 
-                                            <div className="flex flex-col gap-3">
-                                                {isReady ? (
-                                                    <button 
-                                                        onClick={() => handleUpdateOrderStatus(order.id, 'served', order._source)}
-                                                        className="w-full bg-[#FFD700] text-[#0F3A2F] py-5 rounded-2xl font-black uppercase text-sm tracking-[0.2em] shadow-xl shadow-[#FFD700]/10 active:scale-95 transition-all flex items-center justify-center gap-3"
-                                                    >
-                                                        <CheckCircle size={20} /> Mark as Served
-                                                    </button>
-                                                ) : isNew ? (
-                                                    <div className="flex gap-3">
+                                                <div className="flex flex-col gap-3">
+                                                    {isReady ? (
                                                         <button 
-                                                            onClick={() => handleUpdateOrderStatus(order.id, 'confirmed', order._source)}
-                                                            className="flex-[2] bg-[#FFD700] text-[#0F3A2F] py-5 rounded-2xl font-black uppercase text-sm tracking-[0.2em] active:scale-95 transition-all shadow-xl shadow-[#FFD700]/10 flex items-center justify-center gap-3"
+                                                            onClick={() => handleUpdateOrderStatus(order.id, 'served', order._source)}
+                                                            className="w-full bg-[#FFD700] text-[#0F3A2F] py-5 rounded-2xl font-black uppercase text-sm tracking-[0.2em] shadow-xl shadow-[#FFD700]/10 active:scale-95 transition-all flex items-center justify-center gap-3"
                                                         >
-                                                            <CheckCircle size={20} /> Accept
+                                                            <CheckCircle size={20} /> Mark as Served
                                                         </button>
-                                                        <button 
-                                                            onClick={() => {
-                                                                setSelectedTable(order.tableId);
-                                                                setCart(order.items || []);
-                                                                setView('order_entry');
-                                                            }}
-                                                            className="flex-1 bg-white/5 text-white/40 py-5 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all border border-white/10"
-                                                        >
-                                                            Edit
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex gap-3">
-                                                        <div className="flex-[2] bg-white/5 border border-white/10 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] text-[#86a69d] flex items-center justify-center gap-3">
-                                                            <Clock size={16} className="animate-spin-slow" /> In Kitchen
+                                                    ) : isNew ? (
+                                                        <div className="flex gap-3">
+                                                            <button 
+                                                                onClick={() => handleUpdateOrderStatus(order.id, 'confirmed', order._source)}
+                                                                className="flex-[2] bg-[#FFD700] text-[#0F3A2F] py-5 rounded-2xl font-black uppercase text-sm tracking-[0.2em] active:scale-95 transition-all shadow-xl shadow-[#FFD700]/10 flex items-center justify-center gap-3"
+                                                            >
+                                                                <CheckCircle size={20} /> Accept
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => {
+                                                                    setSelectedTable(order.tableId);
+                                                                    setCart(order.items || []);
+                                                                    setView('order_entry');
+                                                                }}
+                                                                className="flex-1 bg-white/5 text-white/40 py-5 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all border border-white/10"
+                                                            >
+                                                                Edit
+                                                            </button>
                                                         </div>
-                                                        <button 
-                                                            onClick={() => {
-                                                                setSelectedTable(order.tableId);
-                                                                setCart(order.items || []);
-                                                                setEditingOrder({ id: order.id, type: order._source });
-                                                                setView('order_entry');
-                                                            }}
-                                                    className="flex-1 bg-white/10 text-white py-3 rounded-xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all"
-                                                >
-                                                    Modify
-                                                </button>
+                                                    ) : (
+                                                        <div className="flex gap-3">
+                                                            <div className="flex-[2] bg-white/5 border border-white/10 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] text-[#86a69d] flex items-center justify-center gap-3">
+                                                                <Clock size={16} className="animate-spin-slow" /> In Kitchen
+                                                            </div>
+                                                            <button 
+                                                                onClick={() => {
+                                                                    setSelectedTable(order.tableId);
+                                                                    setCart(order.items || []);
+                                                                    setEditingOrder({ id: order.id, type: order._source });
+                                                                    setView('order_entry');
+                                                                }}
+                                                                className="flex-1 bg-white/10 text-white py-3 rounded-xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all"
+                                                            >
+                                                                Modify
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
+                                        </div>
+                                    );
+                                })}
                         </div>
                     </section>
                 </div>
