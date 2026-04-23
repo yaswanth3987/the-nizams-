@@ -8,7 +8,7 @@ export default function AdminAttendance() {
     const [attendanceToday, setAttendanceToday] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
-    const [newStaff, setNewStaff] = useState({ name: '', phone: '', shiftTimings: '' });
+    const [newStaff, setNewStaff] = useState({ name: '', phone: '', shiftTimings: '', designation: 'waiter' });
     const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
@@ -95,7 +95,7 @@ export default function AdminAttendance() {
                     </p>
                 </div>
                 <button 
-                    onClick={() => { setShowAddModal(true); setNewStaff({name:'', phone:'', shiftTimings:''}); }}
+                    onClick={() => { setShowAddModal(true); setNewStaff({name:'', phone:'', shiftTimings:'', designation: 'waiter'}); }}
                     className="h-14 px-8 rounded-xl bg-accent text-black font-bold text-sm flex items-center gap-3 transition-all hover:bg-white shadow-xl"
                 >
                     <UserPlus size={20} /> 
@@ -145,7 +145,7 @@ export default function AdminAttendance() {
                                         <td className="py-6 px-10 text-white/20 font-serif italic text-sm">#{String(staff.id).padStart(4, '0')}</td>
                                         <td className="py-6 px-10">
                                             <p className="font-serif font-bold text-xl text-white italic">{staff.name}</p>
-                                            <p className="text-[10px] text-white/20 uppercase font-bold tracking-widest mt-1">Authorized Staff</p>
+                                            <p className="text-[10px] text-accent uppercase font-bold tracking-widest mt-1">{staff.designation || 'Authorized Staff'}</p>
                                         </td>
                                         <td className="py-6 px-10 text-white/80 font-bold">{staff.shiftTimings || 'N/A'}</td>
                                         <td className="py-6 px-10 text-white/60 font-medium">{staff.phone}</td>
@@ -203,6 +203,21 @@ export default function AdminAttendance() {
                             <div>
                                 <label className="block text-[10px] font-black text-white/20 tracking-[0.5em] uppercase mb-4 ml-4">UK Communication Line</label>
                                 <input required type="tel" value={newStaff.phone} onChange={e => setNewStaff({...newStaff, phone: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-xl text-white font-serif italic focus:outline-none focus:border-nizam-gold/50 transition-all font-medium" placeholder="+44 ..." />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-white/20 tracking-[0.5em] uppercase mb-4 ml-4">Personnel Designation</label>
+                                <select 
+                                    value={newStaff.designation} 
+                                    onChange={e => setNewStaff({...newStaff, designation: e.target.value})} 
+                                    className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-xl text-white font-serif italic focus:outline-none focus:border-nizam-gold/50 transition-all font-medium appearance-none"
+                                >
+                                    <option value="waiter">Waiter</option>
+                                    <option value="chef">Chef</option>
+                                    <option value="manager">Manager</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="super admin">Super Admin</option>
+                                    <option value="cleaner">Cleaner</option>
+                                </select>
                             </div>
                             <div>
                                 <label className="block text-[10px] font-black text-white/20 tracking-[0.5em] uppercase mb-4 ml-4">Shift Timings</label>

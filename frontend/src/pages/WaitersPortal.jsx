@@ -202,8 +202,8 @@ export default function WaitersPortal() {
                                 <div key={req.id} className="bg-white/5 border border-white/10 rounded-[32px] p-6 relative overflow-hidden group hover:border-[#FFD700]/30 transition-all duration-500">
                                     <div className="flex justify-between items-start mb-6">
                                         <div>
-                                            <p className="text-[#86a69d] text-[10px] font-black uppercase tracking-[0.2em] mb-1">TABLE {req.tableId.replace(/\D/g, '')}</p>
-                                            <h3 className="text-white text-2xl font-serif font-black italic">{req.type === 'bill' ? 'Settlement Call' : 'Immediate Call'}</h3>
+                                            <p className="text-[#86a69d] text-xs font-black uppercase tracking-[0.2em] mb-1">TABLE {req.tableId.replace(/\D/g, '')}</p>
+                                            <h3 className="text-white text-3xl font-serif font-black italic">{req.type === 'bill' ? 'Settlement Call' : 'Immediate Call'}</h3>
                                         </div>
                                         <div className="text-right">
                                             <p className="text-[#FFD700] text-lg font-black tabular-nums">04:12</p>
@@ -249,8 +249,8 @@ export default function WaitersPortal() {
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex justify-between items-start mb-2">
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-[#FFD700] text-[10px] font-black uppercase tracking-widest">TABLE {order.tableId}</span>
-                                                        <span className="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
+                                                        <span className="text-[#FFD700] text-sm font-black uppercase tracking-widest">TABLE {order.tableId}</span>
+                                                        <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-ping"></span>
                                                     </div>
                                                 </div>
                                                 <h3 className="text-white text-xl font-bold font-serif mb-1 truncate">
@@ -289,8 +289,8 @@ export default function WaitersPortal() {
                                 <div key={order.id} className={`bg-white/5 border rounded-[32px] p-6 group transition-all ${order.status === 'ready' ? 'border-[#FFD700]/50 bg-[#FFD700]/5' : 'border-white/10'}`}>
                                     <div className="flex justify-between items-start mb-4">
                                         <div>
-                                            <span className="text-[#86a69d] text-[10px] font-black uppercase tracking-widest">TABLE {order.tableId}</span>
-                                            <h4 className="text-white font-bold text-lg">Order #{order.id}</h4>
+                                            <span className="text-[#FFD700] text-sm font-black uppercase tracking-widest">TABLE {order.tableId}</span>
+                                            <h4 className="text-white font-bold text-2xl">Order #{order.id}</h4>
                                         </div>
                                         <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
                                             order.status === 'ready' ? 'bg-[#FFD700] text-[#0F3A2F]' :
@@ -421,14 +421,14 @@ export default function WaitersPortal() {
                             </h2>
                             <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
                                 {section.data.map(t => (
-                                    <button 
-                                        key={t}
-                                        onClick={() => { setSelectedTable(t); setView('table_details'); }}
-                                        className={`aspect-square rounded-3xl border-2 flex flex-col items-center justify-center transition-all active:scale-90 ${getTableColor(t)}`}
-                                    >
-                                        <span className="text-2xl font-serif font-black">{t}</span>
-                                        <span className="text-[9px] font-black uppercase opacity-60 mt-1">{tables[t] || 'Free'}</span>
-                                    </button>
+                                        <button 
+                                            key={t}
+                                            onClick={() => { setSelectedTable(t); setView('table_details'); }}
+                                            className={`aspect-square rounded-3xl border-2 flex flex-col items-center justify-center transition-all active:scale-90 ${getTableColor(t)}`}
+                                        >
+                                            <span className="text-4xl font-serif font-black">{t}</span>
+                                            <span className="text-xs font-black uppercase opacity-60 mt-2">{tables[t] || 'Free'}</span>
+                                        </button>
                                 ))}
                             </div>
                         </div>
@@ -450,8 +450,8 @@ export default function WaitersPortal() {
                             <ArrowLeft size={20} />
                         </button>
                         <div>
-                            <h1 className="text-2xl font-black text-[#FFD700] font-serif">Table {selectedTable}</h1>
-                            <p className="text-[#86a69d] text-[10px] font-black uppercase tracking-[0.2em]">Table Management Console</p>
+                            <h1 className="text-5xl font-black text-[#FFD700] font-serif">Table {selectedTable}</h1>
+                            <p className="text-[#86a69d] text-xs font-black uppercase tracking-[0.2em] mt-2">Table Management Console</p>
                         </div>
                     </div>
                     <button onClick={() => setView('order_entry')} className="bg-[#FFD700] text-[#0F3A2F] px-8 py-3.5 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center gap-2 active:scale-95 transition-all shadow-xl">

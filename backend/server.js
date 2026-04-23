@@ -150,21 +150,47 @@ app.post('/api/orders', async (req, res) => {
 
 app.put('/api/orders/:id/status', async (req, res) => {
     try {
-        const updatedSession = await updateSessionStatus(req.params.id, req.body.status);
+        const { status, settled } = req.body;
+        const updatedSession = await updateSessionStatus(req.params.id, status, { settled });
         
         // Auto-update table status on billing/completion
-        if (req.body.status === 'billed') {
+        if (status === 'billed') {
             await clearSession(updatedSession.tableId);
             const tStatus = await updateTableStatus(updatedSession.tableId, 'billing');
             io.emit('tableStatusUpdated', tStatus);
-        } else if (req.body.status === 'completed') {
+        } else if (status === 'completed') {
+            await clearSession(updatedSession.tableId);
+            const tStatus = await updateTableStatus(updatedSession.tableId, 'free');
+            io.emit('tableStatusUpdated', tStatus);
+        }
+
+        // Real-time notification for billing portal
+        if (status === 'billing_pending') {
+            console.log("Order moved to billing:", req.params.id);
+            io.emit('NEW_BILLING_ORDER', updatedSession);
+        }
+
+        io.emit('sessionUpdated', updatedSession);
+        io.emit('orderUpdated', updatedSession); // Ensure both are notified
+        res.json(updatedSession);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/orders/:id/finalize', async (req, res) => {
+    try {
+        const updatedSession = await finalizePayment(req.params.id, req.body);
+        
+        // Auto-update table status on completion
+        if (req.body.status === 'completed' && updatedSession.tableId !== 'TAKEAWAY') {
             await clearSession(updatedSession.tableId);
             const tStatus = await updateTableStatus(updatedSession.tableId, 'free');
             io.emit('tableStatusUpdated', tStatus);
         }
 
         io.emit('sessionUpdated', updatedSession);
-        io.emit('orderUpdated', updatedSession); // Ensure both are notified
+        io.emit('orderUpdated', updatedSession);
         res.json(updatedSession);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -387,7 +413,8 @@ app.get('/api/employees', async (req, res) => {
 
 app.post('/api/employees', async (req, res) => {
     try {
-        const emp = await createEmployee(req.body.name, req.body.phone, req.body.shiftTimings);
+        const { name, phone, shiftTimings, designation } = req.body;
+        const emp = await createEmployee(name, phone, shiftTimings, designation);
         res.status(201).json(emp);
     } catch (err) { 
         console.error('API Error /api/employees (POST):', err);
@@ -397,7 +424,8 @@ app.post('/api/employees', async (req, res) => {
 
 app.put('/api/employees/:id', async (req, res) => {
     try {
-        const emp = await updateEmployee(req.params.id, req.body.name, req.body.phone, req.body.shiftTimings);
+        const { name, phone, shiftTimings, designation } = req.body;
+        const emp = await updateEmployee(req.params.id, name, phone, shiftTimings, designation);
         res.json(emp);
     } catch (err) { 
         console.error('API Error /api/employees/:id (PUT):', err);

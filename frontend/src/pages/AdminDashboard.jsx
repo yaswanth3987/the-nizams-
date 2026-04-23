@@ -168,7 +168,12 @@ export default function AdminDashboard() {
         });
 
         socket.on('assistanceUpdated', (updatedReq) => {
-            setAssistanceRequests(prev => prev.map(r => r.id === updatedReq.id ? updatedReq : r));
+            setAssistanceRequests(prev => {
+                if (updatedReq.status !== 'pending') {
+                    return prev.filter(r => r.id !== updatedReq.id);
+                }
+                return prev.map(r => r.id === updatedReq.id ? updatedReq : r);
+            });
         });
 
         socket.on('assistanceDeleted', ({ id }) => {

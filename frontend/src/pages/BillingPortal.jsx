@@ -1,12 +1,142 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { socket } from '../utils/socket';
-import { PoundSterling, CheckCircle, Search, User, FileText, Printer, CreditCard, ArrowLeft } from 'lucide-react';
+import { PoundSterling, CheckCircle, Search, User, FileText, Printer, CreditCard, ArrowLeft, X, Wallet, Calculator, AlertCircle } from 'lucide-react';
 
 const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
+
+function PaymentModal({ session, onClose, onComplete }) {
+    const [cash, setCash] = useState('');
+    const [card, setCard] = useState('');
+    const [error, setError] = useState('');
+    
+    const total = Number(session.finalTotal);
+    const paidTotal = Number(cash || 0) + Number(card || 0);
+    const remaining = Math.max(0, total - paidTotal);
+    const change = Math.max(0, paidTotal - total);
+
+    const handleAutoFillCard = () => {
+        const cashAmt = Number(cash || 0);
+        if (cashAmt >= total) {
+            setCard('0');
+        } else {
+            setCard((total - cashAmt).toFixed(2));
+        }
+    };
+
+    const handleConfirm = () => {
+        if (paidTotal < total - 0.01) { // Allowance for floating point
+            setError(`Insufficient amount. Still need £${remaining.toFixed(2)}`);
+            return;
+        }
+        onComplete(session.id, {
+            cash: Number(cash || 0),
+            card: Number(card || 0),
+            total: total,
+            status: 'completed'
+        });
+    };
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0B3A2E]/90 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="bg-white rounded-[40px] w-full max-w-2xl overflow-hidden shadow-2xl border border-white/20 animate-in zoom-in-95 duration-300">
+                <div className="bg-[#0B3A2E] p-8 text-white flex justify-between items-center">
+                    <div>
+                        <h2 className="text-3xl font-serif font-black italic">Final Settlement</h2>
+                        <p className="text-[#C29958] text-[10px] font-black tracking-widest uppercase mt-1">
+                            {session.tableId === 'TAKEAWAY' ? 'Takeaway Order' : `Table ${session.tableId}`} • #{session.id}
+                        </p>
+                    </div>
+                    <button onClick={onClose} className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all">
+                        <X size={24} />
+                    </button>
+                </div>
+
+                <div className="p-10 space-y-10">
+                    <div className="flex items-center justify-between bg-[#F6EFE6] p-8 rounded-3xl border border-[#0B3A2E]/5">
+                        <div>
+                            <p className="text-[10px] font-black text-[#6D5D4B]/40 uppercase tracking-widest mb-1">Total Amount Due</p>
+                            <p className="text-5xl font-serif font-black text-[#0B3A2E]">£{total.toFixed(2)}</p>
+                        </div>
+                        <Wallet className="w-12 h-12 text-[#C29958]" />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-black text-[#6D5D4B]/60 uppercase tracking-widest ml-2">Cash Received (£)</label>
+                            <div className="relative">
+                                <input 
+                                    type="number" 
+                                    placeholder="0.00"
+                                    value={cash}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val >= 0 || val === '') setCash(val);
+                                        setError('');
+                                    }}
+                                    className="w-full bg-[#F6EFE6] border-2 border-transparent focus:border-[#C29958] rounded-2xl py-4 pl-6 pr-4 font-black text-xl outline-none transition-all"
+                                />
+                                <PoundSterling className="absolute right-6 top-1/2 -translate-y-1/2 text-[#0B3A2E]/20" size={20} />
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-center ml-2">
+                                <label className="text-[10px] font-black text-[#6D5D4B]/60 uppercase tracking-widest">Card Payment (£)</label>
+                                <button 
+                                    onClick={handleAutoFillCard}
+                                    className="text-[9px] font-black text-[#C29958] uppercase tracking-widest hover:underline"
+                                >
+                                    Auto-Fill Remaining
+                                </button>
+                            </div>
+                            <div className="relative">
+                                <input 
+                                    type="number" 
+                                    placeholder="0.00"
+                                    value={card}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val >= 0 || val === '') setCard(val);
+                                        setError('');
+                                    }}
+                                    className="w-full bg-[#F6EFE6] border-2 border-transparent focus:border-[#C29958] rounded-2xl py-4 pl-6 pr-4 font-black text-xl outline-none transition-all"
+                                />
+                                <CreditCard className="absolute right-6 top-1/2 -translate-y-1/2 text-[#0B3A2E]/20" size={20} />
+                            </div>
+                        </div>
+                    </div>
+
+                    {error && (
+                        <div className="bg-red-50 text-red-600 p-4 rounded-2xl flex items-center gap-3 text-xs font-bold border border-red-100 animate-shake">
+                            <AlertCircle size={16} />
+                            {error}
+                        </div>
+                    )}
+
+                    <div className="flex items-center justify-between border-t border-[#0B3A2E]/5 pt-8">
+                        <div>
+                            <p className="text-[10px] font-black text-[#6D5D4B]/40 uppercase tracking-widest mb-1">Change Due</p>
+                            <p className={`text-3xl font-serif font-black ${change > 0 ? 'text-emerald-600' : 'text-[#0B3A2E]/20'}`}>
+                                £{change.toFixed(2)}
+                            </p>
+                        </div>
+                        <button 
+                            onClick={handleConfirm}
+                            className="bg-[#0B3A2E] text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-[#0B3A2E]/20 hover:bg-[#C29958] transition-all flex items-center gap-3 active:scale-95"
+                        >
+                            <CheckCircle size={20} /> Confirm Payment
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export default function BillingPortal() {
     const [sessions, setSessions] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedSession, setSelectedSession] = useState(null);
+    const [notifications, setNotifications] = useState([]);
 
     useEffect(() => {
         document.title = "Billing - The Great Nizam";
@@ -14,7 +144,7 @@ export default function BillingPortal() {
 
     const fetchBillingSessions = useCallback(() => {
         // SUPER-FETCH: Fetch all possible active/pending statuses to ensure NO orders are hidden
-        const allActiveStatuses = 'billed,active,ready,served,accepted,confirmed,new,pending';
+        const allActiveStatuses = 'billed,active,ready,served,accepted,confirmed,new,pending,billing_pending';
         fetch(`${API_URL}/orders?statuses=${allActiveStatuses}`)
             .then(res => res.json())
             .then(data => {
@@ -27,25 +157,39 @@ export default function BillingPortal() {
 
     useEffect(() => {
         fetchBillingSessions();
-        socket.on('sessionUpdated', fetchBillingSessions);
-        socket.on('tableReset', fetchBillingSessions);
+        
+        const handleSessionUpdate = () => fetchBillingSessions();
+        const handleNewBilling = (order) => {
+            fetchBillingSessions();
+            setNotifications(prev => [...prev, { id: Date.now(), message: `New Billing Request: ${order.tableId === 'TAKEAWAY' ? 'Takeaway' : 'Table ' + order.tableId}` }]);
+            // Auto-clear notification after 5s
+            setTimeout(() => {
+                setNotifications(prev => prev.slice(1));
+            }, 5000);
+        };
+
+        socket.on('sessionUpdated', handleSessionUpdate);
+        socket.on('tableReset', handleSessionUpdate);
+        socket.on('NEW_BILLING_ORDER', handleNewBilling);
+        
         return () => {
-            socket.off('sessionUpdated', fetchBillingSessions);
-            socket.off('tableReset', fetchBillingSessions);
+            socket.off('sessionUpdated', handleSessionUpdate);
+            socket.off('tableReset', handleSessionUpdate);
+            socket.off('NEW_BILLING_ORDER', handleNewBilling);
         };
     }, [fetchBillingSessions]);
 
-    const completePayment = async (id) => {
-        if (!window.confirm('Mark this order as PAID and COMPLETE?')) return;
+    const finalizeOrder = async (id, paymentData) => {
         try {
-            await fetch(`${API_URL}/orders/${id}/status`, {
-                method: 'PUT',
+            await fetch(`${API_URL}/orders/${id}/finalize`, {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: 'completed' })
+                body: JSON.stringify(paymentData)
             });
+            setSelectedSession(null);
             fetchBillingSessions();
         } catch (err) {
-            console.error('Failed to complete payment', err);
+            console.error('Failed to finalize payment', err);
         }
     };
 
@@ -109,9 +253,34 @@ export default function BillingPortal() {
         s.customerName?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const isPending = (s) => s.status === 'billed' || s.status === 'billing_pending' || s.status === 'served' || (s.tableId === 'TAKEAWAY' && s.status === 'ready');
+
     return (
-        <div className="min-h-screen bg-[#F6EFE6] text-[#0B3A2E] font-sans flex flex-col">
-            <header className="h-20 bg-[#0B3A2E] flex items-center justify-between px-10 shadow-xl shrink-0">
+        <div className="min-h-screen bg-[#F6EFE6] text-[#0B3A2E] font-sans flex flex-col relative overflow-hidden">
+            {/* Real-time Notifications */}
+            <div className="fixed top-24 right-10 z-[100] space-y-4">
+                {notifications.map(n => (
+                    <div key={n.id} className="bg-[#0B3A2E] text-white px-8 py-5 rounded-3xl shadow-2xl flex items-center gap-4 animate-in slide-in-from-right duration-500 border border-white/10">
+                        <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center">
+                            <AlertCircle className="text-[#C29958]" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Real-time Alert</p>
+                            <p className="font-serif font-black italic">{n.message}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {selectedSession && (
+                <PaymentModal 
+                    session={selectedSession} 
+                    onClose={() => setSelectedSession(null)} 
+                    onComplete={finalizeOrder}
+                />
+            )}
+
+            <header className="h-20 bg-[#0B3A2E] flex items-center justify-between px-10 shadow-xl shrink-0 z-50">
                 <div className="flex items-center gap-4">
                     <img src="/logo-icon.png" alt="Logo" className="w-10 h-10 brightness-150" />
                     <div>
@@ -144,7 +313,7 @@ export default function BillingPortal() {
                         <div className="flex gap-4">
                             <div className="bg-white px-6 py-3 rounded-2xl shadow-sm border border-[#0B3A2E]/5">
                                 <p className="text-[10px] font-black text-[#6D5D4B]/40 uppercase tracking-widest">Pending Payment</p>
-                                <p className="text-2xl font-serif font-black">{sessions.filter(s=>s.status==='billed' || (s.tableId === 'TAKEAWAY' && s.status === 'ready')).length}</p>
+                                <p className="text-2xl font-serif font-black text-emerald-600">{sessions.filter(isPending).length}</p>
                             </div>
                         </div>
                     </div>
@@ -152,12 +321,20 @@ export default function BillingPortal() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {filtered.map(session => (
                             <div key={session.id} className="bg-white rounded-[40px] p-8 shadow-2xl border border-[#0B3A2E]/5 flex flex-col relative overflow-hidden group hover:-translate-y-2 transition-all duration-500">
-                                <div className={`absolute top-0 right-0 px-6 py-2 rounded-bl-3xl font-black text-[10px] uppercase tracking-widest ${session.status === 'billed' || session.status === 'served' || (session.tableId === 'TAKEAWAY' && session.status === 'ready') ? 'bg-[#C29958] text-white' : 'bg-[#0B3A2E]/5 text-[#0B3A2E]/40'}`}>
-                                    {session.status === 'billed' || session.status === 'served' || (session.tableId === 'TAKEAWAY' && session.status === 'ready') ? 'READY TO PAY' : (session.status === 'confirmed' ? 'CONFIRMED' : 'ACTIVE')}
+                                <div className={`absolute top-0 right-0 px-6 py-2 rounded-bl-3xl font-black text-[10px] uppercase tracking-widest ${isPending(session) ? 'bg-[#C29958] text-white' : 'bg-[#0B3A2E]/5 text-[#0B3A2E]/40'}`}>
+                                    {isPending(session) ? 'READY TO PAY' : (session.status === 'confirmed' ? 'CONFIRMED' : 'ACTIVE')}
                                 </div>
 
                                 <div className="mb-8">
-                                    <h3 className="text-3xl font-serif font-black italic mb-1">{session.tableId === 'TAKEAWAY' ? 'Takeaway' : `Table ${session.tableId}`}</h3>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <h3 className="text-3xl font-serif font-black italic">{session.tableId === 'TAKEAWAY' ? 'Takeaway' : `Table ${session.tableId}`}</h3>
+                                        {session.status === 'billing_pending' && (
+                                            <span className="flex h-3 w-3 relative">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C29958] opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-[#C29958]"></span>
+                                            </span>
+                                        )}
+                                    </div>
                                     <p className="text-[10px] font-black text-[#6D5D4B]/40 uppercase tracking-widest">Order ID: #{session.id}</p>
                                 </div>
 
@@ -182,13 +359,13 @@ export default function BillingPortal() {
                                         onClick={() => handlePrint(session)}
                                         className="flex-1 bg-[#F6EFE6] text-[#0B3A2E] py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 hover:bg-[#C29958] hover:text-white transition-all"
                                     >
-                                        <Printer size={16} /> Print Bill
+                                        <Printer size={16} /> Print
                                     </button>
                                     <button 
-                                        onClick={() => completePayment(session.id)}
+                                        onClick={() => setSelectedSession(session)}
                                         className="flex-[2] bg-[#0B3A2E] text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 shadow-xl hover:bg-[#C29958] transition-all"
                                     >
-                                        <CreditCard size={16} /> Complete Payment
+                                        <CreditCard size={16} /> Settlement
                                     </button>
                                 </div>
                             </div>

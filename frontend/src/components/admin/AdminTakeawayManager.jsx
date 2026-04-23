@@ -173,7 +173,10 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                                         Edit
                                     </button>
                                     <button 
-                                        onClick={() => updateStatus(order.id, 'served')}
+                                        onClick={() => {
+                                            console.log("Order moved to billing:", order.id);
+                                            updateStatus(order.id, 'billing_pending', true);
+                                        }}
                                         className="flex-[2] py-4 rounded-xl font-bold text-xs bg-white/10 text-emerald-400 border border-emerald-400/20 uppercase hover:bg-emerald-500 hover:text-black transition-all"
                                     >
                                         Send to Billing
