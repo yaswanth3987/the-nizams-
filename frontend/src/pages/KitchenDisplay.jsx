@@ -16,10 +16,20 @@ export default function KitchenDisplay() {
     };
 
     const fetchKitchenOrders = useCallback(() => {
-        // Fetch confirmed, active, and ready sessions
-        fetch(`${API_URL}/orders?statuses=confirmed,active,ready`)
+        // Fetch all active, confirmed, and recently completed (settled) orders
+        fetch(`${API_URL}/orders?statuses=confirmed,active,ready,completed`)
             .then(res => res.json())
-            .then(data => setOrders(data))
+            .then(data => {
+                // For 'completed' orders, only show takeaways from the last hour
+                const now = new Date();
+                const filtered = data.filter(o => {
+                    if (o.status !== 'completed') return true;
+                    const orderTime = new Date(o.createdAt);
+                    const diffMinutes = (now - orderTime) / (1000 * 60);
+                    return o.orderType === 'takeaway' && diffMinutes < 60;
+                });
+                setOrders(filtered);
+            })
             .catch(err => console.error("Error fetching kitchen orders:", err));
     }, []);
 
