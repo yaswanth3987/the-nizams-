@@ -80,7 +80,7 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
             finalTotal,
             subtotal,
             serviceCharge: 0,
-            status: initialOrder?.status || 'active'
+            status: 'confirmed'
         };
 
         try {
