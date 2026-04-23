@@ -3,13 +3,13 @@ import { ShoppingBag, Plus, Minus, Search, UtensilsCrossed, CheckCircle, Info } 
 
 const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
 
-export default function AdminTakeawayPOS() {
+export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
     const [menu, setMenu] = useState({ categories: [], items: [] });
     const [activeCategory, setActiveCategory] = useState('');
-    const [cart, setCart] = useState([]);
+    const [cart, setCart] = useState(initialOrder?.items || []);
     const [now, setNow] = useState(new Date());
     const [isLoading, setIsLoading] = useState(true);
-    const [customerName, setCustomerName] = useState('');
+    const [customerName, setCustomerName] = useState(initialOrder?.customerName || '');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [orderStatus, setOrderStatus] = useState(null);
 
@@ -84,21 +84,30 @@ export default function AdminTakeawayPOS() {
             finalTotal,
             subtotal,
             serviceCharge: 0,
-            status: 'confirmed'
+            status: initialOrder?.status || 'confirmed'
         };
 
         try {
-            const res = await fetch(`${API_URL}/orders`, {
-                method: 'POST',
+            const url = initialOrder ? `${API_URL}/orders/${initialOrder.id}/items` : `${API_URL}/orders`;
+            const method = initialOrder ? 'PUT' : 'POST';
+            const body = initialOrder ? { items: orderData.items, finalTotal: orderData.finalTotal, type: 'session' } : orderData;
+
+            const res = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(orderData)
+                body: JSON.stringify(body)
             });
             
             if (res.ok) {
                 setOrderStatus('success');
-                setCart([]);
-                setCustomerName('');
-                setTimeout(() => setOrderStatus(null), 3000);
+                if (!initialOrder) {
+                    setCart([]);
+                    setCustomerName('');
+                }
+                setTimeout(() => {
+                    setOrderStatus(null);
+                    onComplete?.();
+                }, 1500);
             } else {
                 setOrderStatus('error');
                 setTimeout(() => setOrderStatus(null), 3000);
@@ -187,7 +196,7 @@ export default function AdminTakeawayPOS() {
             {/* Right side: Cart and Checkout */}
             <div className="w-[500px] flex flex-col bg-[#111311] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl shrink-0">
                 <div className="p-12 border-b border-white/5 bg-black/40">
-                    <h2 className="text-4xl font-serif text-white font-bold tracking-tight mb-2">Checkout</h2>
+                    <h2 className="text-4xl font-serif text-white font-bold tracking-tight mb-2">{initialOrder ? 'Edit Order' : 'Checkout'}</h2>
                     <p className="text-[10px] font-black text-white/20 tracking-[0.3em] uppercase">Digital POS Terminal 01</p>
                 </div>
 
@@ -199,7 +208,8 @@ export default function AdminTakeawayPOS() {
                             placeholder="Customer Name..."
                             value={customerName}
                             onChange={(e) => setCustomerName(e.target.value)}
-                            className="w-full bg-black/40 border-2 border-white/5 rounded-2xl px-6 py-5 text-white placeholder:text-white/10 text-xl font-serif font-bold outline-none focus:border-nizam-gold/30 transition-all italic"
+                            disabled={!!initialOrder}
+                            className="w-full bg-black/40 border-2 border-white/5 rounded-2xl px-6 py-5 text-white placeholder:text-white/10 text-xl font-serif font-bold outline-none focus:border-nizam-gold/30 transition-all italic disabled:opacity-50"
                         />
                     </div>
                 </div>

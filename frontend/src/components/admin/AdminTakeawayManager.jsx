@@ -1,7 +1,7 @@
 import React from 'react';
 import { Package, CheckCircle, Clock, ShoppingBag, ArrowRight, Printer, Check, CreditCard, XCircle, Utensils, Plus } from 'lucide-react';
 
-export default function AdminTakeawayManager({ sessions, newOrders, updateStatus, onViewChange }) {
+export default function AdminTakeawayManager({ sessions, newOrders, updateStatus, onViewChange, onEdit }) {
     // Filter only takeaway sessions that aren't completed yet
     const activeSessions = sessions.filter(s => s.orderType === 'takeaway' && s.status !== 'completed');
     const incomingTakeaways = newOrders.filter(o => o.orderType === 'takeaway' && (o.status === 'new' || o.status === 'pending'));
@@ -58,13 +58,21 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                                         </div>
                                     ))}
                                 </div>
-
-                                <button 
-                                    onClick={() => updateStatus(order.id, 'accepted', true)}
-                                    className="ml-4 py-4 rounded-xl font-bold text-xs bg-accent text-black uppercase shadow-lg hover:bg-white transition-all"
-                                >
-                                    Accept Takeaway
-                                </button>
+                                
+                                <div className="flex gap-2 ml-4">
+                                    <button 
+                                        onClick={() => onEdit?.(order)}
+                                        className="flex-1 py-4 rounded-xl font-bold text-xs bg-white/5 text-white/60 uppercase border border-white/10 hover:bg-white/10 transition-all"
+                                    >
+                                        Edit Items
+                                    </button>
+                                    <button 
+                                        onClick={() => updateStatus(order.id, 'accepted', true)}
+                                        className="flex-[2] py-4 rounded-xl font-bold text-xs bg-accent text-black uppercase shadow-lg hover:bg-white transition-all"
+                                    >
+                                        Accept
+                                    </button>
+                                </div>
                             </div>
                         ))}
                         {incoming.length === 0 && (
@@ -104,12 +112,20 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                                     </div>
                                 </div>
 
-                                <button 
-                                    onClick={() => updateStatus(order.id, 'billed')}
-                                    className="w-full py-4 rounded-xl font-bold text-xs bg-accent text-black uppercase shadow-lg hover:bg-white transition-all"
-                                >
-                                    Ready to Settle
-                                </button>
+                                <div className="flex gap-2">
+                                    <button 
+                                        onClick={() => onEdit?.(order)}
+                                        className="flex-1 py-4 rounded-xl font-bold text-xs bg-white/5 text-white/60 uppercase border border-white/10 hover:bg-white/10 transition-all"
+                                    >
+                                        Edit
+                                    </button>
+                                    <button 
+                                        onClick={() => updateStatus(order.id, 'billed')}
+                                        className="flex-[2] py-4 rounded-xl font-bold text-xs bg-accent text-black uppercase shadow-lg hover:bg-white transition-all"
+                                    >
+                                        Ready to Settle
+                                    </button>
+                                </div>
                             </div>
                         ))}
                         {preparing.length === 0 && (
@@ -149,12 +165,20 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                                     </div>
                                 </div>
 
-                                <button 
-                                    onClick={() => updateStatus(order.id, 'completed')}
-                                    className="w-full py-4 rounded-xl font-bold text-xs bg-white/10 text-emerald-400 border border-emerald-400/20 uppercase hover:bg-emerald-500 hover:text-black transition-all"
-                                >
-                                    Close Order
-                                </button>
+                                <div className="flex gap-2">
+                                    <button 
+                                        onClick={() => onEdit?.(order)}
+                                        className="flex-1 py-4 rounded-xl font-bold text-xs bg-white/5 text-white/60 uppercase border border-white/10 hover:bg-white/10 transition-all"
+                                    >
+                                        Edit
+                                    </button>
+                                    <button 
+                                        onClick={() => updateStatus(order.id, 'completed')}
+                                        className="flex-[2] py-4 rounded-xl font-bold text-xs bg-white/10 text-emerald-400 border border-emerald-400/20 uppercase hover:bg-emerald-500 hover:text-black transition-all"
+                                    >
+                                        Close Order
+                                    </button>
+                                </div>
                             </div>
                         ))}
                         {billed.length === 0 && (

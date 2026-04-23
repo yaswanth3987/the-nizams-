@@ -24,7 +24,8 @@ const API_URL = import.meta.env.DEV
 
 export default function AdminDashboard() {
     const [sessions, setSessions] = useState([]);
-    const [newOrders, setNewOrders] = useState([]); 
+    const [newOrders, setNewOrders] = useState([]);
+    const [editingTakeaway, setEditingTakeaway] = useState(null);
     const [assistanceRequests, setAssistanceRequests] = useState([]);
     const [activeView, setActiveView] = useState('orders');
     const [selectedSessionForReceipt, setSelectedSessionForReceipt] = useState(null);
@@ -397,11 +398,21 @@ export default function AdminDashboard() {
                         newOrders={newOrders}
                         updateStatus={updateStatus}
                         onViewChange={setActiveView}
+                        onEdit={(order) => {
+                            setEditingTakeaway(order);
+                            setActiveView('pos');
+                        }}
                     />
                 )}
 
                 {activeView === 'pos' && (
-                    <AdminTakeawayPOS />
+                    <AdminTakeawayPOS 
+                        initialOrder={editingTakeaway}
+                        onComplete={() => {
+                            setEditingTakeaway(null);
+                            setActiveView('takeaway');
+                        }}
+                    />
                 )}
 
                 {activeView === 'tables' && (
