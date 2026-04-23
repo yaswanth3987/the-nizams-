@@ -84,21 +84,16 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
         };
 
         try {
-            const url = initialOrder ? `${API_URL}/orders/${initialOrder.id}/items` : `${API_URL}/orders`;
-            const method = initialOrder ? 'PUT' : 'POST';
-            const body = initialOrder ? { items: orderData.items, finalTotal: orderData.finalTotal, type: 'session' } : orderData;
-
-            const res = await fetch(url, {
-                method,
+            const res = await fetch(`${API_URL}/orders`, {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
+                body: JSON.stringify(orderData)
             });
             
             if (res.ok) {
                 const result = await res.json();
                 setLastOrderId(result.id);
                 setOrderStatus('success');
-                // Cart will be cleared in handleInstantPrint or Next Order
             } else {
                 setOrderStatus('error');
                 setTimeout(() => setOrderStatus(null), 3000);
@@ -165,7 +160,6 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
             </html>
         `);
         printWindow.document.close();
-        // Just clear the print-specific state, keep the success screen visible
         setLastOrderId(null);
     };
 
@@ -181,11 +175,9 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
 
     return (
         <div className="flex h-full gap-8 animate-in fade-in duration-700 pb-20 w-full pr-4">
-            {/* Left side: Menu items */}
             <div className="flex-1 flex flex-col bg-[#111311] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl relative">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-nizam-gold/5 blur-[100px] -mr-32 -mt-32 rounded-full pointer-events-none"></div>
                 
-                {/* Categories */}
                 <div className="flex gap-4 overflow-x-auto p-8 border-b border-white/10 no-scrollbar shrink-0">
                     {menu.categories.map(cat => (
                         <button
@@ -202,7 +194,6 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
                     ))}
                 </div>
 
-                {/* Items Grid */}
                 <div className="flex-1 overflow-y-auto p-8 no-scrollbar grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6">
                     {filteredItems.map(item => {
                         const timeRem = getRemainingTime(item.until);
@@ -241,7 +232,6 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
                 </div>
             </div>
 
-            {/* Right side: Cart and Checkout */}
             <div className="w-[500px] flex flex-col bg-[#111311] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl shrink-0">
                 <div className="p-12 border-b border-white/5 bg-black/40">
                     <h2 className="text-4xl font-serif text-white font-bold tracking-tight mb-2">{initialOrder ? 'Edit Order' : 'Checkout'}</h2>
@@ -324,13 +314,31 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
                             </button>
                         </div>
                     ) : (
-                        <button 
-                            onClick={submitOrder}
-                            disabled={cart.length === 0 || isSubmitting}
-                            className="w-full bg-accent text-black py-5 rounded-xl font-bold text-sm uppercase transition-all shadow-xl disabled:opacity-20 flex items-center justify-center gap-3 h-16 group"
-                        >
-                            {isSubmitting ? 'Processing...' : 'Authorize Order'}
-                        </button>
+                        <div className="grid grid-cols-2 gap-4">
+                            <button
+                                onClick={() => submitOrder(false)}
+                                disabled={isSubmitting || cart.length === 0}
+                                className={`h-16 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-3 ${
+                                    isSubmitting || cart.length === 0 
+                                    ? 'bg-white/5 text-white/20' 
+                                    : 'bg-white/10 text-white border border-white/10 hover:bg-white/20'
+                                }`}
+                            >
+                                <ShoppingBag size={18} /> Authorize (Billing)
+                            </button>
+                            <button
+                                onClick={() => submitOrder(true)}
+                                disabled={isSubmitting || cart.length === 0}
+                                className={`h-16 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-3 ${
+                                    isSubmitting || cart.length === 0 
+                                    ? 'bg-white/5 text-white/20' 
+                                    : 'bg-accent/50 text-black/50' 
+                                    : 'bg-accent text-black hover:bg-white'
+                                }`}
+                            >
+                                <CreditCard size={18} /> Direct Settle
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>
