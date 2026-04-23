@@ -47,9 +47,10 @@ export default function BillingPortal() {
     const handlePrint = (session) => {
         const printWindow = window.open('', '_blank', 'width=450,height=600');
         const itemsHtml = session.items.map(item => `
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
-                <span style="flex: 1; padding-right: 10px;">${item.qty}x ${item.name}</span>
-                <span style="font-weight: bold; white-space: nowrap;">£${(item.price * item.qty).toFixed(2)}</span>
+            <div style="display: grid; grid-template-columns: repeat(12, 1fr); font-size: 11px; margin-bottom: 4px;">
+                <span style="grid-column: span 6;">${item.name.toUpperCase()}</span>
+                <span style="grid-column: span 3; text-align: center;">${item.qty}</span>
+                <span style="grid-column: span 3; text-align: right;">${(item.price * item.qty).toFixed(2)}</span>
             </div>
         `).join('');
 
@@ -58,52 +59,40 @@ export default function BillingPortal() {
                 <head>
                     <title>Order #${session.id}</title>
                     <style>
-                        @page { margin: 0; }
-                        body { 
-                            font-family: 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif; 
-                            padding: 30px; 
-                            color: #0B3A2E; 
-                            line-height: 1.4;
-                            max-width: 400px;
-                            margin: auto;
-                        }
-                        .header { text-align: center; border-bottom: 2px solid #0B3A2E; padding-bottom: 15px; margin-bottom: 20px; }
-                        .footer { text-align: center; border-top: 1px dashed #0B3A2E; padding-top: 15px; margin-top: 20px; font-size: 11px; color: #6D5D4B; }
-                        .total { font-size: 20px; font-weight: 900; display: flex; justify-content: space-between; margin-top: 15px; padding-top: 10px; border-top: 1px solid #0B3A2E; }
-                        .meta { font-size: 12px; margin-bottom: 5px; font-weight: 600; color: #6D5D4B; text-transform: uppercase; letter-spacing: 0.1em; }
+                        body { font-family: monospace; padding: 20px; color: black; max-width: 300px; margin: auto; text-transform: uppercase; }
+                        .header { text-align: center; margin-bottom: 15px; }
+                        .dashed { border-top: 1.5px dashed black; margin: 10px 0; }
+                        .total { font-weight: bold; font-size: 15px; display: flex; justify-content: space-between; margin-top: 10px; }
                     </style>
                 </head>
                 <body>
                     <div class="header">
-                        <h1 style="margin: 0; font-size: 24px; letter-spacing: -0.02em;">THE GREAT NIZAM</h1>
-                        <p style="margin: 5px 0; font-size: 10px; font-weight: 800; letter-spacing: 0.3em; color: #C29958;">ROYAL DINING SINCE 1954</p>
+                        <img src="/logo-with-name.png" style="width: 120px; filter: grayscale(1); margin-bottom: 5px;" />
+                        <div class="dashed"></div>
+                        <p style="font-weight: bold; margin: 5px 0;">Order ID: ${session.id}</p>
+                        <p style="font-weight: bold; margin: 5px 0;">Table: ${session.tableId === 'TAKEAWAY' ? 'TAKEAWAY' : session.tableId}</p>
+                        ${session.customerName ? `<p style="font-weight: bold; margin: 5px 0;">Guest: ${session.customerName}</p>` : ''}
+                        <p style="font-size: 10px; margin: 5px 0;">Date: ${new Date().toLocaleString('en-GB')}</p>
+                        <div class="dashed"></div>
                     </div>
-                    <div style="margin-bottom: 25px; text-align: center; background: #0B3A2E; color: white; padding: 15px; border-radius: 10px;">
-                        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 4px; opacity: 0.8;">Order ID</div>
-                        <div style="font-size: 32px; font-weight: 900; letter-spacing: -0.02em;">#${session.id}</div>
-                    </div>
-                    <div style="margin-bottom: 20px; border-bottom: 1px solid #0B3A2E; padding-bottom: 15px;">
-                        <div class="meta">Target: ${session.tableId === 'TAKEAWAY' ? 'TAKEAWAY' : `TABLE ${session.tableId}`}</div>
-                        ${session.customerName ? `<div class="meta">Guest: ${session.customerName}</div>` : `<div class="meta">Guest: VALUED PATRON</div>`}
-                        <div class="meta" style="font-size: 10px; opacity: 0.6;">Date: ${new Date().toLocaleString('en-GB')}</div>
+                    <div style="display: grid; grid-template-columns: repeat(12, 1fr); font-weight: bold; font-size: 11px; margin-bottom: 10px;">
+                        <span style="grid-column: span 6;">ITEM</span>
+                        <span style="grid-column: span 3; text-align: center;">QTY</span>
+                        <span style="grid-column: span 3; text-align: right;">PRICE</span>
                     </div>
                     <div class="items">
                         ${itemsHtml}
                     </div>
+                    <div class="dashed"></div>
                     <div class="total">
                         <span>TOTAL</span>
-                        <span>£${Number(session.finalTotal).toFixed(2)}</span>
+                        <span>£ ${Number(session.finalTotal).toFixed(2)}</span>
                     </div>
-                    <div class="footer">
-                        <p style="font-weight: bold; margin-bottom: 5px;">Thank you for your patronage!</p>
-                        <p>123 Royal Street, Nizam Estate<br/>www.thegreatnizam.com</p>
+                    <div class="dashed"></div>
+                    <div style="text-align: center; margin-top: 20px; font-size: 11px;">
+                        *** Thank You ***<br/>Please visit us again
                     </div>
-                    <script>
-                        window.onload = () => {
-                            window.print();
-                            setTimeout(() => window.close(), 500);
-                        };
-                    </script>
+                    <script>window.onload = () => { window.print(); setTimeout(() => window.close(), 500); };</script>
                 </body>
             </html>
         `);

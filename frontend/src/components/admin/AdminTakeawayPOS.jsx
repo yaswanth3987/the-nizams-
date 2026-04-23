@@ -117,29 +117,50 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
     const handleInstantPrint = () => {
         if (!lastOrderId) return;
         const printWindow = window.open('', '_blank', 'width=450,height=600');
+        const itemsHtml = cart.map(item => `
+            <div style="display: grid; grid-template-columns: repeat(12, 1fr); font-size: 11px; margin-bottom: 4px;">
+                <span style="grid-column: span 6;">${item.name.toUpperCase()}</span>
+                <span style="grid-column: span 3; text-align: center;">${item.qty}</span>
+                <span style="grid-column: span 3; text-align: right;">${(item.price * item.qty).toFixed(2)}</span>
+            </div>
+        `).join('');
+
         printWindow.document.write(`
             <html>
                 <head>
                     <title>Order #${lastOrderId}</title>
                     <style>
-                        body { font-family: sans-serif; padding: 20px; color: #0B3A2E; text-align: center; }
-                        .header { border-bottom: 2px solid #0B3A2E; padding-bottom: 10px; margin-bottom: 20px; }
-                        .id-box { background: #0B3A2E; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+                        body { font-family: monospace; padding: 20px; color: black; max-width: 300px; margin: auto; text-transform: uppercase; }
+                        .header { text-align: center; margin-bottom: 15px; }
+                        .dashed { border-top: 1.5px dashed black; margin: 10px 0; }
+                        .total { font-weight: bold; font-size: 15px; display: flex; justify-content: space-between; margin-top: 10px; }
                     </style>
                 </head>
                 <body>
                     <div class="header">
-                        <h1 style="margin: 0;">THE GREAT NIZAM</h1>
-                        <p style="margin: 5px 0; font-size: 10px; font-weight: 800; letter-spacing: 0.2em;">TAKEAWAY BILL</p>
+                        <img src="/logo-with-name.png" style="width: 120px; filter: grayscale(1); margin-bottom: 5px;" />
+                        <div class="dashed"></div>
+                        <p style="font-weight: bold; margin: 5px 0;">Order ID: ${lastOrderId}</p>
+                        ${customerName ? `<p style="font-weight: bold; margin: 5px 0;">Guest: ${customerName}</p>` : ''}
+                        <p style="font-size: 10px; margin: 5px 0;">Date: ${new Date().toLocaleString('en-GB')}</p>
+                        <div class="dashed"></div>
                     </div>
-                    <div class="id-box">
-                        <div style="font-size: 10px; text-transform: uppercase;">Order ID</div>
-                        <div style="font-size: 32px; font-weight: 900;">#${lastOrderId}</div>
+                    <div style="display: grid; grid-template-columns: repeat(12, 1fr); font-weight: bold; font-size: 11px; margin-bottom: 10px;">
+                        <span style="grid-column: span 6;">ITEM</span>
+                        <span style="grid-column: span 3; text-align: center;">QTY</span>
+                        <span style="grid-column: span 3; text-align: right;">PRICE</span>
                     </div>
-                    <p style="font-weight: bold;">Guest: ${customerName || 'VALUED PATRON'}</p>
-                    <p style="font-size: 12px; opacity: 0.6;">${new Date().toLocaleString('en-GB')}</p>
-                    <div style="border-top: 1px solid #0B3A2E; margin-top: 20px; padding-top: 10px; font-size: 20px; font-weight: 900;">
-                        TOTAL: £${Number(finalTotal).toFixed(2)}
+                    <div class="items">
+                        ${itemsHtml}
+                    </div>
+                    <div class="dashed"></div>
+                    <div class="total">
+                        <span>TOTAL</span>
+                        <span>£ ${Number(finalTotal).toFixed(2)}</span>
+                    </div>
+                    <div class="dashed"></div>
+                    <div style="text-align: center; margin-top: 20px; font-size: 11px;">
+                        *** Thank You ***<br/>Please visit us again
                     </div>
                     <script>window.onload = () => { window.print(); setTimeout(() => window.close(), 500); };</script>
                 </body>
