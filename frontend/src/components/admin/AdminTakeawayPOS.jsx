@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Plus, Minus, Search, UtensilsCrossed, CheckCircle, Info, Printer, CreditCard } from 'lucide-react';
+import { ShoppingBag, Plus, Minus, Search, UtensilsCrossed, CheckCircle, Info, Printer, CreditCard, ArrowRight } from 'lucide-react';
 
 const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
 
@@ -313,32 +313,17 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
                                 Next Order
                             </button>
                         </div>
-                    ) : (
-                        <div className="grid grid-cols-2 gap-4">
-                            <button
-                                onClick={() => submitOrder(false)}
-                                disabled={isSubmitting || cart.length === 0}
-                                className={`h-16 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-3 ${
-                                    isSubmitting || cart.length === 0 
-                                    ? 'bg-white/5 text-white/20' 
-                                    : 'bg-white/10 text-white border border-white/10 hover:bg-white/20'
-                                }`}
-                            >
-                                <ShoppingBag size={18} /> Authorize (Billing)
-                            </button>
-                            <button
-                                onClick={() => submitOrder(true)}
-                                disabled={isSubmitting || cart.length === 0}
-                                className={`h-16 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-3 ${
-                                    isSubmitting || cart.length === 0 
-                                    ? 'bg-white/5 text-white/20' 
-                                    : 'bg-accent/50 text-black/50' 
-                                    : 'bg-accent text-black hover:bg-white'
-                                }`}
-                            >
-                                <CreditCard size={18} /> Direct Settle
-                            </button>
-                        </div>
+                        <button 
+                            onClick={() => submitOrder(false)}
+                            disabled={cart.length === 0 || isSubmitting}
+                            className="w-full bg-accent text-black py-5 rounded-xl font-bold text-sm uppercase transition-all shadow-xl disabled:opacity-20 flex items-center justify-center gap-3 h-16 group"
+                        >
+                            {isSubmitting ? (
+                                <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin"></div>
+                            ) : (
+                                <><ArrowRight size={18} /> Authorize Order</>
+                            )}
+                        </button>
                     )}
                 </div>
             </div>
