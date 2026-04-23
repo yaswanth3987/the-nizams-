@@ -4,12 +4,12 @@ import { FileText, CheckCircle, PoundSterling, CheckSquare, Package, HelpCircle,
 export default function AdminSidebar({ activeView, onViewChange, counts = {} }) {
     const navItems = [
         { id: 'all-in-one', label: 'QUICK ACCESS', icon: LayoutGrid },
+        { id: 'takeaway', label: 'TAKEAWAY', icon: ShoppingBag },
         { id: 'assistance', label: 'ASSISTANCE', icon: HelpCircle },
         { id: 'orders', label: 'ORDERS', icon: FileText },
         { id: 'confirmed', label: 'CONFIRMED', icon: CheckCircle },
         { id: 'billed', label: 'PAYMENT', icon: PoundSterling },
         { id: 'completed', label: 'COMPLETED', icon: CheckSquare },
-        { id: 'takeaway', label: 'TAKEAWAY', icon: ShoppingBag },
         { id: 'tables', label: 'TABLES', icon: LayoutGrid },
         { id: 'menu', label: 'MENU', icon: Utensils },
         { id: 'scheduler', label: 'SCHEDULER', icon: Clock },

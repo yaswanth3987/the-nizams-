@@ -212,19 +212,25 @@ const createOrder = async (orderData) => {
 const allocateSession = async (tableId, sessionId) => {
     try {
         const existing = await getActiveSession(tableId);
-        if (existing) {
-            return existing.session_token === sessionId;
+        if (existing && existing.session_token === sessionId) {
+            return true;
         }
         
-        // No active session. Check if table is currently in a state that blocks new QR sessions
+        // Check table status
         const tStatus = await getTableStatus(tableId);
-        if (tStatus && ['billing', 'ordering', 'cooking', 'ready', 'served'].includes(tStatus.status)) {
-            return false;
+        
+        // If table is FREE or OCCUPIED, we allow starting a new session (the QR code owns the table)
+        // We only block if it's in a critical state like 'billing' or 'ready' (awaiting payment/collection)
+        if (!tStatus || ['free', 'occupied', 'ordering'].includes(tStatus.status)) {
+            // End any old active sessions for this table first to be clean
+            await clearSession(tableId);
+            await runQuery(`INSERT INTO qr_sessions (seating_id, session_token, status) VALUES (?, ?, 'ACTIVE')`, [tableId.toString(), sessionId]);
+            return true;
         }
         
-        // No active session and table is not in a blocking state (e.g. 'free' or 'occupied'), create one
-        await runQuery(`INSERT INTO qr_sessions (seating_id, session_token, status) VALUES (?, ?, 'ACTIVE')`, [tableId.toString(), sessionId]);
-        return true;
+        // If it's billing/ready/served, it might be an old session. 
+        // If the sessionId matches, we allow it (handled at top). If not, we block to prevent hijacking.
+        return false;
     } catch (e) {
         console.error('Error allocating session:', e);
         return false;
