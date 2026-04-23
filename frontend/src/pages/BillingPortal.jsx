@@ -13,8 +13,8 @@ export default function BillingPortal() {
     }, []);
 
     const fetchBillingSessions = useCallback(() => {
-        // Fetch sessions in 'billed' or 'active' status that might need payment
-        fetch(`${API_URL}/orders?statuses=billed,active,ready,served`)
+        // Fetch sessions in any active or ready status to ensure they show in Billing
+        fetch(`${API_URL}/orders?statuses=billed,active,ready,served,accepted,confirmed`)
             .then(res => res.json())
             .then(data => setSessions(data))
             .catch(err => console.error("Error fetching billing orders:", err));
