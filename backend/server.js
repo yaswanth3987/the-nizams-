@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const { Server } = require('socket.io');
 const { 
-    getOrdersByStatus, createOrder, updateOrderStatus, deleteOrder, clearTableOrders, 
+    getOrdersByStatus, createOrder, addOrderToSession, updateOrderStatus, deleteOrder, clearTableOrders, 
     getAnalyticsDaily, getItemAnalytics, getAssistanceRequests, createAssistanceRequest, 
     updateAssistanceStatus, deleteAssistanceRequest, getEmployees, createEmployee, 
     updateEmployee, deleteEmployee, markAttendance, getAttendanceToday,
