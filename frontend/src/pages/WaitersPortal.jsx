@@ -199,27 +199,36 @@ export default function WaitersPortal() {
                         <h2 className="text-[#FFD700] text-2xl font-serif font-black mb-6 italic tracking-tight">Urgent Assistance</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {assistanceRequests.map(req => (
-                                <div key={req.id} className="bg-white/5 border border-white/10 rounded-[32px] p-6 relative overflow-hidden group hover:border-[#FFD700]/30 transition-all duration-500">
-                                    <div className="flex justify-between items-start mb-6">
-                                        <div>
-                                            <p className="text-[#86a69d] text-xs font-black uppercase tracking-[0.2em] mb-1">TABLE {req.tableId.replace(/\D/g, '')}</p>
-                                            <h3 className="text-white text-3xl font-serif font-black italic">{req.type === 'bill' ? 'Settlement Call' : 'Immediate Call'}</h3>
+                                <div key={req.id} className="bg-white/5 border border-red-500/20 rounded-[40px] flex flex-col overflow-hidden hover:bg-white/10 transition-all group animate-in slide-in-from-right duration-500 relative">
+                                    {/* Status Color Strip */}
+                                    <div className="absolute top-0 left-0 w-2 h-full bg-red-600 shadow-[4px_0_15px_rgba(220,38,38,0.3)]"></div>
+                                    
+                                    <div className="p-8 pl-10">
+                                        <div className="flex justify-between items-start mb-6">
+                                            <div>
+                                                <h3 className="text-[#FFD700] text-5xl font-serif font-black italic mb-1 uppercase tracking-tighter">Table {req.tableId.replace(/\D/g, '')}</h3>
+                                                <p className="text-red-400 text-sm font-black uppercase tracking-widest">{req.type === 'bill' ? 'Settlement Requested' : 'Immediate Assistance'}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[#FFD700] text-lg font-black tabular-nums">04:12</p>
+                                                <p className="text-[#86a69d] text-[10px] font-black uppercase tracking-widest">WAIT TIME</p>
+                                            </div>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-[#FFD700] text-lg font-black tabular-nums">04:12</p>
-                                            <p className="text-[#86a69d] text-[9px] font-black uppercase tracking-widest">WAIT TIME</p>
+
+                                        <div className="flex items-center gap-4 mb-8 bg-red-500/5 p-4 rounded-2xl border border-red-500/10">
+                                            <div className="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center text-white shrink-0">
+                                                {req.type === 'bill' ? <CreditCard size={20} /> : <AlertTriangle size={20} />}
+                                            </div>
+                                            <p className="text-sm font-medium text-white/80">{req.type === 'bill' ? 'Patron is ready for the final bill settlement.' : 'Customer requires immediate staff attention.'}</p>
                                         </div>
+
+                                        <button 
+                                            onClick={() => handleClearAssistance(req.id)}
+                                            className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-sm tracking-[0.2em] shadow-xl shadow-red-600/10 active:scale-95 transition-all flex items-center justify-center gap-3"
+                                        >
+                                            <Check size={20} strokeWidth={3} /> Clear Alert
+                                        </button>
                                     </div>
-                                    <div className="flex items-center gap-3 mb-8 text-[#86a69d]">
-                                        {req.type === 'bill' ? <CreditCard size={16} /> : <User size={16} />}
-                                        <p className="text-xs font-medium">{req.type === 'bill' ? 'Patron requesting final bill' : 'General assistance requested'}</p>
-                                    </div>
-                                    <button 
-                                        onClick={() => handleClearAssistance(req.id)}
-                                        className="w-full bg-red-700/80 hover:bg-red-600 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-[0.2em] flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
-                                    >
-                                        <Check size={16} strokeWidth={3} /> Mark as Attended
-                                    </button>
                                 </div>
                             ))}
                             {assistanceRequests.length === 0 && (
@@ -238,36 +247,41 @@ export default function WaitersPortal() {
                                 <h2 className="text-[#FFD700] text-2xl font-serif font-black italic tracking-tight">Kitchen Dispatch</h2>
                                 <span className="bg-green-500/20 text-green-400 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">{readyOrders.length} READY TO SERVE</span>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 {readyOrders.map(order => {
                                     const itemsArray = Array.isArray(order.items) ? order.items : [];
                                     return (
-                                        <div key={order.id} className="bg-[#FFD700]/10 border border-[#FFD700]/30 rounded-[32px] p-6 flex gap-6 hover:bg-[#FFD700]/20 transition-all group animate-pulse">
-                                            <div className="w-24 h-24 rounded-3xl bg-black/40 overflow-hidden shrink-0 border border-[#FFD700]/20 flex items-center justify-center">
-                                                <Utensils size={40} className="text-[#FFD700] opacity-50" />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-[#FFD700] text-sm font-black uppercase tracking-widest">TABLE {order.tableId}</span>
-                                                        <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-ping"></span>
+                                        <div key={order.id} className="bg-white/5 border border-[#FFD700]/30 rounded-[40px] flex flex-col overflow-hidden hover:bg-white/10 transition-all group animate-in zoom-in-95 duration-300 relative">
+                                            {/* Status Color Strip */}
+                                            <div className="absolute top-0 left-0 w-2 h-full bg-green-500 shadow-[4px_0_15px_rgba(34,197,94,0.3)]"></div>
+                                            
+                                            <div className="p-8 pl-10">
+                                                <div className="flex justify-between items-start mb-6">
+                                                    <div>
+                                                        <h3 className="text-[#FFD700] text-5xl font-serif font-black italic mb-1 uppercase tracking-tighter">Table {order.tableId}</h3>
+                                                        <p className="text-[#86a69d] text-sm font-black uppercase tracking-widest">ORDER #{order.id}</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-green-400 text-lg font-black tabular-nums">READY</p>
+                                                        <p className="text-[#86a69d] text-[10px] font-black uppercase tracking-widest">STATUS</p>
                                                     </div>
                                                 </div>
-                                                <h3 className="text-white text-xl font-bold font-serif mb-1 truncate">
-                                                    {itemsArray[0]?.name || 'Mystery Dish'} {itemsArray.length > 1 && `+ ${itemsArray.length - 1} more`}
-                                                </h3>
-                                                <div className="flex items-center justify-between mt-4">
-                                                    <div className="flex items-center gap-2 text-[#86a69d]">
-                                                        <Clock size={12} />
-                                                        <span className="text-[10px] font-bold">READY NOW</span>
-                                                    </div>
-                                                    <button 
-                                                        onClick={() => handleUpdateOrderStatus(order.id, 'served', order._source)}
-                                                        className="bg-[#FFD700] text-[#0F3A2F] px-8 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all shadow-xl"
-                                                    >
-                                                        Serve
-                                                    </button>
+
+                                                <div className="space-y-3 mb-8 border-y border-white/5 py-6">
+                                                    {itemsArray.map((item, i) => (
+                                                        <div key={i} className="flex justify-between items-center text-lg italic font-medium">
+                                                            <span className="text-white"><span className="text-[#FFD700] font-black not-italic mr-2">{item.qty}x</span> {item.name}</span>
+                                                            <span className="text-white/60 text-sm font-bold not-italic">£{(item.price * item.qty).toFixed(2)}</span>
+                                                        </div>
+                                                    ))}
                                                 </div>
+
+                                                <button 
+                                                    onClick={() => handleUpdateOrderStatus(order.id, 'served', order._source)}
+                                                    className="w-full bg-green-500 text-black py-5 rounded-2xl font-black uppercase text-sm tracking-[0.2em] shadow-xl shadow-green-500/10 active:scale-95 transition-all flex items-center justify-center gap-3"
+                                                >
+                                                    <CheckCircle size={20} /> Mark as Served
+                                                </button>
                                             </div>
                                         </div>
                                     );
@@ -284,70 +298,80 @@ export default function WaitersPortal() {
                                 Processing {activeOrders.filter(o => ['new', 'pending', 'accepted', 'confirmed', 'active', 'ready'].includes(o.status)).length}
                             </div>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {activeOrders.filter(o => ['new', 'pending', 'accepted', 'confirmed', 'active', 'ready'].includes(o.status)).map(order => (
-                                <div key={order.id} className={`bg-white/5 border rounded-[32px] p-6 group transition-all ${order.status === 'ready' ? 'border-[#FFD700]/50 bg-[#FFD700]/5' : 'border-white/10'}`}>
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div>
-                                            <span className="text-[#FFD700] text-sm font-black uppercase tracking-widest">TABLE {order.tableId}</span>
-                                            <h4 className="text-white font-bold text-2xl">Order #{order.id}</h4>
-                                        </div>
-                                        <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                                            order.status === 'ready' ? 'bg-[#FFD700] text-[#0F3A2F]' :
-                                            order.status === 'new' ? 'bg-blue-500/20 text-blue-400' : 
-                                            'bg-orange-500/20 text-orange-400'
-                                        }`}>
-                                            {order.status}
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2 mb-6">
-                                        {(Array.isArray(order.items) ? order.items : []).slice(0, 2).map((item, i) => (
-                                            <div key={i} className="flex justify-between text-xs text-[#86a69d]">
-                                                <span>{item.qty}x {item.name}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="flex gap-2">
-                                        {order.status === 'ready' ? (
-                                            <button 
-                                                onClick={() => handleUpdateOrderStatus(order.id, 'served', order._source)}
-                                                className="w-full bg-[#FFD700] text-[#0F3A2F] py-3 rounded-xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all shadow-lg"
-                                            >
-                                                Mark as Served
-                                            </button>
-                                        ) : (order.status === 'new' || order.status === 'pending') ? (
-                                            <>
-                                                <button 
-                                                    onClick={() => handleUpdateOrderStatus(order.id, 'confirmed', order._source)}
-                                                    className="flex-1 bg-[#FFD700] text-[#0F3A2F] py-3 rounded-xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all"
-                                                >
-                                                    Accept
-                                                </button>
-                                                <button 
-                                                    onClick={() => {
-                                                        setSelectedTable(order.tableId);
-                                                        setCart(order.items || []);
-                                                        setView('order_entry');
-                                                        if("vibrate" in navigator) navigator.vibrate(50);
-                                                    }}
-                                                    className="flex-1 bg-white/10 text-white py-3 rounded-xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all"
-                                                >
-                                                    Edit
-                                                </button>
-                                            </>
-                                        ) : (
-                                            <div className="flex w-full gap-2">
-                                                <div className="flex-1 text-center py-3 text-[#86a69d] text-[10px] font-black uppercase tracking-widest border border-white/5 rounded-xl flex items-center justify-center">
-                                                    In Kitchen
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {activeOrders.filter(o => ['new', 'pending', 'accepted', 'confirmed', 'active', 'ready'].includes(o.status)).map(order => {
+                                const isNew = order.status === 'new' || order.status === 'pending';
+                                const isReady = order.status === 'ready';
+                                return (
+                                    <div key={order.id} className={`bg-white/5 border rounded-[40px] flex flex-col overflow-hidden transition-all duration-500 relative ${isReady ? 'border-[#FFD700]/50 shadow-[0_0_50px_rgba(255,215,0,0.1)]' : 'border-white/10'}`}>
+                                        {/* Status Color Strip */}
+                                        <div className={`absolute top-0 left-0 w-2 h-full shadow-[4px_0_15px_rgba(0,0,0,0.3)] ${
+                                            isReady ? 'bg-[#FFD700]' : 
+                                            isNew ? 'bg-blue-500' : 'bg-orange-500'
+                                        }`}></div>
+
+                                        <div className="p-8 pl-10">
+                                            <div className="flex justify-between items-start mb-6">
+                                                <div>
+                                                    <h3 className="text-[#FFD700] text-5xl font-serif font-black italic mb-1 uppercase tracking-tighter">Table {order.tableId}</h3>
+                                                    <p className="text-[#86a69d] text-sm font-black uppercase tracking-widest">ORDER #{order.id}</p>
                                                 </div>
-                                                <button 
-                                                    onClick={() => {
-                                                        setSelectedTable(order.tableId);
-                                                        setCart(order.items || []);
-                                                        setEditingOrder({ id: order.id, type: order._source });
-                                                        setView('order_entry');
-                                                        if("vibrate" in navigator) navigator.vibrate(50);
-                                                    }}
+                                                <div className="text-right">
+                                                    <p className={`text-lg font-black uppercase tabular-nums ${isReady ? 'text-[#FFD700]' : isNew ? 'text-blue-400' : 'text-orange-400'}`}>
+                                                        {order.status}
+                                                    </p>
+                                                    <p className="text-[#86a69d] text-[10px] font-black uppercase tracking-widest">STATUS</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-3 mb-8 border-y border-white/5 py-6">
+                                                {(Array.isArray(order.items) ? order.items : []).map((item, i) => (
+                                                    <div key={i} className="flex justify-between items-center text-lg italic font-medium">
+                                                        <span className="text-white"><span className="text-[#FFD700] font-black not-italic mr-2">{item.qty}x</span> {item.name}</span>
+                                                        <span className="text-white/60 text-sm font-bold not-italic">£{(item.price * item.qty).toFixed(2)}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            <div className="flex flex-col gap-3">
+                                                {isReady ? (
+                                                    <button 
+                                                        onClick={() => handleUpdateOrderStatus(order.id, 'served', order._source)}
+                                                        className="w-full bg-[#FFD700] text-[#0F3A2F] py-5 rounded-2xl font-black uppercase text-sm tracking-[0.2em] shadow-xl shadow-[#FFD700]/10 active:scale-95 transition-all flex items-center justify-center gap-3"
+                                                    >
+                                                        <CheckCircle size={20} /> Mark as Served
+                                                    </button>
+                                                ) : isNew ? (
+                                                    <div className="flex gap-3">
+                                                        <button 
+                                                            onClick={() => handleUpdateOrderStatus(order.id, 'confirmed', order._source)}
+                                                            className="flex-[2] bg-[#FFD700] text-[#0F3A2F] py-5 rounded-2xl font-black uppercase text-sm tracking-[0.2em] active:scale-95 transition-all shadow-xl shadow-[#FFD700]/10 flex items-center justify-center gap-3"
+                                                        >
+                                                            <CheckCircle size={20} /> Accept
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => {
+                                                                setSelectedTable(order.tableId);
+                                                                setCart(order.items || []);
+                                                                setView('order_entry');
+                                                            }}
+                                                            className="flex-1 bg-white/5 text-white/40 py-5 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all border border-white/10"
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex gap-3">
+                                                        <div className="flex-[2] bg-white/5 border border-white/10 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] text-[#86a69d] flex items-center justify-center gap-3">
+                                                            <Clock size={16} className="animate-spin-slow" /> In Kitchen
+                                                        </div>
+                                                        <button 
+                                                            onClick={() => {
+                                                                setSelectedTable(order.tableId);
+                                                                setCart(order.items || []);
+                                                                setEditingOrder({ id: order.id, type: order._source });
+                                                                setView('order_entry');
+                                                            }}
                                                     className="flex-1 bg-white/10 text-white py-3 rounded-xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all"
                                                 >
                                                     Modify
