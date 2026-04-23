@@ -211,27 +211,13 @@ const createOrder = async (orderData) => {
 
 const allocateSession = async (tableId, sessionId) => {
     try {
-        const existing = await getActiveSession(tableId);
-        // Normalize token field because legacy table uses 'sessionId' and new uses 'session_token'
-        const existingToken = existing ? (existing.session_token || existing.sessionId) : null;
-
-        if (existingToken === sessionId) {
-            return true;
-        }
-        
-        // Check table status
-        const tStatus = await getTableStatus(tableId);
-        const statusStr = (tStatus?.status || 'free').toLowerCase();
-        
-        // We allow accessing the table in ALMOST any state if it's a new session scan.
-        // The only reason to block is if we want to prevent hijacking an active 'billing' session,
-        // but often 'billing' is just a stale state from a departed guest.
-        // We now allow ALL states to be accessible via a fresh scan to prevent lockouts.
-        await runQuery(`INSERT INTO qr_sessions (seating_id, session_token, status) VALUES (?, ?, 'ACTIVE')`, [tableId.toString(), sessionId]);
+        // EMERGENCY: Always allow session allocation for the opening to prevent lockouts.
+        // We still try to record it, but we return true regardless of any existing session checks.
+        await runQuery(`INSERT INTO qr_sessions (seating_id, session_token, status) VALUES (?, ?, 'ACTIVE')`, [tableId.toString(), sessionId]).catch(e => console.error('Silent insert error:', e));
         return true;
     } catch (e) {
-        console.error('Error allocating session:', e);
-        return false;
+        console.error('Error in emergency allocateSession:', e);
+        return true; // Still return true to let customer in
     }
 };
 
