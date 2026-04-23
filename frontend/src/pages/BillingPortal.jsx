@@ -143,14 +143,23 @@ export default function BillingPortal() {
     }, []);
 
     const fetchBillingSessions = useCallback(() => {
-        // SUPER-FETCH: Fetch all possible active/pending statuses to ensure NO orders are hidden
+        // SUPER-FETCH: Fetch both sessions and raw takeaway orders to ensure NO orders are hidden
         const allActiveStatuses = 'billed,active,ready,served,accepted,confirmed,new,pending,billing_pending';
-        fetch(`${API_URL}/orders?statuses=${allActiveStatuses}`)
-            .then(res => res.json())
-            .then(data => {
-                // Only show takeaway or dine-in that aren't completed
-                const activeOnes = data.filter(s => s.status !== 'completed');
-                setSessions(activeOnes);
+        Promise.all([
+            fetch(`${API_URL}/orders?statuses=${allActiveStatuses}`).then(res => res.json()),
+            fetch(`${API_URL}/new-orders`).then(res => res.json())
+        ])
+            .then(([sessionsData, newOrdersData]) => {
+                // Ensure raw takeaway orders that are ready or pending billing get pulled in
+                const rawTakeaways = newOrdersData.filter(o => o.status === 'billing_pending' || (o.tableId === 'TAKEAWAY' && o.status === 'ready'));
+                const combined = [...sessionsData, ...rawTakeaways];
+                const activeOnes = combined.filter(s => s.status !== 'completed');
+                
+                // Deduplicate just in case
+                const uniqueMap = new Map();
+                activeOnes.forEach(item => uniqueMap.set(item.id + '-' + (item.orderType || 'session'), item));
+                
+                setSessions(Array.from(uniqueMap.values()));
             })
             .catch(err => console.error("Error fetching billing orders:", err));
     }, []);
@@ -170,11 +179,13 @@ export default function BillingPortal() {
 
         socket.on('sessionUpdated', handleSessionUpdate);
         socket.on('tableReset', handleSessionUpdate);
+        socket.on('orderUpdated', handleSessionUpdate); // Added for raw takeaway order sync
         socket.on('NEW_BILLING_ORDER', handleNewBilling);
         
         return () => {
             socket.off('sessionUpdated', handleSessionUpdate);
             socket.off('tableReset', handleSessionUpdate);
+            socket.off('orderUpdated', handleSessionUpdate);
             socket.off('NEW_BILLING_ORDER', handleNewBilling);
         };
     }, [fetchBillingSessions]);

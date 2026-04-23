@@ -353,6 +353,15 @@ app.get('/api/analytics/items', async (req, res) => {
     }
 });
 
+app.delete('/api/analytics/reset', async (req, res) => {
+    try {
+        await runQuery('DELETE FROM item_sales');
+        res.json({ success: true, message: 'Inventory reset successfully.' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Assistance APIs
 app.get('/api/assistance', async (req, res) => {
     try {

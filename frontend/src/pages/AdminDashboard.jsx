@@ -170,9 +170,10 @@ export default function AdminDashboard() {
         socket.on('assistanceUpdated', (updatedReq) => {
             setAssistanceRequests(prev => {
                 if (updatedReq.status !== 'pending') {
-                    return prev.filter(r => r.id !== updatedReq.id);
+                    // Force strict string conversion for robust syncing
+                    return prev.filter(r => r.id.toString() !== updatedReq.id.toString());
                 }
-                return prev.map(r => r.id === updatedReq.id ? updatedReq : r);
+                return prev.map(r => r.id.toString() === updatedReq.id.toString() ? updatedReq : r);
             });
         });
 
