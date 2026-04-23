@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Plus, Minus, Search, UtensilsCrossed, CheckCircle, Info, Printer, CreditCard, ArrowRight } from 'lucide-react';
+import { ShoppingBag, Plus, Minus, Search, UtensilsCrossed, CheckCircle, Info, Printer, ArrowRight } from 'lucide-react';
 
 const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
 
@@ -313,6 +313,7 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
                                 Next Order
                             </button>
                         </div>
+                    ) : (
                         <button 
                             onClick={() => submitOrder(false)}
                             disabled={cart.length === 0 || isSubmitting}
