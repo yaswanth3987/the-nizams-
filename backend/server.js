@@ -11,7 +11,7 @@ const {
     getMenuItems, addMenuItem, updateMenuItem, deleteMenuItem, seedMenu,
     updateMenuItemStatus, checkMenuAvailabilityReset, getSessionsByStatus, updateSessionStatus, updateCategoryItemStatus,
     getTableStatuses, updateTableStatus, allocateSession, getActiveSession, clearSession,
-    getSessionsByTable, getOrdersByTable, updatePrepTime, updateOrderItems,
+    getSessionsByTable, getOrdersByTable, updatePrepTime, updateOrderItems, resetAllSalesAndSessions,
     getUnavailabilitySchedules, createUnavailabilitySchedule, updateUnavailabilitySchedule, deleteUnavailabilitySchedule, processSchedulesTask
 } = require('./database');
 
@@ -357,6 +357,16 @@ app.delete('/api/analytics/reset', async (req, res) => {
     try {
         await runQuery('DELETE FROM item_sales');
         res.json({ success: true, message: 'Inventory reset successfully.' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/factory-reset', async (req, res) => {
+    try {
+        await resetAllSalesAndSessions();
+        io.emit('forceRefresh'); // Force all dashboards to clear
+        res.json({ success: true, message: 'Factory reset complete. All sales, orders, and sessions cleared.' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

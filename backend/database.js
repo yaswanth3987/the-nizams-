@@ -350,6 +350,14 @@ const getItemAnalytics = async () => {
     return res.rows;
 };
 
+const resetAllSalesAndSessions = async () => {
+    const tablesToClear = ['orders', 'table_sessions', 'item_sales', 'daily_sales', 'assistance_requests', 'table_status'];
+    for (const table of tablesToClear) {
+        await runQuery(`DELETE FROM ${table}`);
+    }
+    return { success: true };
+};
+
 const getAssistanceRequests = async () => {
     const colName = isPg ? '"createdAt"' : 'createdAt';
     const res = await runQuery(`SELECT * FROM assistance_requests ORDER BY ${colName} DESC`);
@@ -845,7 +853,7 @@ const processSchedulesTask = async () => {
 
 module.exports = {
     db, pgPool, runQuery, isPg, getOrdersByStatus, createOrder, addOrderToSession, updateOrderStatus,
-    deleteOrder, deleteSession, clearTableOrders, getAnalyticsDaily, getItemAnalytics,
+    deleteOrder, deleteSession, clearTableOrders, getAnalyticsDaily, getItemAnalytics, resetAllSalesAndSessions,
     getAssistanceRequests, createAssistanceRequest, updateAssistanceStatus, deleteAssistanceRequest,
     getEmployees, createEmployee, updateEmployee, deleteEmployee, markAttendance, getAttendanceToday,
     getMenuItems, addMenuItem, updateMenuItem, deleteMenuItem, seedMenu,
