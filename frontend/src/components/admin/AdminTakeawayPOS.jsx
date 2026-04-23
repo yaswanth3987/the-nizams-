@@ -165,10 +165,8 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
             </html>
         `);
         printWindow.document.close();
+        // Just clear the print-specific state, keep the success screen visible
         setLastOrderId(null);
-        setOrderStatus(null);
-        setCustomerName('');
-        onComplete?.();
     };
 
     if (isLoading) {
@@ -314,7 +312,12 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
                                 <Printer size={20} /> Print Receipt
                             </button>
                             <button 
-                                onClick={() => { setOrderStatus(null); onComplete?.(); }}
+                                onClick={() => { 
+                                    setCart([]); 
+                                    setCustomerName(''); 
+                                    setOrderStatus(null); 
+                                    onComplete?.(); 
+                                }}
                                 className="flex-1 bg-accent text-black py-5 rounded-xl font-bold text-sm uppercase transition-all shadow-xl flex items-center justify-center gap-3 h-16"
                             >
                                 Next Order
