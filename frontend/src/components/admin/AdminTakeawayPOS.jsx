@@ -202,10 +202,10 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
 
                 <div className="p-10 border-b border-white/5 space-y-6">
                     <div>
-                        <label className="text-[10px] text-white/20 uppercase tracking-[0.4em] font-black mb-4 block">IDENTIFIER</label>
+                        <label className="text-[10px] text-white/20 uppercase tracking-[0.4em] font-black mb-4 block">Guest Name (Optional)</label>
                         <input 
                             type="text" 
-                            placeholder="Customer Name..."
+                            placeholder="Ex: Royal Guest"
                             value={customerName}
                             onChange={(e) => setCustomerName(e.target.value)}
                             disabled={!!initialOrder}
