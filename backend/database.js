@@ -219,17 +219,17 @@ const allocateSession = async (tableId, sessionId) => {
         // Check table status
         const tStatus = await getTableStatus(tableId);
         
-        // If table is FREE or OCCUPIED, we allow starting a new session (the QR code owns the table)
-        // We only block if it's in a critical state like 'billing' or 'ready' (awaiting payment/collection)
-        if (!tStatus || ['free', 'occupied', 'ordering'].includes(tStatus.status)) {
-            // End any old active sessions for this table first to be clean
-            await clearSession(tableId);
+        // If table is in any active dining state, we allow starting/joining a session 
+        // We only block if it's explicitly in 'billing' (awaiting payment) to prevent double-billing confusion
+        if (!tStatus || ['free', 'occupied', 'ordering', 'cooking', 'ready', 'served'].includes(tStatus.status)) {
+            // If it's a NEW session token for a busy table, we just record it. 
+            // We don't necessarily want to clearSession if orders are cooking, 
+            // but for QR-based flow, the latest session token is the "owner".
             await runQuery(`INSERT INTO qr_sessions (seating_id, session_token, status) VALUES (?, ?, 'ACTIVE')`, [tableId.toString(), sessionId]);
             return true;
         }
         
-        // If it's billing/ready/served, it might be an old session. 
-        // If the sessionId matches, we allow it (handled at top). If not, we block to prevent hijacking.
+        // If it's billing, it might be an old session. 
         return false;
     } catch (e) {
         console.error('Error allocating session:', e);
