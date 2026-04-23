@@ -8,7 +8,7 @@ export default function AdminAttendance() {
     const [attendanceToday, setAttendanceToday] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
-    const [newStaff, setNewStaff] = useState({ name: '', phone: '' });
+    const [newStaff, setNewStaff] = useState({ name: '', phone: '', shiftTimings: '' });
     const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
@@ -95,7 +95,7 @@ export default function AdminAttendance() {
                     </p>
                 </div>
                 <button 
-                    onClick={() => { setShowAddModal(true); setNewStaff({name:'', phone:''}); }}
+                    onClick={() => { setShowAddModal(true); setNewStaff({name:'', phone:'', shiftTimings:''}); }}
                     className="h-14 px-8 rounded-xl bg-accent text-black font-bold text-sm flex items-center gap-3 transition-all hover:bg-white shadow-xl"
                 >
                     <UserPlus size={20} /> 
@@ -129,6 +129,7 @@ export default function AdminAttendance() {
                             <tr className="text-xs font-bold uppercase tracking-wider text-white/40 border-b border-white/10 bg-white/5">
                                 <th className="py-6 px-10">Registry ID</th>
                                 <th className="py-6 px-10">Personnel Name</th>
+                                <th className="py-6 px-10">Shift Timings</th>
                                 <th className="py-6 px-10">UK Number</th>
                                 <th className="py-6 px-10">Verification Status</th>
                                 <th className="py-6 px-10 text-right">Access Point</th>
@@ -136,7 +137,7 @@ export default function AdminAttendance() {
                         </thead>
                         <tbody>
                             {filteredStaff.length === 0 ? (
-                                <tr><td colSpan="5" className="text-center py-20 text-white/20 font-serif italic text-xl">No matching personnel detected.</td></tr>
+                                <tr><td colSpan="6" className="text-center py-20 text-white/20 font-serif italic text-xl">No matching personnel detected.</td></tr>
                             ) : filteredStaff.map(staff => {
                                 const attended = attendanceToday.find(a => a.employeeId === staff.id);
                                 return (
@@ -146,6 +147,7 @@ export default function AdminAttendance() {
                                             <p className="font-serif font-bold text-xl text-white italic">{staff.name}</p>
                                             <p className="text-[10px] text-white/20 uppercase font-bold tracking-widest mt-1">Authorized Staff</p>
                                         </td>
+                                        <td className="py-6 px-10 text-white/80 font-bold">{staff.shiftTimings || 'N/A'}</td>
                                         <td className="py-6 px-10 text-white/60 font-medium">{staff.phone}</td>
                                         <td className="py-6 px-10">
                                             {attended ? (
@@ -201,6 +203,10 @@ export default function AdminAttendance() {
                             <div>
                                 <label className="block text-[10px] font-black text-white/20 tracking-[0.5em] uppercase mb-4 ml-4">UK Communication Line</label>
                                 <input required type="tel" value={newStaff.phone} onChange={e => setNewStaff({...newStaff, phone: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-xl text-white font-serif italic focus:outline-none focus:border-nizam-gold/50 transition-all font-medium" placeholder="+44 ..." />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-white/20 tracking-[0.5em] uppercase mb-4 ml-4">Shift Timings</label>
+                                <input required type="text" value={newStaff.shiftTimings} onChange={e => setNewStaff({...newStaff, shiftTimings: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-xl text-white font-serif italic focus:outline-none focus:border-nizam-gold/50 transition-all font-medium" placeholder="09:00 - 17:00" />
                             </div>
                             <button type="submit" className="w-full h-24 bg-gradient-to-r from-[#2c5b4d] to-[#1a3d34] text-white py-4 rounded-[2rem] font-black uppercase tracking-[0.4em] text-[11px] shadow-2xl hover:brightness-125 transition-all mt-4 flex justify-center items-center gap-4">
                                 <User size={20}/> Complete Enrollment

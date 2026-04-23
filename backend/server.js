@@ -391,8 +391,7 @@ app.get('/api/employees', async (req, res) => {
 
 app.post('/api/employees', async (req, res) => {
     try {
-        const embeddingStr = req.body.faceEmbedding ? JSON.stringify(Array.from(req.body.faceEmbedding)) : null;
-        const emp = await createEmployee(req.body.name, req.body.phone, embeddingStr);
+        const emp = await createEmployee(req.body.name, req.body.phone, req.body.shiftTimings);
         res.status(201).json(emp);
     } catch (err) { 
         console.error('API Error /api/employees (POST):', err);
@@ -402,7 +401,7 @@ app.post('/api/employees', async (req, res) => {
 
 app.put('/api/employees/:id', async (req, res) => {
     try {
-        const emp = await updateEmployee(req.params.id, req.body.name, req.body.phone);
+        const emp = await updateEmployee(req.params.id, req.body.name, req.body.phone, req.body.shiftTimings);
         res.json(emp);
     } catch (err) { 
         console.error('API Error /api/employees/:id (PUT):', err);

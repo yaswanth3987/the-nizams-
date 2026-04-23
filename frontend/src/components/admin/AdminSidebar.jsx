@@ -3,9 +3,7 @@ import { FileText, CheckCircle, PoundSterling, CheckSquare, Package, HelpCircle,
 
 export default function AdminSidebar({ activeView, onViewChange, counts = {} }) {
     const navItems = [
-        { id: 'pos', label: 'TAKEAWAY POS', icon: ShoppingBag },
         { id: 'all-in-one', label: 'QUICK ACCESS', icon: LayoutGrid },
-        { id: 'takeaway-manager', label: 'TAKEAWAY ORDERS', icon: Columns },
         { id: 'assistance', label: 'ASSISTANCE', icon: HelpCircle },
         { id: 'orders', label: 'ORDERS', icon: FileText },
         { id: 'confirmed', label: 'CONFIRMED', icon: CheckCircle },

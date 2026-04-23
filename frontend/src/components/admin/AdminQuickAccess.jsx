@@ -230,12 +230,6 @@ export default function AdminQuickAccess({
                         >
                             Delivery
                         </button>
-                        <button 
-                            onClick={() => setOrderTypeMode('takeaway')}
-                            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${orderTypeMode === 'takeaway' ? 'bg-blue-600/20 text-blue-500 border-blue-500/20' : 'text-white/20 border-transparent hover:bg-white/5'}`}
-                        >
-                            Take Away
-                        </button>
                     </div>
                 </div>
             </div>

@@ -7,7 +7,6 @@ const API_URL = import.meta.env.DEV
     : '/api';
 
 export default function InventoryDashboard() {
-    const [itemAnalytics, setItemAnalytics] = useState([]);
     const [salesList, setSalesList] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -43,14 +42,10 @@ export default function InventoryDashboard() {
         try {
             // Using the existing endpoints for top-level stats
             
-            const itemsRes = await fetch(`${API_URL}/analytics/items`);
-            const itemsData = await itemsRes.json();
-            
             // Getting all historical sales to construct charts and reports locally
             const salesRes = await fetch(`${API_URL}/orders?statuses=completed,billed,archived`);
             const salesData = await salesRes.json();
 
-            setItemAnalytics(itemsData || []);
             setSalesList(salesData || []);
         } catch (err) {
             console.error("Failed to load inventory data:", err);
@@ -92,6 +87,23 @@ export default function InventoryDashboard() {
             grouped[d].orders += 1;
         });
         return Object.values(grouped).sort((a,b) => a.date.localeCompare(b.date));
+    }, [filteredSalesList]);
+
+    const computedItemAnalytics = useMemo(() => {
+        const itemMap = {};
+        filteredSalesList.forEach(order => {
+            if (Array.isArray(order.items)) {
+                order.items.forEach(item => {
+                    const name = item.name;
+                    if (!itemMap[name]) {
+                        itemMap[name] = { id: item.id || name, itemName: name, quantitySold: 0, totalRevenue: 0 };
+                    }
+                    itemMap[name].quantitySold += item.qty;
+                    itemMap[name].totalRevenue += (item.qty * item.price);
+                });
+            }
+        });
+        return Object.values(itemMap).sort((a, b) => b.quantitySold - a.quantitySold);
     }, [filteredSalesList]);
 
     // Derived Statistics from Filtered Data
@@ -238,7 +250,7 @@ export default function InventoryDashboard() {
                     <div>
                         <p className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] mb-1">All-time Items</p>
                         <h3 className="text-2xl font-serif italic text-white font-bold tracking-tighter">
-                            {itemAnalytics.reduce((sum, item) => sum + item.quantitySold, 0)} Sold
+                            {computedItemAnalytics.reduce((sum, item) => sum + item.quantitySold, 0)} Sold
                         </h3>
                     </div>
                 </div>
@@ -357,7 +369,7 @@ export default function InventoryDashboard() {
                                     </tr>
                                 </thead>
                                 <tbody className="text-sm">
-                                    {itemAnalytics.map((item, idx) => (
+                                    {computedItemAnalytics.map((item, idx) => (
                                         <tr key={item.id} className="border-b border-white/5 hover:bg-white/[0.02]">
                                             <td className="px-6 py-3 text-white/80 font-serif italic whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]" title={item.itemName}>
                                                 {idx < 3 && <span className="text-accent mr-2 text-xs glow-gold">★</span>}
@@ -367,7 +379,7 @@ export default function InventoryDashboard() {
                                             <td className="px-6 py-3 text-right font-bold text-accent glow-gold">£{item.totalRevenue.toFixed(2)}</td>
                                         </tr>
                                     ))}
-                                    {itemAnalytics.length === 0 && (
+                                    {computedItemAnalytics.length === 0 && (
                                         <tr>
                                             <td colSpan="3" className="text-center py-6 text-white/20 font-serif italic">No items sold yet.</td>
                                         </tr>
@@ -413,7 +425,7 @@ export default function InventoryDashboard() {
                             </tr>
                         </thead>
                         <tbody>
-                            {itemAnalytics.slice(0, 15).map(item => (
+                            {computedItemAnalytics.slice(0, 15).map(item => (
                                 <tr key={item.id} className="border-b border-gray-200">
                                     <td className="py-1">{item.itemName}</td>
                                     <td className="py-1">{item.quantitySold}</td>

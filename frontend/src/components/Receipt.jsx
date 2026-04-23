@@ -8,8 +8,8 @@ const Receipt = React.forwardRef(({ order: session }, ref) => {
 
     return (
         <div ref={ref} id="receipt-print-area" className="hidden print:block bg-white text-black p-[2mm] mx-auto text-[12px] leading-tight w-full max-w-[80mm] min-w-[58mm] font-mono">
-            <div className="text-center mb-3">
-                <h1 className="text-xl font-bold mb-1 uppercase tracking-widest">The Nizam's</h1>
+            <div className="text-center mb-3 flex flex-col items-center">
+                <img src="/logo-with-name.png" alt="The Great Nizam" className="w-32 mb-1 grayscale contrast-200" />
                 <div className="text-[10px] space-y-0.5 mb-2">
                     <p>123 Fake Street, London</p>
                 </div>

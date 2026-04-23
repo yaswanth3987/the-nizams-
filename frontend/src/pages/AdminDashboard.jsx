@@ -12,7 +12,6 @@ import AdminCompletedView from '../components/admin/AdminCompletedView';
 import AdminAttendance from '../components/admin/AdminAttendance';
 import AdminMenuManagement from '../components/admin/AdminMenuManagement';
 import AdminTableOverview from '../components/admin/AdminTableOverview';
-import AdminTakeawayPOS from '../components/admin/AdminTakeawayPOS';
 import AdminQuickAccess from '../components/admin/AdminQuickAccess';
 import InventoryDashboard from '../components/InventoryDashboard';
 import { useSoundSystem } from '../hooks/useSoundSystem';
@@ -279,9 +278,7 @@ export default function AdminDashboard() {
 
     const getHeaderConfig = () => {
         switch(activeView) {
-            case 'pos': return { title: 'Takeaway POS', active: 'pos', tabs: [] };
             case 'all-in-one': return { title: 'Quick Access', active: 'all-in-one', tabs: [] };
-            case 'takeaway-manager': return { title: 'Takeaway Management', active: 'tm', tabs: [] };
             case 'inventory': return { title: 'The Great Nizam', active: 'inv', tabs: [{id:'dashboard', label:'DASHBOARD'}, {id:'inv', label:'INVENTORY'}, {id:'reports', label:'REPORTS'}] };
             case 'assistance': return { title: 'The Great Nizam', active: 'ast', tabs: [{id:'live', label:'LIVE VIEW'}, {id:'reports', label:'REPORTS'}, {id:'ast', label:'ASSISTANCE'}] };
             case 'tables': return { title: 'The Great Nizam', active: 'grid', tabs: [{id:'grid', label:'TABLE OVERVIEW'}] };
@@ -325,10 +322,6 @@ export default function AdminDashboard() {
         confirmed: sessions.filter(s => ['confirmed', 'active', 'ready', 'served'].includes(s.status) && s.orderType !== 'takeaway').length,
         billed: sessions.filter(s => s.status === 'billed' && s.orderType !== 'takeaway').length,
         completed: sessions.filter(s => s.status === 'completed' && s.orderType !== 'takeaway').length,
-        'takeaway-manager': [
-            ...sessions.filter(s => s.orderType === 'takeaway' && s.status !== 'completed'),
-            ...newOrders.filter(o => o.orderType === 'takeaway' && (o.status === 'new' || o.status === 'pending'))
-        ].length,
         assistance: assistanceRequests.length,
         hasBillRequest: assistanceRequests.some(r => r.type === 'bill' && r.status === 'pending')
     };
@@ -347,12 +340,6 @@ export default function AdminDashboard() {
                 onClearAlerts={() => setUnreadAlerts(0)}
                 counts={categoryCounts}
             >
-                {activeView === 'pos' && (
-                    <div className="h-[calc(100vh-140px)] -mt-4 -ml-4 -mr-4 md:-ml-8 md:-mr-8 md:-mb-8 pr-4">
-                        <AdminTakeawayPOS />
-                    </div>
-                )}
-
                 {activeView === 'all-in-one' && (
                     <div className="w-full">
                         <AdminQuickAccess 
@@ -367,15 +354,6 @@ export default function AdminDashboard() {
                             onViewChange={setActiveView}
                         />
                     </div>
-                )}
-
-                {activeView === 'takeaway-manager' && (
-                    <AdminTakeawayManager 
-                        sessions={sessions}
-                        newOrders={newOrders}
-                        updateStatus={updateStatus}
-                        printReceipt={printReceipt}
-                    />
                 )}
 
                 {activeView === 'inventory' && (

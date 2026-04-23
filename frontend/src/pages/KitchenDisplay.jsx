@@ -147,7 +147,6 @@ export default function KitchenDisplay() {
                         <div className="h-5 w-px bg-white/10 mx-2"></div>
                         <span className="text-[#d4af37] border-b-2 border-[#d4af37] py-7 cursor-pointer hover:text-[#e0e8e4] transition-colors">Main Floor</span>
                         <span className="cursor-pointer hover:text-[#e0e8e4] transition-colors">VIP Lounge</span>
-                        <span className="cursor-pointer hover:text-[#e0e8e4] transition-colors">Takeaway</span>
                     </div>
 
                     <div className="flex items-center gap-6">

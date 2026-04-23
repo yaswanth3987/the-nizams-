@@ -44,10 +44,10 @@ if (isPg) {
             await pgPool.query(`CREATE TABLE IF NOT EXISTS item_sales (id SERIAL PRIMARY KEY, date DATE NOT NULL, "itemName" TEXT NOT NULL, "quantitySold" INTEGER NOT NULL, "totalRevenue" REAL NOT NULL, "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, UNIQUE(date, "itemName"));`);
             await pgPool.query(`CREATE TABLE IF NOT EXISTS assistance_requests (id SERIAL PRIMARY KEY, "tableId" TEXT NOT NULL, type TEXT DEFAULT 'staff', status TEXT DEFAULT 'pending', "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
             await pgPool.query(`ALTER TABLE assistance_requests ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'staff';`).catch(() => {});
-            await pgPool.query(`CREATE TABLE IF NOT EXISTS employees (id SERIAL PRIMARY KEY, name TEXT NOT NULL, phone TEXT NOT NULL, "faceEmbedding" TEXT, "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
+            await pgPool.query(`CREATE TABLE IF NOT EXISTS employees (id SERIAL PRIMARY KEY, name TEXT NOT NULL, phone TEXT NOT NULL, "shiftTimings" TEXT, "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
             await pgPool.query(`CREATE TABLE IF NOT EXISTS attendance (id SERIAL PRIMARY KEY, "employeeId" INTEGER NOT NULL, date DATE NOT NULL, "checkInTime" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, verified BOOLEAN DEFAULT false, UNIQUE(date, "employeeId"));`);
             await pgPool.query(`CREATE TABLE IF NOT EXISTS unavailability_schedules (id SERIAL PRIMARY KEY, "itemIds" TEXT, category TEXT, type TEXT NOT NULL, "startDate" DATE, "startTime" TEXT NOT NULL, "endTime" TEXT NOT NULL, "daysOfWeek" TEXT, "isEnabled" BOOLEAN DEFAULT true, label TEXT, "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
-            await pgPool.query(`ALTER TABLE employees ADD COLUMN "faceEmbedding" TEXT;`).catch(() => {});
+            await pgPool.query(`ALTER TABLE employees ADD COLUMN "shiftTimings" TEXT;`).catch(() => {});
             // Add badge columns to menu_items if they don't exist
             await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "isPopular" BOOLEAN DEFAULT false;`).catch(() => {});
             await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "isRecommended" BOOLEAN DEFAULT false;`).catch(() => {});
@@ -99,10 +99,10 @@ if (isPg) {
             db.run(`CREATE TABLE IF NOT EXISTS assistance_requests (id INTEGER PRIMARY KEY AUTOINCREMENT, tableId TEXT NOT NULL, type TEXT DEFAULT 'staff', status TEXT DEFAULT 'pending', createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
             db.run(`ALTER TABLE assistance_requests ADD COLUMN type TEXT DEFAULT 'staff'`, (err) => {});
             db.run(`ALTER TABLE menu_items ADD COLUMN platterItems TEXT`, (err) => {});
-            db.run(`CREATE TABLE IF NOT EXISTS employees (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, phone TEXT NOT NULL, faceEmbedding TEXT, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+            db.run(`CREATE TABLE IF NOT EXISTS employees (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, phone TEXT NOT NULL, shiftTimings TEXT, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
             db.run(`CREATE TABLE IF NOT EXISTS attendance (id INTEGER PRIMARY KEY AUTOINCREMENT, employeeId INTEGER NOT NULL, date DATE NOT NULL, checkInTime DATETIME DEFAULT CURRENT_TIMESTAMP, verified BOOLEAN DEFAULT 0, UNIQUE(date, employeeId))`);
             db.run(`CREATE TABLE IF NOT EXISTS unavailability_schedules (id INTEGER PRIMARY KEY AUTOINCREMENT, itemIds TEXT, category TEXT, type TEXT NOT NULL, startDate DATE, startTime TEXT NOT NULL, endTime TEXT NOT NULL, daysOfWeek TEXT, isEnabled BOOLEAN DEFAULT 1, label TEXT, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
-            db.run(`ALTER TABLE employees ADD COLUMN faceEmbedding TEXT`, (err) => {});
+            db.run(`ALTER TABLE employees ADD COLUMN shiftTimings TEXT`, (err) => {});
             // Add badge columns to menu_items if they don't exist
             db.run(`ALTER TABLE menu_items ADD COLUMN isPopular BOOLEAN DEFAULT 0`, (err) => {});
             db.run(`ALTER TABLE menu_items ADD COLUMN isRecommended BOOLEAN DEFAULT 0`, (err) => {});
@@ -382,19 +382,21 @@ const getEmployees = async () => {
     return res.rows;
 };
 
-const createEmployee = async (name, phone, faceEmbedding = null) => {
+const createEmployee = async (name, phone, shiftTimings = null) => {
     if (isPg) {
-        const res = await runQuery(`INSERT INTO employees (name, phone, "faceEmbedding") VALUES (?, ?, ?) RETURNING *`, [name, phone, faceEmbedding]);
+        const res = await runQuery(`INSERT INTO employees (name, phone, "shiftTimings") VALUES (?, ?, ?) RETURNING *`, [name, phone, shiftTimings]);
         return res.rows[0];
     } else {
-        const res = await runQuery(`INSERT INTO employees (name, phone, faceEmbedding) VALUES (?, ?, ?)`, [name, phone, faceEmbedding]);
+        const res = await runQuery(`INSERT INTO employees (name, phone, shiftTimings) VALUES (?, ?, ?)`, [name, phone, shiftTimings]);
         const selectRes = await runQuery(`SELECT * FROM employees WHERE id = ?`, [res.lastID]);
         return selectRes.rows[0];
     }
 };
 
-const updateEmployee = async (id, name, phone) => {
-    await runQuery(`UPDATE employees SET name = ?, phone = ? WHERE id = ?`, [name, phone, id]);
+const updateEmployee = async (id, name, phone, shiftTimings = null) => {
+    await runQuery(`UPDATE employees SET name = ?, phone = ?, "shiftTimings" = ? WHERE id = ?`, [name, phone, shiftTimings, id]).catch(async () => {
+        await runQuery(`UPDATE employees SET name = ?, phone = ?, shiftTimings = ? WHERE id = ?`, [name, phone, shiftTimings, id]);
+    });
     const res = await runQuery(`SELECT * FROM employees WHERE id = ?`, [id]);
     return res.rows[0];
 };
