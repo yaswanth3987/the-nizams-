@@ -107,11 +107,25 @@ export default function WaitersPortal() {
     };
 
     const handleClearAssistance = async (id) => {
-        await fetch(`${API_URL}/assistance/${id}/status`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: 'resolved' })
-        });
+        try {
+            await fetch(`${API_URL}/assistance/${id}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'completed' })
+            });
+            // Locally clear to ensure instant UI feedback
+            setAssistanceRequests(prev => prev.filter(r => r.id.toString() !== id.toString()));
+        } catch (err) { console.error(err); }
+    };
+
+    const handleUpdateAssistance = async (id, status) => {
+        try {
+            await fetch(`${API_URL}/assistance/${id}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+        } catch (err) { console.error(err); }
     };
 
     // UI Components
@@ -198,39 +212,74 @@ export default function WaitersPortal() {
                     <section>
                         <h2 className="text-[#FFD700] text-2xl font-serif font-black mb-6 italic tracking-tight">Urgent Assistance</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {assistanceRequests.map(req => (
-                                <div key={req.id} className="bg-white/5 border border-red-500/20 rounded-[40px] flex flex-col overflow-hidden hover:bg-white/10 transition-all group animate-in slide-in-from-right duration-500 relative">
-                                    {/* Status Color Strip */}
-                                    <div className="absolute top-0 left-0 w-2 h-full bg-red-600 shadow-[4px_0_15px_rgba(220,38,38,0.3)]"></div>
-                                    
-                                    <div className="p-8 pl-10">
-                                        <div className="flex justify-between items-start mb-6">
-                                            <div>
-                                                <h3 className="text-[#FFD700] text-5xl font-serif font-black italic mb-1 uppercase tracking-tighter">Table {req.tableId.replace(/\D/g, '')}</h3>
-                                                <p className="text-red-400 text-sm font-black uppercase tracking-widest">{req.type === 'bill' ? 'Settlement Requested' : 'Immediate Assistance'}</p>
+                            {assistanceRequests.map(req => {
+                                const isAttended = req.status === 'attended';
+                                const createdTime = new Date(req.createdAt);
+                                const diffMins = Math.floor((new Date() - createdTime) / 60000);
+                                
+                                let stateColor = isAttended ? 'border-white/5' : 'border-red-500/30';
+                                if (!isAttended && diffMins > 5) stateColor = 'border-red-600 shadow-[0_0_30px_rgba(220,38,38,0.2)]';
+
+                                return (
+                                    <div key={req.id} className={`bg-white/5 border ${stateColor} rounded-[40px] flex flex-col overflow-hidden hover:bg-white/10 transition-all group animate-in slide-in-from-right duration-500 relative`}>
+                                        {/* Status Color Strip */}
+                                        <div className={`absolute top-0 left-0 w-2 h-full ${isAttended ? 'bg-emerald-500' : 'bg-red-600'} shadow-[4px_0_15px_rgba(0,0,0,0.3)]`}></div>
+                                        
+                                        <div className="p-8 pl-10">
+                                            <div className="flex justify-between items-start mb-6">
+                                                <div>
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
+                                                            req.type === 'bill' ? 'bg-[#FFD700] text-[#0F3A2F]' : 
+                                                            isAttended ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' : 
+                                                            'bg-red-500 text-white'
+                                                        }`}>
+                                                            {req.type === 'bill' ? 'BILL REQUEST' : isAttended ? 'ATTENDED' : 'NEW REQUEST'}
+                                                        </span>
+                                                        {!isAttended && <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>}
+                                                    </div>
+                                                    <h3 className="text-[#FFD700] text-5xl font-serif font-black italic mb-1 uppercase tracking-tighter">Table {req.tableId.replace(/\D/g, '')}</h3>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-[#FFD700] text-lg font-black tabular-nums">{diffMins}m</p>
+                                                    <p className="text-[#86a69d] text-[10px] font-black uppercase tracking-widest">WAITING</p>
+                                                </div>
                                             </div>
-                                            <div className="text-right">
-                                                <p className="text-[#FFD700] text-lg font-black tabular-nums">04:12</p>
-                                                <p className="text-[#86a69d] text-[10px] font-black uppercase tracking-widest">WAIT TIME</p>
+                                            
+                                            <div className="flex items-center gap-4 mb-8 bg-white/5 p-4 rounded-2xl border border-white/5">
+                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 ${isAttended ? 'bg-emerald-500' : 'bg-red-600'}`}>
+                                                    {req.type === 'bill' ? <CreditCard size={20} /> : <AlertTriangle size={20} />}
+                                                </div>
+                                                <p className="text-xs font-bold text-white/60 leading-tight">
+                                                    {req.type === 'bill' ? 'Patron is ready for the final bill settlement.' : isAttended ? 'Staff is currently assisting the table.' : 'Customer requires immediate staff attention.'}
+                                                </p>
+                                            </div>
+
+                                            <div className="flex gap-3">
+                                                {!isAttended ? (
+                                                    <button 
+                                                        onClick={() => handleUpdateAssistance(req.id, 'attended')}
+                                                        className="flex-[2] bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-emerald-600/10 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                                    >
+                                                        <Check size={18} strokeWidth={3} /> Mark Attended
+                                                    </button>
+                                                ) : (
+                                                    <div className="flex-[2] bg-white/5 border border-white/10 text-white/20 py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] flex items-center justify-center gap-2 cursor-default">
+                                                        <CheckCircle size={18} /> In Service
+                                                    </div>
+                                                )}
+                                                <button 
+                                                    onClick={() => handleClearAssistance(req.id)}
+                                                    className="w-16 h-16 bg-red-600/10 border border-red-500/20 text-red-500 hover:bg-red-600 hover:text-white rounded-2xl flex items-center justify-center transition-all active:scale-95"
+                                                    title="Clear Request"
+                                                >
+                                                    <X size={24} strokeWidth={3} />
+                                                </button>
                                             </div>
                                         </div>
-
-                                        <div className="flex items-center gap-4 mb-8 bg-red-500/5 p-4 rounded-2xl border border-red-500/10">
-                                            <div className="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center text-white shrink-0">
-                                                {req.type === 'bill' ? <CreditCard size={20} /> : <AlertTriangle size={20} />}
-                                            </div>
-                                            <p className="text-sm font-medium text-white/80">{req.type === 'bill' ? 'Patron is ready for the final bill settlement.' : 'Customer requires immediate staff attention.'}</p>
-                                        </div>
-
-                                        <button 
-                                            onClick={() => handleClearAssistance(req.id)}
-                                            className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-sm tracking-[0.2em] shadow-xl shadow-red-600/10 active:scale-95 transition-all flex items-center justify-center gap-3"
-                                        >
-                                            <Check size={20} strokeWidth={3} /> Clear Alert
-                                        </button>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                             {assistanceRequests.length === 0 && (
                                 <div className="col-span-full py-12 border-2 border-dashed border-white/5 rounded-[40px] flex flex-col items-center justify-center text-white/20">
                                     <Sparkles size={48} className="mb-4" />
