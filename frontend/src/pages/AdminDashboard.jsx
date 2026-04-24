@@ -169,11 +169,17 @@ export default function AdminDashboard() {
 
         socket.on('assistanceUpdated', (updatedReq) => {
             setAssistanceRequests(prev => {
-                if (updatedReq.status !== 'pending') {
-                    // Force strict string conversion for robust syncing
+                const status = updatedReq.status;
+                // If it's completed or rejected, remove it
+                if (status === 'completed' || status === 'rejected' || status === 'cleared') {
                     return prev.filter(r => r.id.toString() !== updatedReq.id.toString());
                 }
-                return prev.map(r => r.id.toString() === updatedReq.id.toString() ? updatedReq : r);
+                // If it's attended or still pending, update/add it
+                const exists = prev.some(r => r.id.toString() === updatedReq.id.toString());
+                if (exists) {
+                    return prev.map(r => r.id.toString() === updatedReq.id.toString() ? updatedReq : r);
+                }
+                return [updatedReq, ...prev];
             });
         });
 
@@ -206,7 +212,7 @@ export default function AdminDashboard() {
             socket.off('assistanceUpdated');
             socket.off('assistanceDeleted');
         };
-    }, [playSound, fetchSessions, fetchNewOrders, fetchDashboardData]);
+    }, [playSound, fetchSessions, fetchNewOrders, fetchAssistance, fetchDashboardData]);
 
     const updateAssistance = async (id, status) => {
         try {
