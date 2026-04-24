@@ -1,4 +1,4 @@
-const { Pool } = require('pg');
+
 const path = require('path');
 const isPg = !!process.env.DATABASE_URL;
 let db, pgPool;
@@ -6,7 +6,9 @@ let db, pgPool;
 if (isPg) {
     const poolConfig = {
         connectionString: process.env.DATABASE_URL,
-        ssl: { rejectUnauthorized: false },
+        ssl: { 
+            rejectUnauthorized: false
+        },
         max: 30,
         connectionTimeoutMillis: 10000,
         idleTimeoutMillis: 30000
