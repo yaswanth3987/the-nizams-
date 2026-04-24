@@ -3,7 +3,7 @@ import {
     Clock, CheckCircle, AlertTriangle, Bell, Search, 
     Plus, Minus, X, Utensils, CreditCard, ArrowLeft,
     Check, LayoutGrid, ListOrdered, Settings, User, 
-    Trash2, Sparkles, ArrowUpRight, ShoppingBag, FileText, CheckSquare
+    Trash2, Sparkles, ArrowUpRight, ShoppingBag, FileText, SquareCheck as CheckSquare
 } from 'lucide-react';
 import { socket } from '../utils/socket';
 import { useSoundSystem } from '../hooks/useSoundSystem';
@@ -227,14 +227,14 @@ export default function WaitersPortal() {
             <nav className="flex-1 px-4 space-y-2 overflow-y-auto py-4">
                 {[
                     { id: 'all-in-one', label: 'Quick Access', icon: LayoutGrid, count: 0 },
-                    { id: 'tables', label: 'Tables', icon: LayoutGrid, count: [...new Set([...(assistanceRequests || []).map(r => (r.tableId || '').toString().toUpperCase()), ...(activeOrders || []).filter(o => o.status === 'ready').map(o => (o.tableId || '').toString().toUpperCase())])].filter(Boolean).length },
-                    { id: 'takeaway', label: 'Takeaway', icon: ShoppingBag, count: (activeOrders || []).filter(o => o.orderType === 'takeaway' && (o.status === 'new' || o.status === 'pending')).length },
-                    { id: 'new_orders', label: 'New Orders', icon: FileText, count: (activeOrders || []).filter(o => o._source === 'new' && (o.status === 'new' || o.status === 'pending')).length },
-                    { id: 'orders', label: 'Ready Orders', icon: ListOrdered, count: (activeOrders || []).filter(o => o.status === 'ready').length },
-                    { id: 'confirmed', label: 'Confirmed', icon: CheckCircle, count: (activeOrders || []).filter(o => ['confirmed', 'active', 'ready', 'served'].includes(o.status) && o.orderType !== 'takeaway').length },
-                    { id: 'billing', label: 'Billing', icon: CreditCard, count: (activeOrders || []).filter(o => ['billed', 'billing_pending'].includes(o.status)).length },
-                    { id: 'alerts', label: 'Alerts', icon: Bell, count: (assistanceRequests || []).filter(r => r.status === 'pending').length },
-                    { id: 'completed', label: 'Completed', icon: CheckSquare, count: (activeOrders || []).filter(o => o.status === 'completed' && o.orderType !== 'takeaway').length },
+                    { id: 'tables', label: 'Tables', icon: LayoutGrid, count: [...new Set([...(assistanceRequests || []).map(r => (r?.tableId || '').toString().toUpperCase()), ...(activeOrders || []).filter(o => o?.status === 'ready').map(o => (o?.tableId || '').toString().toUpperCase())])].filter(Boolean).length },
+                    { id: 'takeaway', label: 'Takeaway', icon: ShoppingBag, count: (activeOrders || []).filter(o => o?.orderType === 'takeaway' && (o?.status === 'new' || o?.status === 'pending')).length },
+                    { id: 'new_orders', label: 'New Orders', icon: FileText, count: (activeOrders || []).filter(o => o?._source === 'new' && (o?.status === 'new' || o?.status === 'pending')).length },
+                    { id: 'orders', label: 'Ready Orders', icon: ListOrdered, count: (activeOrders || []).filter(o => o?.status === 'ready').length },
+                    { id: 'confirmed', label: 'Confirmed', icon: CheckCircle, count: (activeOrders || []).filter(o => ['confirmed', 'active', 'ready', 'served'].includes(o?.status) && o?.orderType !== 'takeaway').length },
+                    { id: 'billing', label: 'Billing', icon: CreditCard, count: (activeOrders || []).filter(o => ['billed', 'billing_pending'].includes(o?.status)).length },
+                    { id: 'alerts', label: 'Alerts', icon: Bell, count: (assistanceRequests || []).filter(r => r?.status === 'pending').length },
+                    { id: 'completed', label: 'Completed', icon: CheckSquare, count: (activeOrders || []).filter(o => o?.status === 'completed' && o?.orderType !== 'takeaway').length },
                     { id: 'scheduler', label: 'Scheduler', icon: Clock, count: 0 }
                 ].map(item => (
                     <button 

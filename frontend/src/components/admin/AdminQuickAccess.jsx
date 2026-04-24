@@ -7,7 +7,8 @@ import {
     Smartphone, 
     RotateCcw, 
     X,
-    Clock
+    Clock,
+    SquareCheck as CheckSquare
 } from 'lucide-react';
 
 const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
@@ -149,9 +150,9 @@ export default function AdminQuickAccess({
     ];
 
     const getTableStatus = (tableId) => {
-        const assistance = (assistanceRequests || []).find(r => r.tableId === tableId && r.status === 'pending');
-        const session = (sessions || []).find(s => s.tableId === tableId && s.status !== 'completed' && s.status !== 'archived');
-        const newOrder = (newOrders || []).find(o => o.tableId === tableId && (o.status === 'new' || o.status === 'pending'));
+        const assistance = (assistanceRequests || []).find(r => r?.tableId === tableId && r?.status === 'pending');
+        const session = (sessions || []).find(s => s?.tableId === tableId && s?.status !== 'completed' && s?.status !== 'archived');
+        const newOrder = (newOrders || []).find(o => o?.tableId === tableId && (o?.status === 'new' || o?.status === 'pending'));
 
         // Prioritize active billing sessions
         if (session?.status === 'billed') return { status: 'billing', session, assistance };
