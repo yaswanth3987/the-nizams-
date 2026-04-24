@@ -159,36 +159,21 @@ export default function AdminDashboard() {
         });
 
         socket.on('assistanceRequested', (req) => {
-            setAssistanceRequests(prev => {
-                if (prev.some(r => r.id.toString() === req.id.toString())) return prev;
-                setTimeout(() => {
-                    setUnreadAlerts(u => u + 1);
-                    if (req.type === 'bill') playSound('bill');
-                    else playSound('assistance');
-                }, 0);
-                return [req, ...prev];
-            });
+            fetchAssistance();
+            setTimeout(() => {
+                setUnreadAlerts(u => u + 1);
+                if (req.type === 'bill') playSound('bill');
+                else playSound('assistance');
+            }, 0);
         });
-
-        socket.on('assistanceUpdated', (updatedReq) => {
-            setAssistanceRequests(prev => {
-                const status = updatedReq.status;
-                // If it's completed or rejected, remove it
-                if (status === 'completed' || status === 'rejected' || status === 'cleared') {
-                    return prev.filter(r => r.id.toString() !== updatedReq.id.toString());
-                }
-                // If it's attended or still pending, update/add it
-                const exists = prev.some(r => r.id.toString() === updatedReq.id.toString());
-                if (exists) {
-                    return prev.map(r => r.id.toString() === updatedReq.id.toString() ? updatedReq : r);
-                }
-                return [updatedReq, ...prev];
-            });
+ 
+        socket.on('assistanceUpdated', () => {
+            fetchAssistance();
         });
-
-        socket.on('assistanceDeleted', ({ id }) => {
-            setAssistanceRequests(prev => prev.filter(r => r.id.toString() !== id.toString()));
-            fetchSessions(); // Refresh sessions in case assistance was tied to a bill closure
+ 
+        socket.on('assistanceDeleted', () => {
+            fetchAssistance();
+            fetchSessions();
         });
         
         socket.on('orderDeleted', ({ id }) => {
