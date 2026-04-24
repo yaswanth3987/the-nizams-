@@ -335,12 +335,20 @@ export default function WaitersPortal() {
 
                                                 <div className="flex flex-col gap-3">
                                                     {isReady ? (
-                                                        <button 
-                                                            onClick={() => handleUpdateOrderStatus(order.id, 'served', order._source)}
-                                                            className="w-full bg-[#FFD700] text-[#0F3A2F] py-5 rounded-2xl font-black uppercase text-sm tracking-[0.2em] shadow-xl shadow-[#FFD700]/10 active:scale-95 transition-all flex items-center justify-center gap-3"
-                                                        >
-                                                            <CheckCircle size={20} /> Mark as Served
-                                                        </button>
+                                                        <div className="flex gap-3">
+                                                            <button 
+                                                                onClick={() => handleUpdateOrderStatus(order.id, 'served', order._source)}
+                                                                className="flex-[2] bg-[#FFD700] text-[#0F3A2F] py-5 rounded-2xl font-black uppercase text-sm tracking-[0.2em] shadow-xl shadow-[#FFD700]/10 active:scale-95 transition-all flex items-center justify-center gap-3"
+                                                            >
+                                                                <CheckCircle size={20} /> Served
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => { setSelectedTable(order.tableId); setView('table_details'); }}
+                                                                className="flex-1 bg-white/5 border border-white/10 text-white rounded-2xl flex items-center justify-center active:scale-95 transition-all"
+                                                            >
+                                                                <CreditCard size={20} />
+                                                            </button>
+                                                        </div>
                                                     ) : isNew ? (
                                                         <div className="flex gap-3">
                                                             <button 
@@ -362,9 +370,12 @@ export default function WaitersPortal() {
                                                         </div>
                                                     ) : (
                                                         <div className="flex gap-3">
-                                                            <div className="flex-[2] bg-white/5 border border-white/10 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] text-[#86a69d] flex items-center justify-center gap-3">
-                                                                <Clock size={16} className="animate-spin-slow" /> In Kitchen
-                                                            </div>
+                                                            <button 
+                                                                onClick={() => { setSelectedTable(order.tableId); setView('table_details'); }}
+                                                                className="flex-[2] bg-white/5 border border-white/10 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.1em] flex items-center justify-center gap-2 active:scale-95 transition-all"
+                                                            >
+                                                                <CreditCard size={14} /> View Bill
+                                                            </button>
                                                             <button 
                                                                 onClick={() => {
                                                                     setSelectedTable(order.tableId);
@@ -446,16 +457,25 @@ export default function WaitersPortal() {
                                 <div className="h-px flex-1 bg-white/5"></div>
                             </h2>
                             <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
-                                {section.data.map(t => (
+                                {section.data.map(t => {
+                                    const tableOrders = activeOrders.filter(o => o.tableId === t && o.status !== 'completed' && o.status !== 'rejected');
+                                    const tableTotal = tableOrders.reduce((sum, o) => sum + (o.finalTotal || 0), 0);
+                                    
+                                    return (
                                         <button 
                                             key={t}
                                             onClick={() => { setSelectedTable(t); setView('table_details'); }}
                                             className={`aspect-square rounded-3xl border-2 flex flex-col items-center justify-center transition-all active:scale-90 ${getTableColor(t)}`}
                                         >
                                             <span className="text-4xl font-serif font-black">{t}</span>
-                                            <span className="text-xs font-black uppercase opacity-60 mt-2">{tables[t] || 'Free'}</span>
+                                            {tableTotal > 0 ? (
+                                                <span className="text-xs font-black text-white/90 mt-1 bg-black/20 px-2 py-0.5 rounded-lg">£{tableTotal.toFixed(2)}</span>
+                                            ) : (
+                                                <span className="text-xs font-black uppercase opacity-60 mt-1">{tables[t] || 'Free'}</span>
+                                            )}
                                         </button>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     ))}
@@ -467,6 +487,7 @@ export default function WaitersPortal() {
     const renderTableDetails = () => {
         const tableOrders = activeOrders.filter(o => o.tableId === selectedTable && o.status !== 'completed' && o.status !== 'rejected');
         const tableAssistance = assistanceRequests.find(r => r.tableId === selectedTable);
+        const totalBill = tableOrders.reduce((sum, order) => sum + (order.finalTotal || 0), 0);
 
         return (
             <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#0a261f]/30">
@@ -559,16 +580,37 @@ export default function WaitersPortal() {
                     </div>
                 </div>
 
-                <footer className="p-8 border-t border-white/5 flex gap-4">
-                    <button 
-                        onClick={() => handleUpdateOrderStatus(tableOrders[0]?.id, 'billed', tableOrders[0]?._source)}
-                        className="flex-1 bg-white/5 hover:bg-white/10 text-white py-5 rounded-3xl font-black uppercase text-xs tracking-[0.2em] active:scale-95 transition-all flex items-center justify-center gap-3 border border-white/10"
-                    >
-                        <CreditCard size={20} /> Request Final Bill
-                    </button>
-                    <button className="flex-1 bg-red-900/20 hover:bg-red-900/40 text-red-400 py-5 rounded-3xl font-black uppercase text-xs tracking-[0.2em] active:scale-95 transition-all flex items-center justify-center gap-3 border border-red-500/30">
-                        <X size={20} /> Reset & Close Table
-                    </button>
+                <footer className="p-8 border-t border-white/5 flex flex-col gap-6 bg-black/40">
+                    <div className="flex justify-between items-end px-4">
+                        <div>
+                            <p className="text-[#86a69d] text-[10px] font-black uppercase tracking-[0.3em] mb-1">Total Table Balance</p>
+                            <p className="text-white/40 text-xs font-bold">{tableOrders.length} active orders</p>
+                        </div>
+                        <div className="text-right">
+                            <span className="text-5xl font-serif font-black text-[#FFD700]">£{totalBill.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <div className="flex gap-4">
+                        <button 
+                            onClick={() => {
+                                if (tableOrders.length === 0) return alert("No active orders to settle.");
+                                if (confirm(`Request final bill for Table ${selectedTable}? Total: £${totalBill.toFixed(2)}`)) {
+                                    tableOrders.forEach(o => handleUpdateOrderStatus(o.id, 'billing_pending', o._source));
+                                    alert("Bill request sent to counter.");
+                                    setView('dashboard');
+                                }
+                            }}
+                            className="flex-1 bg-[#FFD700] text-[#0F3A2F] py-6 rounded-[2rem] font-black uppercase text-sm tracking-[0.2em] active:scale-95 transition-all flex items-center justify-center gap-3 shadow-2xl shadow-[#FFD700]/20"
+                        >
+                            <CreditCard size={24} /> Settle & Bill Table
+                        </button>
+                        <button 
+                            onClick={() => setView('dashboard')}
+                            className="w-20 bg-white/5 hover:bg-white/10 text-white/20 hover:text-white rounded-[2rem] flex items-center justify-center transition-all border border-white/5"
+                        >
+                            <ArrowLeft size={24} />
+                        </button>
+                    </div>
                 </footer>
             </div>
         );

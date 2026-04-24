@@ -9,7 +9,7 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
     // Grouping by status for management columns
     const incoming = incomingTakeaways;
     const preparing = activeSessions.filter(o => o.status === 'confirmed' || o.status === 'active' || o.status === 'ready' || o.status === 'accepted');
-    const billed = activeSessions.filter(o => o.status === 'billed');
+    const billed = activeSessions.filter(o => o.status === 'billed' || o.status === 'billing_pending');
     
     return (
         <div className="space-y-8 animate-in fade-in duration-700 pb-24 font-sans">
@@ -175,7 +175,7 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                                     <button 
                                         onClick={() => {
                                             console.log("Order moved to billing:", order.id);
-                                            updateStatus(order.id, 'billing_pending', true);
+                                            updateStatus(order.id, 'billing_pending', false);
                                         }}
                                         className="flex-[2] py-4 rounded-xl font-bold text-xs bg-white/10 text-emerald-400 border border-emerald-400/20 uppercase hover:bg-emerald-500 hover:text-black transition-all"
                                     >

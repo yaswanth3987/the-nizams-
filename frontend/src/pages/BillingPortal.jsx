@@ -7,19 +7,20 @@ const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/a
 function PaymentModal({ session, onClose, onComplete }) {
     const [cash, setCash] = useState('');
     const [card, setCard] = useState('');
+    const [custom, setCustom] = useState('');
     const [error, setError] = useState('');
     
     const total = Number(session.finalTotal);
-    const paidTotal = Number(cash || 0) + Number(card || 0);
+    const paidTotal = Number(cash || 0) + Number(card || 0) + Number(custom || 0);
     const remaining = Math.max(0, total - paidTotal);
     const change = Math.max(0, paidTotal - total);
 
     const handleAutoFillCard = () => {
-        const cashAmt = Number(cash || 0);
-        if (cashAmt >= total) {
+        const currentPaid = Number(cash || 0) + Number(custom || 0);
+        if (currentPaid >= total) {
             setCard('0');
         } else {
-            setCard((total - cashAmt).toFixed(2));
+            setCard((total - currentPaid).toFixed(2));
         }
     };
 
@@ -31,6 +32,7 @@ function PaymentModal({ session, onClose, onComplete }) {
         onComplete(session.id, {
             cash: Number(cash || 0),
             card: Number(card || 0),
+            custom: Number(custom || 0),
             total: total,
             status: 'completed'
         });
@@ -60,7 +62,7 @@ function PaymentModal({ session, onClose, onComplete }) {
                         <Wallet className="w-12 h-12 text-[#C29958]" />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-3">
                             <label className="text-[10px] font-black text-[#6D5D4B]/60 uppercase tracking-widest ml-2">Cash Received (£)</label>
                             <div className="relative">
@@ -80,12 +82,12 @@ function PaymentModal({ session, onClose, onComplete }) {
                         </div>
                         <div className="space-y-3">
                             <div className="flex justify-between items-center ml-2">
-                                <label className="text-[10px] font-black text-[#6D5D4B]/60 uppercase tracking-widest">Card Payment (£)</label>
+                                <label className="text-[10px] font-black text-[#6D5D4B]/60 uppercase tracking-widest">Card (£)</label>
                                 <button 
                                     onClick={handleAutoFillCard}
                                     className="text-[9px] font-black text-[#C29958] uppercase tracking-widest hover:underline"
                                 >
-                                    Auto-Fill Remaining
+                                    Auto
                                 </button>
                             </div>
                             <div className="relative">
@@ -101,6 +103,23 @@ function PaymentModal({ session, onClose, onComplete }) {
                                     className="w-full bg-[#F6EFE6] border-2 border-transparent focus:border-[#C29958] rounded-2xl py-4 pl-6 pr-4 font-black text-xl outline-none transition-all"
                                 />
                                 <CreditCard className="absolute right-6 top-1/2 -translate-y-1/2 text-[#0B3A2E]/20" size={20} />
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-black text-[#6D5D4B]/60 uppercase tracking-widest ml-2">Other/Custom (£)</label>
+                            <div className="relative">
+                                <input 
+                                    type="number" 
+                                    placeholder="0.00"
+                                    value={custom}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val >= 0 || val === '') setCustom(val);
+                                        setError('');
+                                    }}
+                                    className="w-full bg-[#F6EFE6] border-2 border-transparent focus:border-[#C29958] rounded-2xl py-4 pl-6 pr-4 font-black text-xl outline-none transition-all"
+                                />
+                                <Calculator className="absolute right-6 top-1/2 -translate-y-1/2 text-[#0B3A2E]/20" size={20} />
                             </div>
                         </div>
                     </div>
@@ -147,7 +166,7 @@ export default function BillingPortal() {
         const allActiveStatuses = 'billed,active,ready,served,accepted,confirmed,new,pending,billing_pending';
         Promise.all([
             fetch(`${API_URL}/orders?statuses=${allActiveStatuses}`).then(res => res.json()),
-            fetch(`${API_URL}/new-orders`).then(res => res.json())
+            fetch(`${API_URL}/new-orders?statuses=new,pending,ready,billing_pending`).then(res => res.json())
         ])
             .then(([sessionsData, newOrdersData]) => {
                 // Ensure raw takeaway orders that are ready or pending billing get pulled in

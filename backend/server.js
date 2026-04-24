@@ -252,7 +252,9 @@ app.get('/api/tables/:tableId/new-orders', async (req, res) => {
 
 app.get('/api/new-orders', async (req, res) => {
     try {
-        const orders = await getOrdersByStatus(['new', 'pending']);
+        const statusesStr = req.query.statuses;
+        const statuses = statusesStr ? statusesStr.split(',') : ['new', 'pending'];
+        const orders = await getOrdersByStatus(statuses);
         res.json(orders);
     } catch (err) {
         res.status(500).json({ error: err.message });

@@ -44,7 +44,8 @@ if (isPg) {
             await pgPool.query(`CREATE TABLE IF NOT EXISTS active_sessions ("tableId" TEXT PRIMARY KEY, "sessionId" TEXT NOT NULL, "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
             await pgPool.query(`CREATE TABLE IF NOT EXISTS qr_sessions (id SERIAL PRIMARY KEY, seating_id TEXT NOT NULL, session_token TEXT NOT NULL, status TEXT DEFAULT 'ACTIVE', start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, end_time TIMESTAMP);`);
             await pgPool.query(`CREATE TABLE IF NOT EXISTS waitlist (id SERIAL PRIMARY KEY, name TEXT NOT NULL, party_size INTEGER NOT NULL, phone TEXT NOT NULL, status TEXT DEFAULT 'waiting', "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
-            await pgPool.query(`CREATE TABLE IF NOT EXISTS daily_sales (id SERIAL PRIMARY KEY, date DATE NOT NULL UNIQUE, total_sales REAL NOT NULL, total_orders INTEGER NOT NULL, net_profit REAL DEFAULT 0, cash_collected REAL DEFAULT 0, card_collected REAL DEFAULT 0, upi_collected REAL DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
+            await pgPool.query(`CREATE TABLE IF NOT EXISTS daily_sales (id SERIAL PRIMARY KEY, date DATE NOT NULL UNIQUE, total_sales REAL NOT NULL, total_orders INTEGER NOT NULL, net_profit REAL DEFAULT 0, cash_collected REAL DEFAULT 0, card_collected REAL DEFAULT 0, upi_collected REAL DEFAULT 0, custom_collected REAL DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
+            await pgPool.query(`ALTER TABLE daily_sales ADD COLUMN IF NOT EXISTS custom_collected REAL DEFAULT 0;`).catch(() => {});
             await pgPool.query(`CREATE TABLE IF NOT EXISTS item_sales (id SERIAL PRIMARY KEY, date DATE NOT NULL, "itemName" TEXT NOT NULL, "quantitySold" INTEGER NOT NULL, "totalRevenue" REAL NOT NULL, "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, UNIQUE(date, "itemName"));`);
             await pgPool.query(`CREATE TABLE IF NOT EXISTS assistance_requests (id SERIAL PRIMARY KEY, "tableId" TEXT NOT NULL, type TEXT DEFAULT 'staff', status TEXT DEFAULT 'pending', "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
             await pgPool.query(`ALTER TABLE assistance_requests ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'staff';`).catch(() => {});
@@ -103,7 +104,8 @@ if (isPg) {
             db.run(`CREATE TABLE IF NOT EXISTS active_sessions (tableId TEXT PRIMARY KEY, sessionId TEXT NOT NULL, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
             db.run(`CREATE TABLE IF NOT EXISTS qr_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, seating_id TEXT NOT NULL, session_token TEXT NOT NULL, status TEXT DEFAULT 'ACTIVE', start_time DATETIME DEFAULT CURRENT_TIMESTAMP, end_time DATETIME)`);
             db.run(`CREATE TABLE IF NOT EXISTS waitlist (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, party_size INTEGER NOT NULL, phone TEXT NOT NULL, status TEXT DEFAULT 'waiting', createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
-            db.run(`CREATE TABLE IF NOT EXISTS daily_sales (id INTEGER PRIMARY KEY AUTOINCREMENT, date DATE NOT NULL UNIQUE, total_sales REAL NOT NULL, total_orders INTEGER NOT NULL, net_profit REAL DEFAULT 0, cash_collected REAL DEFAULT 0, card_collected REAL DEFAULT 0, upi_collected REAL DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+            db.run(`CREATE TABLE IF NOT EXISTS daily_sales (id INTEGER PRIMARY KEY AUTOINCREMENT, date DATE NOT NULL UNIQUE, total_sales REAL NOT NULL, total_orders INTEGER NOT NULL, net_profit REAL DEFAULT 0, cash_collected REAL DEFAULT 0, card_collected REAL DEFAULT 0, upi_collected REAL DEFAULT 0, custom_collected REAL DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+            db.run(`ALTER TABLE daily_sales ADD COLUMN custom_collected REAL DEFAULT 0`, (err) => {});
             db.run(`CREATE TABLE IF NOT EXISTS item_sales (id INTEGER PRIMARY KEY AUTOINCREMENT, date DATE NOT NULL, itemName TEXT NOT NULL, quantitySold INTEGER NOT NULL, totalRevenue REAL NOT NULL, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(date, itemName))`);
             db.run(`CREATE TABLE IF NOT EXISTS assistance_requests (id INTEGER PRIMARY KEY AUTOINCREMENT, tableId TEXT NOT NULL, type TEXT DEFAULT 'staff', status TEXT DEFAULT 'pending', createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
             db.run(`ALTER TABLE assistance_requests ADD COLUMN type TEXT DEFAULT 'staff'`, (err) => {});
@@ -645,11 +647,12 @@ const finalizePayment = async (id, paymentData) => {
     // Update daily sales
     if (status === 'completed') {
         const today = new Date().toISOString().split('T')[0];
+        const custom = Number(paymentData.custom || 0);
         const salesSql = isPg
-            ? `INSERT INTO daily_sales (date, total_sales, total_orders, cash_collected, card_collected) VALUES (?, ?, 1, ?, ?) ON CONFLICT(date) DO UPDATE SET total_sales = daily_sales.total_sales + EXCLUDED.total_sales, total_orders = daily_sales.total_orders + 1, cash_collected = daily_sales.cash_collected + EXCLUDED.cash_collected, card_collected = daily_sales.card_collected + EXCLUDED.card_collected`
-            : `INSERT INTO daily_sales (date, total_sales, total_orders, cash_collected, card_collected) VALUES (?, ?, 1, ?, ?) ON CONFLICT(date) DO UPDATE SET total_sales = total_sales + excluded.total_sales, total_orders = total_orders + 1, cash_collected = cash_collected + excluded.cash_collected, card_collected = card_collected + excluded.card_collected`;
+            ? `INSERT INTO daily_sales (date, total_sales, total_orders, cash_collected, card_collected, custom_collected) VALUES (?, ?, 1, ?, ?, ?) ON CONFLICT(date) DO UPDATE SET total_sales = daily_sales.total_sales + EXCLUDED.total_sales, total_orders = daily_sales.total_orders + 1, cash_collected = daily_sales.cash_collected + EXCLUDED.cash_collected, card_collected = daily_sales.card_collected + EXCLUDED.card_collected, custom_collected = daily_sales.custom_collected + EXCLUDED.custom_collected`
+            : `INSERT INTO daily_sales (date, total_sales, total_orders, cash_collected, card_collected, custom_collected) VALUES (?, ?, 1, ?, ?, ?) ON CONFLICT(date) DO UPDATE SET total_sales = total_sales + excluded.total_sales, total_orders = total_orders + 1, cash_collected = cash_collected + excluded.cash_collected, card_collected = card_collected + excluded.card_collected, custom_collected = custom_collected + excluded.custom_collected`;
         
-        await runQuery(salesSql, [today, total, cash, card]).catch(e => console.error('[DB] Daily Sales Update Failed:', e));
+        await runQuery(salesSql, [today, total, cash, card, custom]).catch(e => console.error('[DB] Daily Sales Update Failed:', e));
     }
     
     return updatedSession;
