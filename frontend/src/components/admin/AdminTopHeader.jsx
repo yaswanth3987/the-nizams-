@@ -7,7 +7,7 @@ export default function AdminTopHeader({ activeTab, onTabChange, unreadAlerts = 
 
     return (
         <header className="bg-secondary text-white px-12 py-6 flex flex-col md:flex-row justify-between items-start md:items-center z-20 shadow-xl border-b border-white/10 relative">
-            <div className="flex items-center gap-12 mb-6 md:mb-0 relative z-10 w-full overflow-x-auto no-scrollbar">
+            <div className="flex items-center gap-12 mb-6 md:mb-0 relative z-10 w-full overflow-x-auto">
                 <h1 className="text-2xl font-serif text-white/90 italic tracking-tight font-bold whitespace-nowrap">Admin Terminal</h1>
                 <div className="flex gap-12 h-full">
                     {Object.entries({ dashboard: 'Dashboard', inventory: 'Inventory', reports: 'Reports' }).map(([val, label]) => (

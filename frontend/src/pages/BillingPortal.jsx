@@ -15,18 +15,18 @@ function PaymentModal({ session, onClose, onComplete }) {
     const remaining = Math.max(0, total - paidTotal);
     const change = Math.max(0, paidTotal - total);
 
-    const handleAutoFillCard = () => {
+    const handleQuickPay = (method) => {
         const currentPaid = Number(cash || 0) + Number(custom || 0);
-        if (currentPaid >= total) {
-            setCard('0');
-        } else {
+        if (method === 'exact') {
+            setCash((total - currentPaid).toFixed(2));
+        } else if (method === 'card') {
             setCard((total - currentPaid).toFixed(2));
         }
     };
 
-    const handleConfirm = () => {
-        if (paidTotal < total - 0.01) { // Allowance for floating point
-            setError(`Insufficient amount. Still need £${remaining.toFixed(2)}`);
+    const handleSettle = () => {
+        if (remaining > 0) {
+            setError(`Insufficient amount. Still need £${(remaining || 0).toFixed(2)}`);
             return;
         }
         onComplete(session.id, {
@@ -62,9 +62,9 @@ function PaymentModal({ session, onClose, onComplete }) {
 
                 <div className="p-10 space-y-10">
                     <div className="flex items-center justify-between bg-[#F6EFE6] p-8 rounded-3xl border border-[#0B3A2E]/5">
-                        <div>
-                            <p className="text-[10px] font-black text-[#6D5D4B]/40 uppercase tracking-widest mb-1">Total Amount Due</p>
-                            <p className="text-5xl font-serif font-black text-[#0B3A2E]">£{total.toFixed(2)}</p>
+                        <div className="text-right">
+                            <p className="text-[10px] font-black text-[#86a69d] uppercase tracking-widest mb-1">Grand Total Due</p>
+                            <p className="text-5xl font-serif font-black text-[#0B3A2E]">£{(total || 0).toFixed(2)}</p>
                         </div>
                         <Wallet className="w-12 h-12 text-[#C29958]" />
                     </div>
@@ -91,7 +91,7 @@ function PaymentModal({ session, onClose, onComplete }) {
                             <div className="flex justify-between items-center ml-2">
                                 <label className="text-[10px] font-black text-[#6D5D4B]/60 uppercase tracking-widest">Card (£)</label>
                                 <button 
-                                    onClick={handleAutoFillCard}
+                                    onClick={() => handleQuickPay('card')}
                                     className="text-[9px] font-black text-[#C29958] uppercase tracking-widest hover:underline"
                                 >
                                     Auto
@@ -146,7 +146,7 @@ function PaymentModal({ session, onClose, onComplete }) {
                             </p>
                         </div>
                         <button 
-                            onClick={handleConfirm}
+                            onClick={handleSettle}
                             className="bg-[#0B3A2E] text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-[#0B3A2E]/20 hover:bg-[#C29958] transition-all flex items-center gap-3 active:scale-95"
                         >
                             <CheckCircle size={20} /> Confirm Payment
@@ -169,7 +169,6 @@ export default function BillingPortal() {
     }, []);
 
     const fetchBillingSessions = useCallback(() => {
-        // SUPER-FETCH: Pull every active session and order to ensure 100% visibility
         Promise.all([
             fetch(`${API_URL}/orders?statuses=confirmed,active,ready,served,billed,billing_pending,accepted`).then(res => res.json()),
             fetch(`${API_URL}/new-orders?statuses=new,pending,ready,billing_pending,accepted`).then(res => res.json())
@@ -181,7 +180,6 @@ export default function BillingPortal() {
                 ];
                 const activeOnes = combined.filter(s => s.status !== 'completed' && s.status !== 'cancelled');
                 
-                // Deduplicate just in case
                 const uniqueMap = new Map();
                 activeOnes.forEach(item => uniqueMap.set(item.id + '-' + (item.orderType || 'session'), item));
                 
@@ -197,7 +195,6 @@ export default function BillingPortal() {
         const handleNewBilling = (order) => {
             fetchBillingSessions();
             setNotifications(prev => [...prev, { id: Date.now(), message: `New Billing Request: ${order.tableId === 'TAKEAWAY' ? 'Takeaway' : 'Table ' + order.tableId}` }]);
-            // Auto-clear notification after 5s
             setTimeout(() => {
                 setNotifications(prev => prev.slice(1));
             }, 5000);
@@ -205,7 +202,7 @@ export default function BillingPortal() {
 
         socket.on('sessionUpdated', handleSessionUpdate);
         socket.on('tableReset', handleSessionUpdate);
-        socket.on('orderUpdated', handleSessionUpdate); // Added for raw takeaway order sync
+        socket.on('orderUpdated', handleSessionUpdate);
         socket.on('NEW_BILLING_ORDER', handleNewBilling);
         
         return () => {
@@ -240,7 +237,6 @@ export default function BillingPortal() {
                         body { font-family: monospace; padding: 20px; color: black; max-width: 300px; margin: auto; text-transform: uppercase; }
                         .header { text-align: center; margin-bottom: 15px; }
                         .dashed { border-top: 1.5px dashed black; margin: 10px 0; }
-                        .total { font-weight: bold; font-size: 15px; display: flex; justify-content: space-between; margin-top: 10px; }
                     </style>
                 </head>
                 <body>
@@ -250,7 +246,6 @@ export default function BillingPortal() {
                         <div class="dashed"></div>
                         <p style="font-weight: bold; margin: 5px 0;">Order ID: ${session.id}</p>
                         <p style="font-weight: bold; margin: 5px 0;">Table: ${session.tableId === 'TAKEAWAY' ? 'TAKEAWAY' : session.tableId}</p>
-                        <p style="font-weight: bold; margin: 5px 0;">Guest: ${session.customerName || (session.tableId === 'TAKEAWAY' ? 'Takeaway Guest' : 'Dine-in Guest')}</p>
                         <p style="font-size: 10px; margin: 5px 0;">Date: ${new Date().toLocaleString('en-GB')}</p>
                         <div class="dashed"></div>
                     </div>
@@ -261,19 +256,18 @@ export default function BillingPortal() {
                         <span style="grid-column: span 3; text-align: right;">AMOUNT</span>
                     </div>
                     <div class="items">
-                        ${session.items.map(item => `
+                        ${(session.items || []).map(item => `
                             <div style="display: grid; grid-template-columns: repeat(12, 1fr); font-size: 13px; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px;">
                                 <span style="grid-column: span 5; font-weight: 500;">${item.name.toUpperCase()}</span>
                                 <span style="grid-column: span 2; text-align: center; font-weight: bold;">${item.qty}</span>
-                                <span style="grid-column: span 2; text-align: center;">${Number(item.price).toFixed(2)}</span>
-                                <span style="grid-column: span 3; text-align: right; font-weight: bold;">${(item.price * item.qty).toFixed(2)}</span>
+                                <span style="grid-column: span 2; text-align: center;">${Number(item.price || 0).toFixed(2)}</span>
+                                <span style="grid-column: span 3; text-align: right; font-weight: bold;">${((item.price || 0) * (item.qty || 0)).toFixed(2)}</span>
                             </div>
                         `).join('')}
                     </div>
-                    <div class="dashed"></div>
-                    <div class="total">
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem; border-top: 2px solid #000; padding-top: 10px;">
                         <span>TOTAL</span>
-                        <span>£ ${Number(session.finalTotal).toFixed(2)}</span>
+                        <span>£ ${Number(session.finalTotal || 0).toFixed(2)}</span>
                     </div>
                     <div class="dashed"></div>
                     <div style="text-align: center; margin-top: 20px; font-size: 11px;">
@@ -348,20 +342,14 @@ export default function BillingPortal() {
                 </div>
             </header>
 
-            <main className="flex-1 p-10 overflow-y-auto no-scrollbar">
+            <main className="flex-1 p-10 overflow-y-auto">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-center justify-between mb-10">
                         <h2 className="text-3xl font-serif font-black italic">Active Settlements</h2>
-                        <div className="flex gap-4">
-                            <div className="bg-white px-6 py-3 rounded-2xl shadow-sm border border-[#0B3A2E]/5">
-                                <p className="text-[10px] font-black text-[#6D5D4B]/40 uppercase tracking-widest">Pending Payment</p>
-                                <p className="text-2xl font-serif font-black text-emerald-600">{sessions.filter(isPending).length}</p>
-                            </div>
-                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {filtered.map(session => (
+                        {(filtered || []).map(session => (
                             <div key={session.id} className="bg-white rounded-[40px] p-8 shadow-2xl border border-[#0B3A2E]/5 flex flex-col relative overflow-hidden group hover:-translate-y-2 transition-all duration-500">
                                 <div className={`absolute top-0 right-0 px-6 py-2 rounded-bl-3xl font-black text-[10px] uppercase tracking-widest ${isPending(session) ? 'bg-[#C29958] text-white' : 'bg-[#0B3A2E]/5 text-[#0B3A2E]/40'}`}>
                                     {isPending(session) ? 'READY TO PAY' : (session.status === 'confirmed' ? 'CONFIRMED' : 'ACTIVE')}
@@ -374,39 +362,27 @@ export default function BillingPortal() {
                                                 <div className="bg-[#0B3A2E] text-white px-4 py-2 rounded-xl text-lg font-black uppercase tracking-tighter">
                                                     {session.tableId === 'TAKEAWAY' ? `ID #${session.id}` : `TABLE ${session.tableId}`}
                                                 </div>
-                                                {session.phone && (
-                                                    <span className="text-[#0B3A2E]/40 text-xs font-bold bg-black/5 px-3 py-2 rounded-xl">
-                                                        {session.phone}
-                                                    </span>
-                                                )}
                                             </div>
                                             <h3 className="text-4xl font-serif font-black text-[#0B3A2E] italic">
                                                 {session.customerName || (session.tableId === 'TAKEAWAY' || session.orderType === 'takeaway' ? 'Takeaway Guest' : 'Dine-in Guest')}
                                             </h3>
                                         </div>
-                                        {session.status === 'billing_pending' && (
-                                            <span className="flex h-3 w-3 relative">
-                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C29958] opacity-75"></span>
-                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-[#C29958]"></span>
-                                            </span>
-                                        )}
                                     </div>
-                                    <p className="text-[10px] font-black text-[#6D5D4B]/40 uppercase tracking-widest">Order ID: #{session.id}</p>
                                 </div>
 
                                 <div className="flex-1 space-y-3 mb-8">
                                     {session.items?.map((item, i) => (
                                         <div key={i} className="flex justify-between text-sm italic font-medium text-[#6D5D4B]">
-                                            <span>{item.qty}x {item.name}</span>
-                                            <span className="font-bold">£{(item.price * item.qty).toFixed(2)}</span>
+                                            <span className="text-xs italic font-medium">{item.qty}x {item.name}</span>
+                                            <span className="font-bold">£{((item.price || 0) * (item.qty || 0)).toFixed(2)}</span>
                                         </div>
                                     ))}
                                 </div>
 
                                 <div className="mt-auto border-t border-[#0B3A2E]/5 pt-6 mb-8">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-[10px] font-black text-[#6D5D4B]/40 uppercase tracking-widest">Grand Total</span>
-                                        <span className="text-3xl font-serif font-black text-[#0B3A2E]">£{Number(session.finalTotal).toFixed(2)}</span>
+                                    <div className="flex justify-between items-end">
+                                        <span className="text-[10px] font-black text-[#86a69d] uppercase tracking-widest">Total Bill</span>
+                                        <span className="text-3xl font-serif font-black text-[#0B3A2E]">£{Number(session.finalTotal || 0).toFixed(2)}</span>
                                     </div>
                                 </div>
 

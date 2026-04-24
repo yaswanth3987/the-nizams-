@@ -2,7 +2,7 @@ import React from 'react';
 import { Sparkles, UtensilsCrossed, Monitor } from 'lucide-react';
 
 export default function AdminFloorStatus({ orders: sessions, updateStatus, API_URL }) {
-    const confirmedSessions = sessions.filter(s => ['confirmed', 'active', 'ready', 'served'].includes(s.status) && s.orderType !== 'takeaway');
+    const confirmedSessions = (sessions || []).filter(s => ['confirmed', 'active', 'ready', 'served'].includes(s.status) && s.orderType !== 'takeaway');
 
     const displaySessions = confirmedSessions;
     
@@ -17,7 +17,7 @@ export default function AdminFloorStatus({ orders: sessions, updateStatus, API_U
 
             <div className="flex-1 px-10 pb-32">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                    {displaySessions.map((session, idx) => {
+                    {(displaySessions || []).map((session, idx) => {
                         const isVip = session.tableId?.toString().toUpperCase().includes('VIP');
                         const isReady = session.status === 'ready';
                         const isServed = session.status === 'served';
@@ -52,8 +52,8 @@ export default function AdminFloorStatus({ orders: sessions, updateStatus, API_U
                                     </div>
                                 </div>
 
-                                <div className="flex-1 space-y-3 overflow-y-auto no-scrollbar mb-8">
-                                    {session.items.map((item, i) => (
+                                <div className="flex-1 space-y-3 overflow-y-auto mb-8">
+                                    {(session.items || []).map((item, i) => (
                                         <div key={i} className="flex justify-between items-center text-sm">
                                             <span className="text-white/80 font-serif italic">{item.name}</span>
                                             <span className="text-accent font-bold">x{item.qty}</span>

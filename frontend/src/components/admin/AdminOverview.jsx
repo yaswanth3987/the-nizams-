@@ -27,7 +27,7 @@ export default function AdminOverview({ itemAnalytics = [], salesList = [] }) {
         const weekMs = 7 * 86400000;
         const monthMs = 30 * 86400000;
 
-        return salesList.filter(order => {
+        return (salesList || []).filter(order => {
             if (!order.createdAt) return false;
             const orderDateStr = order.createdAt.split('T')[0].split(' ')[0];
             const tsOrder = new Date(orderDateStr).getTime();
@@ -46,7 +46,7 @@ export default function AdminOverview({ itemAnalytics = [], salesList = [] }) {
     // --- Chart Data Generation ---
     const generatedChartData = useMemo(() => {
         const grouped = {};
-        filteredSalesList.forEach(o => {
+        (filteredSalesList || []).forEach(o => {
             const d = o.createdAt.split('T')[0].split(' ')[0];
             if (!grouped[d]) grouped[d] = { date: d, revenue: 0, orders: 0 };
             grouped[d].revenue += parseFloat(o.finalTotal || 0);
@@ -184,7 +184,7 @@ export default function AdminOverview({ itemAnalytics = [], salesList = [] }) {
                             <div>Revenue</div>
                             <div className="text-right">Action</div>
                         </div>
-                        <div className="flex flex-col max-h-[500px] overflow-y-auto no-scrollbar divide-y divide-white/10">
+                        <div className="flex flex-col max-h-[500px] overflow-y-auto divide-y divide-white/10">
                             {filteredSalesList.map((row, idx) => (
                                 <div key={row.id || idx} className="grid grid-cols-5 px-8 py-6 hover:bg-white/5 transition-colors items-center">
                                     <div className="font-serif text-white font-bold text-lg">#{row.id.toString().slice(-4)}</div>
@@ -207,7 +207,7 @@ export default function AdminOverview({ itemAnalytics = [], salesList = [] }) {
                 <div>
                     <h3 className="text-3xl font-serif text-white font-bold tracking-tight mb-8">Top Revenue Items</h3>
                     <div className="bg-white/5 border border-white/10 rounded-3xl p-8 space-y-6 shadow-2xl">
-                        {itemAnalytics.slice(0, 6).map((item, idx) => (
+                        {(itemAnalytics || []).slice(0, 6).map((item, idx) => (
                             <div key={idx} className="flex items-center justify-between group">
                                 <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center border border-white/10 text-white/40 font-serif font-bold italic group-hover:text-accent transition-colors">

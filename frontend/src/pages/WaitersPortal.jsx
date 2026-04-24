@@ -3,10 +3,20 @@ import {
     Clock, CheckCircle, AlertTriangle, Bell, Search, 
     Plus, Minus, X, Utensils, CreditCard, ArrowLeft,
     Check, LayoutGrid, ListOrdered, Settings, User, 
-    Coffee, Wine, UtensilsCrossed, Trash2
+    Trash2, Sparkles, ArrowUpRight, ShoppingBag, FileText, CheckSquare
 } from 'lucide-react';
 import { socket } from '../utils/socket';
 import { useSoundSystem } from '../hooks/useSoundSystem';
+
+// Admin Components Integration
+import AdminQuickAccess from '../components/admin/AdminQuickAccess';
+import AdminFloorStatus from '../components/admin/AdminFloorStatus';
+import AdminNewOrders from '../components/admin/AdminNewOrders';
+import AdminCompletedView from '../components/admin/AdminCompletedView';
+import AdminTakeawayManager from '../components/admin/AdminTakeawayManager';
+import AdminTakeawayPOS from '../components/admin/AdminTakeawayPOS';
+import AdminUnavailabilityScheduler from '../components/admin/AdminUnavailabilityScheduler';
+import Receipt from '../components/Receipt';
 
 const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
 
@@ -24,7 +34,11 @@ export default function WaitersPortal() {
     const [cart, setCart] = useState([]);
     const [editingOrder, setEditingOrder] = useState(null); // { id, type }
     const [now, setNow] = useState(Date.now());
-    const { playSound } = useSoundSystem(assistanceRequests.length > 0);
+    const { playSound } = useSoundSystem((assistanceRequests || []).some(r => r.status === 'pending'));
+
+    // Admin integration states
+    const [editingTakeaway, setEditingTakeaway] = useState(null);
+    const [selectedSessionForReceipt, setSelectedSessionForReceipt] = useState(null);
 
     const lastScrollTop = React.useRef(0);
 
@@ -55,7 +69,7 @@ export default function WaitersPortal() {
                 });
             }
             setTables(statusMap);
-            setAssistanceRequests(helpData.filter(r => r.status === 'pending'));
+            setAssistanceRequests(helpData.filter(r => r.status === 'pending' || r.status === 'attended'));
             setMenu(menuData);
             
             const allOrders = [
@@ -77,10 +91,17 @@ export default function WaitersPortal() {
                 fetchData();
             }, 300);
             
-            // Play notification sounds based on event
-            if (data?.type === 'bill') playSound('bill');
-            else if (data?.status === 'ready') playSound('ready');
-            else playSound('newOrder');
+            // Play notification sounds based on event type and content
+            if (data?.type === 'bill') {
+                playSound('bill');
+            } else if (data?.status === 'ready') {
+                playSound('ready');
+            } else if (data?.status === 'new' || data?.status === 'pending' || data?.type === 'assistance') {
+                // Only play newOrder for actually NEW things, not every status update
+                if (data?.type === 'assistance' || data?.tableId) {
+                    playSound('newOrder');
+                }
+            }
         };
         socket.on('tableStatusUpdated', refresh);
         socket.on('orderCreated', refresh);
@@ -132,13 +153,64 @@ export default function WaitersPortal() {
     };
 
     const handleUpdateAssistance = async (id, status) => {
+        // Optimistic UI update
+        setAssistanceRequests(prev => prev.map(r => r.id.toString() === id.toString() ? { ...r, status } : r));
+        
         try {
             await fetch(`${API_URL}/assistance/${id}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status })
             });
+        } catch (err) { 
+            console.error(err);
+            fetchData(); // Revert on error
+        }
+    };
+
+    // Admin Wrapper Methods
+    const adminUpdateStatus = async (id, status, isRawOrder = false) => {
+        handleUpdateOrderStatus(id, status, isRawOrder ? 'new' : 'session');
+    };
+
+    const cancelOrder = async (id) => {
+        if (!confirm('Reject this order? The customer will be notified.')) return;
+        try {
+            await fetch(`${API_URL}/new-orders/${id}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'rejected' })
+            });
+            fetchData();
+        } catch (err) { console.error('Reject failed:', err); }
+    };
+
+    const clearTable = async (tableId) => {
+        const tableSessions = (activeOrders || []).filter(s => s.tableId === tableId && s._source === 'session');
+        if (tableSessions.length === 0) {
+            try {
+                await fetch(`${API_URL}/tables/${encodeURIComponent(tableId)}/orders`, { method: 'DELETE' });
+                fetchData();
+            } catch (e) { console.error(e); }
+            return;
+        }
+        if (!confirm(`Clear session for Table ${tableId}?`)) return;
+        try {
+            await fetch(`${API_URL}/tables/${encodeURIComponent(tableId)}/orders`, { method: 'DELETE' });
+            fetchData();
         } catch (err) { console.error(err); }
+    };
+
+    const printReceipt = (order) => {
+        setSelectedSessionForReceipt(order);
+        setTimeout(() => { window.print(); }, 300);
+    };
+
+    const handleAdminViewChange = (newView) => {
+        if (newView === 'orders') setActiveTab('new_orders');
+        else if (newView === 'assistance') setActiveTab('alerts');
+        else if (newView === 'pos') setActiveTab('takeaway_pos');
+        else setActiveTab(newView);
     };
 
     // UI Components
@@ -154,10 +226,16 @@ export default function WaitersPortal() {
 
             <nav className="flex-1 px-4 space-y-2 overflow-y-auto py-4">
                 {[
+                    { id: 'all-in-one', label: 'Quick Access', icon: LayoutGrid, count: 0 },
                     { id: 'tables', label: 'Tables', icon: LayoutGrid, count: [...new Set([...(assistanceRequests || []).map(r => (r.tableId || '').toString().toUpperCase()), ...(activeOrders || []).filter(o => o.status === 'ready').map(o => (o.tableId || '').toString().toUpperCase())])].filter(Boolean).length },
-                    { id: 'orders', label: 'Orders', icon: ListOrdered, count: (activeOrders || []).filter(o => o.status === 'ready').length },
+                    { id: 'takeaway', label: 'Takeaway', icon: ShoppingBag, count: (activeOrders || []).filter(o => o.orderType === 'takeaway' && (o.status === 'new' || o.status === 'pending')).length },
+                    { id: 'new_orders', label: 'New Orders', icon: FileText, count: (activeOrders || []).filter(o => o._source === 'new' && (o.status === 'new' || o.status === 'pending')).length },
+                    { id: 'orders', label: 'Ready Orders', icon: ListOrdered, count: (activeOrders || []).filter(o => o.status === 'ready').length },
+                    { id: 'confirmed', label: 'Confirmed', icon: CheckCircle, count: (activeOrders || []).filter(o => ['confirmed', 'active', 'ready', 'served'].includes(o.status) && o.orderType !== 'takeaway').length },
                     { id: 'billing', label: 'Billing', icon: CreditCard, count: (activeOrders || []).filter(o => ['billed', 'billing_pending'].includes(o.status)).length },
-                    { id: 'alerts', label: 'Alerts', icon: Bell, count: (assistanceRequests || []).length },
+                    { id: 'alerts', label: 'Alerts', icon: Bell, count: (assistanceRequests || []).filter(r => r.status === 'pending').length },
+                    { id: 'completed', label: 'Completed', icon: CheckSquare, count: (activeOrders || []).filter(o => o.status === 'completed' && o.orderType !== 'takeaway').length },
+                    { id: 'scheduler', label: 'Scheduler', icon: Clock, count: 0 }
                 ].map(item => (
                     <button 
                         key={item.id}
@@ -172,7 +250,14 @@ export default function WaitersPortal() {
             </nav>
 
             <div className="mt-auto space-y-4">
-                <button onClick={() => setView('order_entry')} className="w-full bg-[#FFD700]/10 border border-[#FFD700]/20 text-[#FFD700] py-4 rounded-2xl font-black uppercase text-xs tracking-widest active:bg-[#FFD700]/20 transition-all active:scale-95 flex items-center justify-center gap-2">
+                <button 
+                    onClick={() => {
+                        setSelectedTable(null);
+                        setCart([]);
+                        setView('order_entry');
+                    }} 
+                    className="w-full bg-[#FFD700]/10 border border-[#FFD700]/20 text-[#FFD700] py-4 rounded-2xl font-black uppercase text-xs tracking-widest active:bg-[#FFD700]/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                >
                     <Plus size={18} strokeWidth={3} /> New Table
                 </button>
                 <div className="flex items-center gap-3 p-4 bg-black/20 rounded-2xl">
@@ -202,7 +287,7 @@ export default function WaitersPortal() {
     );
 
     const Dashboard = () => {
-        const readyOrders = activeOrders.filter(o => o.status === 'ready');
+        const readyOrders = (activeOrders || []).filter(o => o.status === 'ready');
         
         return (
             <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
@@ -210,7 +295,7 @@ export default function WaitersPortal() {
                 <header className="px-8 py-6 flex items-center justify-between border-b border-white/5">
                     <div className="flex items-center gap-4">
                         <h1 className="text-2xl font-black text-white">Live Waiter Portal</h1>
-                        <span className="bg-red-500/20 text-red-400 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">{assistanceRequests.length} ACTIVE ALERTS</span>
+                        <span className="bg-red-500/20 text-red-400 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">{(assistanceRequests || []).length} ACTIVE ALERTS</span>
                     </div>
                     <div className="flex items-center gap-6">
                         <Search size={20} className="text-[#86a69d]" />
@@ -231,7 +316,7 @@ export default function WaitersPortal() {
                         <section>
                         <h2 className="text-[#FFD700] text-2xl font-serif font-black mb-6 italic tracking-tight">Urgent Assistance</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {assistanceRequests.map(req => {
+                            {(assistanceRequests || []).map(req => {
                                 const isAttended = req.status === 'attended';
                                 const createdTime = new Date(req.createdAt);
                                 const diffMins = Math.floor((new Date() - createdTime) / 60000);
@@ -257,7 +342,7 @@ export default function WaitersPortal() {
                                                         </span>
                                                         {!isAttended && <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>}
                                                     </div>
-                                                    <h3 className="text-[#FFD700] text-5xl font-serif font-black italic mb-1 uppercase tracking-tighter">Table {req.tableId.replace(/\D/g, '')}</h3>
+                                                    <h3 className="text-[#FFD700] text-5xl font-serif font-black italic mb-1 uppercase tracking-tighter">Table {req.tableId}</h3>
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="text-[#FFD700] text-lg font-black tabular-nums">{diffMins}m</p>
@@ -299,7 +384,7 @@ export default function WaitersPortal() {
                                     </div>
                                 );
                             })}
-                            {assistanceRequests.length === 0 && (
+                            {(assistanceRequests || []).length === 0 && (
                                 <div className="col-span-full py-12 border-2 border-dashed border-white/5 rounded-[40px] flex flex-col items-center justify-center text-white/20">
                                     <Sparkles size={48} className="mb-4" />
                                     <p className="font-black uppercase tracking-widest text-sm">No Urgent Calls</p>
@@ -357,11 +442,11 @@ export default function WaitersPortal() {
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-[#FFD700] text-2xl font-serif font-black italic tracking-tight">Active Floor Orders</h2>
                                 <div className="flex items-center gap-2 text-[#86a69d] text-[10px] font-black uppercase tracking-widest">
-                                    Processing {activeOrders.filter(o => ['new', 'pending', 'accepted', 'confirmed', 'active', 'ready'].includes(o.status)).length}
+                                    Processing {(activeOrders || []).filter(o => ['new', 'pending', 'accepted', 'confirmed', 'active', 'ready'].includes(o.status)).length}
                                 </div>
                             </div>
                             <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3">
-                                {activeOrders.filter(o => !['completed', 'cancelled', 'ready', 'billed', 'billing_pending'].includes(o.status)).map(order => {
+                                {(activeOrders || []).filter(o => !['completed', 'cancelled', 'ready', 'billed', 'billing_pending'].includes(o.status)).map(order => {
                                     const isNew = order.status === 'new' || order.status === 'pending';
                                     const isReady = order.status === 'ready';
                                     return (
@@ -424,7 +509,7 @@ export default function WaitersPortal() {
                                                     <>
                                                         <button 
                                                             onClick={() => {
-                                                                if (confirm(`Request final bill for Table ${order.tableId}? Total: £${Number(order.finalTotal).toFixed(2)}`)) {
+                                                                if (confirm(`Request final bill for Table ${order.tableId}? Total: £${Number(order.finalTotal || 0).toFixed(2)}`)) {
                                                                     handleUpdateOrderStatus(order.id, 'billing_pending', order._source);
                                                                 }
                                                             }}
@@ -460,11 +545,11 @@ export default function WaitersPortal() {
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-[#FFD700] text-2xl font-serif font-black italic tracking-tight">Pending Settlements</h2>
                                 <div className="flex items-center gap-2 text-[#86a69d] text-[10px] font-black uppercase tracking-widest">
-                                    Awaiting {activeOrders.filter(o => ['billed', 'billing_pending'].includes(o.status)).length}
+                                    Awaiting {(activeOrders || []).filter(o => ['billed', 'billing_pending'].includes(o.status)).length}
                                 </div>
                             </div>
                             <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3">
-                                {activeOrders.filter(o => ['billed', 'billing_pending'].includes(o.status)).map(order => {
+                                {(activeOrders || []).filter(o => ['billed', 'billing_pending'].includes(o.status)).map(order => {
                                     return (
                                         <div key={`billing-${order.id}`} className={`bg-white/5 border rounded-2xl flex flex-col overflow-hidden transition-all duration-500 relative border-[#FFD700]/30 min-h-[160px] h-auto`}>
                                             <div className="absolute top-0 left-0 w-1.5 h-full bg-[#FFD700]"></div>
@@ -501,6 +586,81 @@ export default function WaitersPortal() {
                             </div>
                         </section>
                     )}
+
+                    {/* Admin Integrated Views */}
+                    {activeTab === 'all-in-one' && (
+                        <div className="w-full">
+                            <AdminQuickAccess 
+                                newOrders={activeOrders.filter(o => o._source === 'new')}
+                                sessions={activeOrders.filter(o => o._source === 'session')}
+                                updateStatus={adminUpdateStatus}
+                                cancelOrder={cancelOrder}
+                                printReceipt={printReceipt}
+                                clearTable={clearTable}
+                                assistanceRequests={assistanceRequests}
+                                updateAssistance={handleUpdateAssistance}
+                                onViewChange={handleAdminViewChange}
+                            />
+                        </div>
+                    )}
+                    {activeTab === 'takeaway' && (
+                        <div className="w-full">
+                            <AdminTakeawayManager 
+                                sessions={activeOrders.filter(o => o._source === 'session')}
+                                newOrders={activeOrders.filter(o => o._source === 'new')}
+                                updateStatus={adminUpdateStatus}
+                                onViewChange={handleAdminViewChange}
+                                onEdit={(order) => {
+                                    setEditingTakeaway(order);
+                                    setActiveTab('takeaway_pos');
+                                }}
+                            />
+                        </div>
+                    )}
+                    {activeTab === 'takeaway_pos' && (
+                        <div className="w-full">
+                            <AdminTakeawayPOS 
+                                initialOrder={editingTakeaway}
+                                onComplete={() => {
+                                    setEditingTakeaway(null);
+                                    setActiveTab('takeaway');
+                                }}
+                            />
+                        </div>
+                    )}
+                    {activeTab === 'new_orders' && (
+                        <div className="w-full">
+                            <AdminNewOrders 
+                                orders={activeOrders.filter(o => o._source === 'new')}
+                                updateStatus={(id, status) => adminUpdateStatus(id, status, true)}
+                                cancelOrder={cancelOrder}
+                            />
+                        </div>
+                    )}
+                    {activeTab === 'confirmed' && (
+                        <div className="w-full">
+                            <AdminFloorStatus 
+                                orders={activeOrders.filter(o => o._source === 'session')}
+                                updateStatus={adminUpdateStatus}
+                                printReceipt={printReceipt}
+                                API_URL={API_URL}
+                            />
+                        </div>
+                    )}
+                    {activeTab === 'completed' && (
+                        <div className="w-full">
+                            <AdminCompletedView 
+                                orders={activeOrders.filter(o => o._source === 'session')}
+                                clearTable={clearTable}
+                                printReceipt={printReceipt}
+                            />
+                        </div>
+                    )}
+                    {activeTab === 'scheduler' && (
+                        <div className="w-full">
+                            <AdminUnavailabilityScheduler />
+                        </div>
+                    )}
                 </div>
 
                 {/* Bottom Stats */}
@@ -526,19 +686,20 @@ export default function WaitersPortal() {
         
     const getTableColor = (tableId) => {
         const normalizedId = tableId.toString().toUpperCase();
-        const needsHelp = (assistanceRequests || []).some(r => (r.tableId || '').toString().toUpperCase() === normalizedId);
+        
+        const needsHelp = (assistanceRequests || []).some(r => {
+            const rId = (r.tableId || '').toString().toUpperCase();
+            return rId === normalizedId && r.status === 'pending';
+        });
         if (needsHelp) return 'bg-blue-600 border-blue-400 text-white animate-pulse shadow-[0_0_20px_rgba(37,99,235,0.4)]';
         
-        const hasReadyOrder = (activeOrders || []).some(o => (o.tableId || '').toString().toUpperCase() === normalizedId && o.status === 'ready');
+        const hasReadyOrder = (activeOrders || []).some(o => {
+            const oId = (o.tableId || '').toString().toUpperCase();
+            return oId === normalizedId && o.status === 'ready';
+        });
         if (hasReadyOrder) return 'bg-[#FFD700] border-[#FFD700] text-[#0F3A2F] animate-pulse shadow-[0_0_25px_rgba(255,215,0,0.6)]';
 
-        // Normalize keys in tables object for lookup
-        const normalizedTables = Object.keys(tables).reduce((acc, key) => {
-            acc[key.toUpperCase()] = tables[key];
-            return acc;
-        }, {});
-
-        const status = normalizedTables[normalizedId] || 'free';
+        const status = (tables[normalizedId] || 'free').toLowerCase();
         switch (status) {
             case 'free': return 'bg-white/5 border-white/10 text-[#86a69d] hover:bg-white/10';
             case 'ordering': return 'bg-[#FFD700]/10 border-[#FFD700]/30 text-[#FFD700]';
@@ -577,8 +738,8 @@ export default function WaitersPortal() {
                                 </h2>
                             <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
                                 {section.data.map(t => {
-                                    const tableOrders = activeOrders.filter(o => o.tableId === t && o.status !== 'completed' && o.status !== 'rejected');
-                                    const tableTotal = tableOrders.reduce((sum, o) => sum + (o.finalTotal || 0), 0);
+                                    const tableOrders = (activeOrders || []).filter(o => (o.tableId || '').toString().toUpperCase() === t.toUpperCase() && o.status !== 'completed' && o.status !== 'rejected');
+                                    const tableTotal = (tableOrders || []).reduce((sum, o) => sum + Number(o.finalTotal || 0), 0);
                                     
                                     return (
                                         <button 
@@ -588,7 +749,7 @@ export default function WaitersPortal() {
                                         >
                                             <span className="text-4xl font-serif font-black">{t}</span>
                                             {tableTotal > 0 ? (
-                                                <span className="text-xs font-black text-white/90 mt-1 bg-black/20 px-2 py-0.5 rounded-lg">£{tableTotal.toFixed(2)}</span>
+                                                <span className="text-xs font-black text-white/90 mt-1 bg-black/20 px-2 py-0.5 rounded-lg">£{(tableTotal || 0).toFixed(2)}</span>
                                             ) : (
                                                 <span className="text-xs font-black uppercase opacity-60 mt-1">{tables[t] || 'Free'}</span>
                                             )}
@@ -605,9 +766,9 @@ export default function WaitersPortal() {
     };
 
     const renderTableDetails = () => {
-        const tableOrders = activeOrders.filter(o => o.tableId === selectedTable && o.status !== 'completed' && o.status !== 'rejected');
-        const tableAssistance = assistanceRequests.find(r => r.tableId === selectedTable);
-        const totalBill = tableOrders.reduce((sum, order) => sum + (order.finalTotal || 0), 0);
+        const tableOrders = (activeOrders || []).filter(o => o.tableId === selectedTable && o.status !== 'completed' && o.status !== 'rejected');
+        const tableAssistance = (assistanceRequests || []).find(r => r.tableId === selectedTable);
+        const totalBill = (tableOrders || []).reduce((sum, order) => sum + (order.finalTotal || 0), 0);
 
         return (
             <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#0a261f]/30">
@@ -707,14 +868,14 @@ export default function WaitersPortal() {
                             <p className="text-white/40 text-xs font-bold">{tableOrders.length} active orders</p>
                         </div>
                         <div className="text-right">
-                            <span className="text-5xl font-serif font-black text-[#FFD700]">£{totalBill.toFixed(2)}</span>
+                            <span className="text-5xl font-serif font-black text-[#FFD700]">£{(totalBill || 0).toFixed(2)}</span>
                         </div>
                     </div>
                     <div className="flex gap-4">
                         <button 
                             onClick={() => {
                                 if (tableOrders.length === 0) return alert("No active orders to settle.");
-                                if (confirm(`Request final bill for Table ${selectedTable}? Total: £${totalBill.toFixed(2)}`)) {
+                                if (confirm(`Request final bill for Table ${selectedTable}? Total: £${(totalBill || 0).toFixed(2)}`)) {
                                     tableOrders.forEach(o => handleUpdateOrderStatus(o.id, 'billing_pending', o._source));
                                     alert("Bill request sent to counter.");
                                     setView('dashboard');
@@ -737,7 +898,7 @@ export default function WaitersPortal() {
     };
 
     const renderOrderEntry = () => {
-        const filteredMenu = menu.filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()) || item.category.toLowerCase().includes(searchQuery.toLowerCase()));
+        const filteredMenu = (menu || []).filter(item => (item.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || (item.category || '').toLowerCase().includes(searchQuery.toLowerCase()));
 
         const addToCart = (item) => {
             setCart(prev => {
@@ -749,7 +910,13 @@ export default function WaitersPortal() {
 
         const submitOrder = async () => {
             if (cart.length === 0) return;
-            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            if (!selectedTable && !editingOrder) {
+                alert("Please select a table first.");
+                setView('dashboard');
+                setActiveTab('tables');
+                return;
+            }
+            const subtotal = cart.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.qty || 0)), 0);
             
             try {
                 if (editingOrder) {
@@ -801,7 +968,7 @@ export default function WaitersPortal() {
                     <header className="px-4 md:px-8 py-6 border-b border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
                         <div className="flex items-center gap-4 w-full sm:w-auto">
                             <button onClick={() => setView('table_details')} className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white"><ArrowLeft size={20} /></button>
-                            <h1 className="text-xl font-black text-white truncate">Menu • {selectedTable}</h1>
+                            <h1 className="text-xl font-black text-white truncate">Menu • {selectedTable || 'Select Table'}</h1>
                         </div>
                         <div className="relative w-full sm:w-72">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />
@@ -814,13 +981,13 @@ export default function WaitersPortal() {
                             />
                         </div>
                     </header>
-                    <div className="flex-1 overflow-y-auto p-4 md:p-8 no-scrollbar">
+                    <div className="flex-1 overflow-y-auto p-4 md:p-8">
                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                             {filteredMenu.map(item => (
                                 <button key={item.id} onClick={() => addToCart(item)} className="bg-white/5 border border-white/5 rounded-[32px] p-6 text-left hover:bg-[#FFD700]/5 transition-all group active:scale-95">
                                     <h3 className="text-white font-bold mb-1 group-hover:text-[#FFD700] transition-colors">{item.name}</h3>
                                     <p className="text-[#86a69d] text-[10px] font-black uppercase tracking-widest mb-4">{item.category}</p>
-                                    <div className="text-[#FFD700] font-black text-lg">£{item.price.toFixed(2)}</div>
+                                    <div className="text-[#FFD700] font-black text-lg">£{(item.price || 0).toFixed(2)}</div>
                                 </button>
                             ))}
                         </div>
@@ -844,7 +1011,7 @@ export default function WaitersPortal() {
                                 <div key={item.id} className="bg-white/5 rounded-3xl p-4 flex items-center justify-between">
                                     <div className="min-w-0 mr-4">
                                         <div className="text-white font-bold text-sm truncate">{item.name}</div>
-                                        <div className="text-[#FFD700] font-black text-xs mt-1">£{(item.price * item.qty).toFixed(2)}</div>
+                                        <div className="text-[#FFD700] font-black text-xs mt-1">£{((item.price || 0) * (item.qty || 0)).toFixed(2)}</div>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <div className="flex items-center gap-3 bg-black/40 rounded-xl p-1 shrink-0">

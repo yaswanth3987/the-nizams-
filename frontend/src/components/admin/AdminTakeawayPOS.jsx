@@ -178,7 +178,7 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
             <div className="flex-1 flex flex-col bg-[#111311] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl relative">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-nizam-gold/5 blur-[100px] -mr-32 -mt-32 rounded-full pointer-events-none"></div>
                 
-                <div className="flex gap-4 overflow-x-auto p-8 border-b border-white/10 no-scrollbar shrink-0">
+                <div className="flex gap-4 overflow-x-auto p-8 border-b border-white/10 shrink-0">
                     {menu.categories.map(cat => (
                         <button
                             key={cat}
@@ -194,7 +194,7 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
                     ))}
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-8 no-scrollbar grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6">
+                <div className="flex-1 overflow-y-auto p-8 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6">
                     {filteredItems.map(item => {
                         const timeRem = getRemainingTime(item.until);
                         const isLocked = !item.isAvailable;
@@ -252,7 +252,7 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-10 space-y-4 bg-black/10 no-scrollbar">
+                <div className="flex-1 overflow-y-auto p-10 space-y-4 bg-black/10">
                     {cart.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-white/10">
                             <ShoppingBag size={64} strokeWidth={1} className="mb-6 opacity-20" />

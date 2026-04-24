@@ -113,8 +113,8 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
                                 </div>
                             </div>
 
-                            <div className="flex-1 space-y-3 overflow-y-auto no-scrollbar mb-8">
-                                {session.items.map((item, i) => (
+                            <div className="flex-1 space-y-3 overflow-y-auto mb-8">
+                                {(session.items || []).map((item, i) => (
                                     <div key={i} className="flex justify-between items-center text-sm">
                                         <span className="text-white/80 font-serif italic">{item.name}</span>
                                         <span className="text-accent font-bold">x{item.qty}</span>
@@ -157,7 +157,7 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
                         <div className="bg-[#111311] border border-white/10 rounded-[3rem] w-full max-w-7xl h-full max-h-[900px] flex shadow-[0_0_150px_rgba(0,0,0,0.8)] overflow-hidden animate-in zoom-in-95 duration-500">
                             
                             {/* LEFT: Audit Summary */}
-                            <div className="w-1/2 p-16 border-r border-white/5 bg-black/40 overflow-y-auto no-scrollbar">
+                            <div className="w-1/2 p-16 border-r border-white/5 bg-black/40 overflow-y-auto">
                                 <h3 className="text-5xl font-serif text-white font-bold mb-16 tracking-tight italic opacity-80">Audit Summary</h3>
                                 
                                 <div className="space-y-12">
@@ -180,7 +180,7 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
                                     <div className="pt-12 border-t border-white/5">
                                         <p className="text-[10px] font-black text-white/20 tracking-[0.4em] uppercase mb-8">ITEMIZED CONSUMPTION</p>
                                         <div className="space-y-6">
-                                            {paymentModal.session.items.map((item, idx) => (
+                                            {(paymentModal.session.items || []).map((item, idx) => (
                                                 <div key={idx} className="flex justify-between items-center text-xl">
                                                     <span className="text-white/60 font-serif italic">{item.name}</span>
                                                     <span className="text-white font-bold">x{item.qty}</span>

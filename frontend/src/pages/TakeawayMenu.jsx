@@ -120,7 +120,7 @@ export default function TakeawayMenu() {
             </div>
 
             {/* Categories */}
-            <div className="sticky top-[69px] z-30 bg-[#F6EFE6] border-b border-[#0B3A2E]/5 overflow-x-auto no-scrollbar shadow-sm">
+            <div className="sticky top-[69px] z-30 bg-[#F6EFE6] border-b border-[#0B3A2E]/5 overflow-x-auto shadow-sm">
                 <div className="flex gap-2 p-3 px-6">
                     {categoriesData.map(c => (
                         <button
@@ -153,8 +153,8 @@ export default function TakeawayMenu() {
                     <div key={cat.id} id={`cat-${cat.name}`} className="scroll-mt-[130px]">
                         <h2 className="text-[#0B3A2E] text-lg font-bold font-serif mb-3 px-2">{cat.name}</h2>
                         <div className="flex flex-col gap-3">
-                            {menu.filter(i => i.category === cat.name).map(item => {
-                                const inCart = cart.find(i => i.id === item.id);
+                            {(menu || []).filter(i => i.category === cat.name).map(item => {
+                                const inCart = (cart || []).find(i => i.id === item.id);
                                 return (
                                     <div key={item.id} className="bg-white p-3 rounded-2xl flex gap-4 premium-shadow items-center">
                                         <div className="w-20 h-20 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-black/5 flex items-center justify-center">
@@ -167,7 +167,7 @@ export default function TakeawayMenu() {
                                         </div>
                                         <div className="flex-1">
                                             <h3 className="font-bold text-[#0B3A2E] text-sm leading-tight">{item.name}</h3>
-                                            <p className="text-xs text-[#6D5D4B] font-semibold mt-1">£{item.price.toFixed(2)}</p>
+                                            <p className="text-xs text-[#6D5D4B] font-semibold mt-1">£{(item.price || 0).toFixed(2)}</p>
                                         </div>
                                         <div>
                                             {!item.isAvailable ? (
@@ -209,7 +209,7 @@ export default function TakeawayMenu() {
                             </span>
                             <span className="font-semibold text-sm">View Cart</span>
                         </div>
-                        <span className="font-bold text-lg">£{subtotal.toFixed(2)}</span>
+                        <span className="font-bold text-lg">£{(subtotal || 0).toFixed(2)}</span>
                     </button>
                 </div>
             )}
@@ -225,12 +225,12 @@ export default function TakeawayMenu() {
                                 <X size={20} className="text-[#0B3A2E]" />
                             </button>
                         </div>
-                        <div className="p-4 overflow-y-auto no-scrollbar flex-1 space-y-4">
-                            {cart.map(item => (
+                        <div className="p-4 overflow-y-auto flex-1 space-y-4">
+                            {(cart || []).map(item => (
                                 <div key={item.id} className="flex justify-between items-center border-b border-gray-50 pb-4">
                                     <div className="flex-1">
                                         <h4 className="font-semibold text-[#0B3A2E] text-sm">{item.name}</h4>
-                                        <p className="text-xs text-[#6D5D4B] mt-0.5">£{(item.price * item.qty).toFixed(2)}</p>
+                                        <p className="text-xs text-[#6D5D4B] mt-0.5">£{((item.price || 0) * (item.qty || 0)).toFixed(2)}</p>
                                     </div>
                                     <div className="flex items-center gap-3 bg-[#F6EFE6] rounded-full p-1 border border-black/5">
                                         <button onClick={() => updateQuantity(item.id, -1)} className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-[#0B3A2E] shadow-sm">
@@ -279,7 +279,7 @@ export default function TakeawayMenu() {
                         <div className="p-6 bg-[#F6EFE6] border-t border-gray-100 rounded-t-3xl -mt-4 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
                             <div className="flex justify-between items-center mb-4">
                                 <span className="text-[#6D5D4B] text-sm font-bold uppercase">Total amount</span>
-                                <span className="text-[#0B3A2E] text-2xl font-black tabular-nums">£{subtotal.toFixed(2)}</span>
+                                <span className="text-[#0B3A2E] text-2xl font-black tabular-nums">£{(subtotal || 0).toFixed(2)}</span>
                             </div>
                             <button 
                                 onClick={submitOrder}

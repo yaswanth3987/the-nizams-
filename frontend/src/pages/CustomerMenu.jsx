@@ -609,7 +609,7 @@ export default function CustomerMenu() {
                     <div className="p-8">
                         <div className="flex justify-between items-start mb-2">
                             <h3 className="text-[#0B3A2E] text-2xl font-black font-serif uppercase tracking-tight">{previewItem.name}</h3>
-                            <span className="text-2xl font-black text-[#0B3A2E]">£{previewItem.price.toFixed(2)}</span>
+                            <span className="text-2xl font-black text-[#0B3A2E]">£{(previewItem.price || 0).toFixed(2)}</span>
                         </div>
                         {renderItemBadge(previewItem)}
                         <p className="text-[#6D5D4B] text-sm leading-relaxed mb-4 opacity-80 italic font-medium mt-2">"{previewItem.desc || previewItem.description}"</p>
@@ -721,14 +721,14 @@ export default function CustomerMenu() {
     };
 
     const renderPremiumMenu = () => {
-        const featuredItem = menu.find(i => i.name === 'Nizami Dum Biryani') || menu[0];
+        const featuredItem = (menu || []).find(i => i.name === 'Nizami Dum Biryani') || (menu || [])[0];
 
         return (
             <div 
-                className="flex-1 overflow-y-auto pb-[90px] no-scrollbar scroll-smooth"
+                className="flex-1 overflow-y-auto pb-[90px]"
                 onScroll={handleScroll}
             >
-                <div className="flex overflow-x-auto px-6 py-5 gap-8 no-scrollbar sticky top-0 bg-[#F9F6F0] z-[45] border-b border-[#0B3A2E]/5 shadow-sm">
+                <div className="flex overflow-x-auto px-6 py-5 gap-8 sticky top-0 bg-[#F9F6F0] z-[45] border-b border-[#0B3A2E]/5 shadow-sm">
                     {categoriesData.map(cat => (
                         <button 
                             key={cat.id}
@@ -761,8 +761,8 @@ export default function CustomerMenu() {
                              <div className="w-2 h-2 rounded-full bg-[#C29958]"></div>
                         </div>
                     </div>
-                    <div className="flex overflow-x-auto no-scrollbar gap-6 pb-4 -mx-2 px-2">
-                        {menu.filter(i => i.isPopular || i.isRecommended).map(item => (
+                    <div className="flex overflow-x-auto gap-6 pb-4 -mx-2 px-2">
+                        {(menu || []).filter(i => i.isPopular || i.isRecommended).map(item => (
                             <div 
                                 key={`pop-${item.id}`}
                                 onClick={() => setPreviewItem(item)}
@@ -779,7 +779,7 @@ export default function CustomerMenu() {
                                 <h4 className="text-[#0B3A2E] font-black text-[12px] uppercase tracking-tight leading-none mb-1.5 truncate">{item.name}</h4>
                                 {renderItemBadge(item)}
                                 <div className="flex justify-between items-center mt-auto pt-1">
-                                    <span className="text-[#C29958] text-xs font-black">£{item.price.toFixed(2)}</span>
+                                    <span className="text-[#C29958] text-xs font-black">£{(item.price || 0).toFixed(2)}</span>
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); handleAddToCart(item); }}
                                         className="w-8 h-8 bg-[#0B3A2E] text-white rounded-full flex items-center justify-center shadow-lg active:rotate-12 transition-all"
@@ -837,8 +837,8 @@ export default function CustomerMenu() {
                                     <div className="h-[2px] flex-1 bg-gradient-to-r from-[#0B3A2E]/10 to-transparent"></div>
                                 </div>
                                 <div className="space-y-5 flex flex-col">
-                                    {menu.filter(i => i.category === cat.name).map(item => {
-                                        const inCart = cart.find(i => i.id === item.id);
+                                    {(menu || []).filter(i => i.category === cat.name).map(item => {
+                                        const inCart = (cart || []).find(i => i.id === item.id);
                                         return (
                                             <div 
                                                 key={item.id} 
@@ -896,7 +896,7 @@ export default function CustomerMenu() {
                                                     <div>
                                                         <div className="flex justify-between items-start gap-2 mb-1">
                                                             <h4 className="font-extrabold text-[#0B3A2E] text-[14px] leading-tight flex-1">{item.name}</h4>
-                                                            <span className="font-black text-[#0B3A2E] text-sm">£{item.price.toFixed(2)}</span>
+                                                            <span className="font-black text-[#0B3A2E] text-sm">£{(item.price || 0).toFixed(2)}</span>
                                                         </div>
                                                         {renderItemBadge(item)}
                                                         {item.category === 'Mandi Platters' ? (
@@ -966,7 +966,7 @@ export default function CustomerMenu() {
                                 </div>
                                 <div className="text-left">
                                     <p className="text-white/50 text-[8px] font-black uppercase tracking-[0.2em] mb-0">{cart.reduce((s, i) => s + i.qty, 0)} Items in cart</p>
-                                    <p className="text-white text-lg font-black tabular-nums leading-tight">£{cart.reduce((s, i) => s + i.price * i.qty, 0).toFixed(2)}</p>
+                                    <p className="text-white text-lg font-black tabular-nums leading-tight">£{(cart.reduce((s, i) => s + (i.price || 0) * (i.qty || 0), 0) || 0).toFixed(2)}</p>
                                 </div>
                             </div>
                             <div className="bg-[#C29958] text-[#0B3A2E] px-5 py-2.5 rounded-[18px] font-black uppercase tracking-[0.1em] text-[10px] group-hover:bg-white transition-all shadow-lg">
@@ -1006,13 +1006,13 @@ export default function CustomerMenu() {
                         </button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto px-10 py-2 space-y-8 no-scrollbar">
+                    <div className="flex-1 overflow-y-auto px-10 py-2 space-y-8">
                         {cart.length === 0 ? (
                             <div className="py-20 text-center opacity-40">
                                 <ShoppingBag size={64} className="mx-auto mb-4" />
                                 <p className="font-bold uppercase tracking-widest text-xs">Your bag is empty</p>
                             </div>
-                        ) : cart.map(item => (
+                        ) : (cart || []).map(item => (
                             <div key={item.id} className="flex gap-6 animate-fade-in">
                                 <div className="w-24 h-24 rounded-[32px] overflow-hidden bg-white shadow-xl shrink-0 border-2 border-white flex items-center justify-center">
                                     <img 
@@ -1025,7 +1025,7 @@ export default function CustomerMenu() {
                                 <div className="flex-1 flex flex-col justify-center gap-1.5">
                                     <div className="flex justify-between items-start">
                                         <h4 className="font-black text-[#0B3A2E] text-base leading-tight pr-4">{item.name}</h4>
-                                        <span className="font-black text-[#0B3A2E] text-base whitespace-nowrap">£{(item.price * item.qty).toFixed(2)}</span>
+                                        <span className="font-black text-[#0B3A2E] text-base whitespace-nowrap">£{((item.price || 0) * (item.qty || 0)).toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between items-center mt-3">
                                         <div className="flex items-center gap-4 bg-white rounded-[20px] p-2 shadow-inner border border-black/5">
@@ -1074,9 +1074,9 @@ export default function CustomerMenu() {
                                      <button 
                                          onClick={() => {
                                              const waterId = 'dr3';
-                                             const waterItem = menu.find(i => i.id === waterId) || menuData.find(i => i.id === waterId);
+                                             const waterItem = (menu || []).find(i => i.id === waterId) || menuData.find(i => i.id === waterId);
                                              if (waterItem) {
-                                                 const inCart = cart.find(i => i.id === waterId);
+                                                 const inCart = (cart || []).find(i => i.id === waterId);
                                                  if (!inCart) {
                                                      handleAddToCart(waterItem);
                                                  } else {
@@ -1131,7 +1131,7 @@ export default function CustomerMenu() {
                                     <span className="text-[#0B3A2E] text-[10px] font-black uppercase tracking-[0.25em] block mb-1">Items Total</span>
                                     <span className="text-[#0B3A2E] text-[10px] font-medium opacity-60">Excluding service fee</span>
                                 </div>
-                                <span className="text-[#0B3A2E] text-4xl font-black font-serif tabular-nums">£{finalTotal.toFixed(2)}</span>
+                                <span className="text-[#0B3A2E] text-4xl font-black font-serif tabular-nums">£{(finalTotal || 0).toFixed(2)}</span>
                             </div>
                         </div>
                         <button 
@@ -1161,7 +1161,7 @@ export default function CustomerMenu() {
     };
 
     const renderPremiumMyOrders = () => (
-        <div className="flex-1 overflow-y-auto px-8 py-10 pb-48 no-scrollbar scroll-smooth">
+        <div className="flex-1 overflow-y-auto px-8 py-10 pb-48">
             <h2 className="text-[#0B3A2E] text-5xl font-black font-serif mb-3 leading-tight">My Orders</h2>
             <p className="text-[#6D5D4B] text-sm leading-relaxed mb-12 font-medium opacity-80">Tracing your journey through the royal kitchens of Hyderabad.</p>
 
@@ -1174,14 +1174,14 @@ export default function CustomerMenu() {
                              <span className="text-[#C29958] text-[10px] font-black uppercase tracking-widest">IN PROGRESS</span>
                         </div>
                     </div>
-                    {myOrders.filter(o => ['Pending', 'Order Received', 'Cooking Started', 'Ready to Serve', 'Served', 'Accepted ✓', 'Rejected ✗'].includes(o.status)).length === 0 ? (
+                    {(myOrders || []).filter(o => ['Pending', 'Order Received', 'Cooking Started', 'Ready to Serve', 'Served', 'Accepted ✓', 'Rejected ✗'].includes(o.status)).length === 0 ? (
                         <div className="bg-white/40 rounded-[40px] p-20 text-center border-2 border-dashed border-[#0B3A2E]/5 flex flex-col items-center">
                             <Clock className="w-12 h-12 text-[#0B3A2E]/10 mb-5" strokeWidth={1.5} />
                             <p className="text-[#6D5D4B] text-xs font-black uppercase tracking-widest opacity-40">No active delights</p>
                             <button onClick={() => setView('menu')} className="mt-8 bg-[#0B3A2E]/5 text-[#0B3A2E] px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#0B3A2E]/10 transition-all">Start Ordering</button>
                         </div>
                     ) : (
-                        myOrders.filter(o => ['Pending', 'Order Received', 'Cooking Started', 'Ready to Serve', 'Served', 'Accepted ✓', 'Rejected ✗'].includes(o.status)).map(order => {
+                        (myOrders || []).filter(o => ['Pending', 'Order Received', 'Cooking Started', 'Ready to Serve', 'Served', 'Accepted ✓', 'Rejected ✗'].includes(o.status)).map(order => {
                             const steps = [
                                 { label: 'PREPARING', trigger: ['Pending', 'Order Received', 'Cooking Started', 'Ready to Serve', 'Served', 'Accepted ✓'] },
                                 { label: 'READY', trigger: ['Ready to Serve', 'Served'] },
@@ -1267,9 +1267,9 @@ export default function CustomerMenu() {
                         <div className="h-px flex-1 bg-gradient-to-r from-[#0B3A2E]/10 to-transparent"></div>
                     </div>
                     <div className="space-y-6">
-                        {myOrders.filter(o => ['Ready to Pay', 'Completed', 'Billed'].includes(o.status)).length === 0 ? (
+                        {(myOrders || []).filter(o => ['Ready to Pay', 'Completed', 'Billed'].includes(o.status)).length === 0 ? (
                             <p className="text-center py-10 text-[#6D5D4B]/40 text-xs font-black uppercase tracking-widest italic">No past records yet</p>
-                        ) : myOrders.filter(o => ['Ready to Pay', 'Completed', 'Billed'].includes(o.status)).map(order => (
+                        ) : (myOrders || []).filter(o => ['Ready to Pay', 'Completed', 'Billed'].includes(o.status)).map(order => (
                             <div key={order.id} className="bg-white rounded-[35px] p-5 flex gap-6 items-center border border-white shadow-sm hover:shadow-md transition-all active:scale-[0.98]">
                                 <div className="w-20 h-20 rounded-[28px] overflow-hidden bg-gray-50 shadow-md shrink-0 border border-white flex items-center justify-center">
                                     <img 
@@ -1367,7 +1367,7 @@ export default function CustomerMenu() {
         // EMERGENCY BYPASS: Ignore sessionError for today's opening to prevent any lockout.
         // if (sessionError) return renderSessionError();
         return (
-            <div className="fixed inset-0 bg-[#F6EFE6] flex flex-col font-sans animate-fade-in no-scrollbar overflow-hidden select-none">
+            <div className="fixed inset-0 bg-[#F6EFE6] flex flex-col font-sans animate-fade-in overflow-hidden select-none">
                 {renderHeader()}
                 <div className="flex-1 overflow-hidden flex flex-col relative">
                     {view === 'menu' && renderPremiumMenu()}
@@ -1398,12 +1398,12 @@ export default function CustomerMenu() {
                                 </div>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+                            <div className="flex-1 overflow-y-auto p-6 space-y-6">
                                 {searchQuery ? (
                                     <>
-                                        {menu.filter(i => 
-                                            i.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                                            i.category.toLowerCase().includes(searchQuery.toLowerCase())
+                                        {(menu || []).filter(i => 
+                                            (i.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                            (i.category || '').toLowerCase().includes(searchQuery.toLowerCase())
                                         ).map(item => {
                                             return (
                                                 <div 
@@ -1424,7 +1424,7 @@ export default function CustomerMenu() {
                                                         <p className="text-[#6D5D4B] text-[9px] font-black uppercase tracking-widest opacity-40">{item.category}</p>
                                                     </div>
                                                     <div className="flex items-center gap-3">
-                                                        <span className="text-sm font-black text-[#0B3A2E]">£{item.price.toFixed(2)}</span>
+                                                        <span className="text-sm font-black text-[#0B3A2E]">£{(item.price || 0).toFixed(2)}</span>
                                                         <button 
                                                             onClick={(e) => { e.stopPropagation(); handleAddToCart(item); }}
                                                             className="w-10 h-10 bg-[#0B3A2E] text-white rounded-xl flex items-center justify-center shadow-lg"
@@ -1435,9 +1435,9 @@ export default function CustomerMenu() {
                                                 </div>
                                             );
                                         })}
-                                        {menu.filter(i => 
-                                            i.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                                            i.category.toLowerCase().includes(searchQuery.toLowerCase())
+                                        {(menu || []).filter(i => 
+                                            (i.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                            (i.category || '').toLowerCase().includes(searchQuery.toLowerCase())
                                         ).length === 0 && (
                                             <div className="flex flex-col items-center justify-center py-20 opacity-30">
                                                 <ShoppingBag size={48} className="mb-4" />

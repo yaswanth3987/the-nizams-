@@ -103,8 +103,8 @@ export default function KitchenDisplay() {
         return null;
     };
 
-    const preparingOrders = orders.filter(o => o.status === 'confirmed' || o.status === 'active');
-    const readyOrders = orders.filter(o => o.status === 'ready');
+    const preparingOrders = (orders || []).filter(o => o.status === 'confirmed' || o.status === 'active');
+    const readyOrders = (orders || []).filter(o => o.status === 'ready');
 
     return (
         <div className="min-h-screen bg-[#111613] text-[#e0e8e4] font-sans flex overflow-hidden">
@@ -194,7 +194,7 @@ export default function KitchenDisplay() {
                             </span>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto space-y-5 pr-2 scrollbar-thin scrollbar-thumb-[#153428] no-scrollbar">
+                        <div className="flex-1 overflow-y-auto space-y-5 pr-2 scrollbar-thin scrollbar-thumb-[#153428]">
                             {preparingOrders.map(order => {
                                 return (
                                     <div key={order.id} className="relative bg-[#171f1a] border border-[#d4af37]/20 rounded-2xl p-6 shadow-[0_10px_20px_rgba(0,0,0,0.3)] hover:border-[#d4af37]/40 transition-all group overflow-hidden shrink-0 flex flex-col">
@@ -216,7 +216,7 @@ export default function KitchenDisplay() {
                                         </div>
 
                                         <div className="space-y-4 mb-8 relative z-10">
-                                            {order.items.map((item, idx) => (
+                                            {(order.items || []).map((item, idx) => (
                                                 <div key={idx} className="flex justify-between items-center text-[#dbe2e0] font-medium text-sm">
                                                     <span className="flex-1 pr-4">{item.qty}x {item.name}</span>
                                                     {renderSpiceLeaf(item.name)}
@@ -262,7 +262,7 @@ export default function KitchenDisplay() {
                             </span>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto space-y-5 pr-2 scrollbar-thin scrollbar-thumb-[#153428] no-scrollbar">
+                        <div className="flex-1 overflow-y-auto space-y-5 pr-2 scrollbar-thin scrollbar-thumb-[#153428]">
                             {readyOrders.map(order => {
                                 const isVip = order.tableId?.toString().toUpperCase().includes('VIP');
 
@@ -294,7 +294,7 @@ export default function KitchenDisplay() {
                                         </div>
 
                                         <div className="space-y-4 mb-8 relative z-10">
-                                            {order.items.map((item, idx) => (
+                                            {(order.items || []).map((item, idx) => (
                                                 <div key={idx} className="flex justify-between items-center text-[#dbe2e0] font-medium text-sm">
                                                     <span className="flex-1 pr-4 flex items-center gap-2">
                                                         <CheckCircle2 size={12} className="text-emerald-500/50" />

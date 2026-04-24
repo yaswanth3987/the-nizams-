@@ -3,8 +3,8 @@ import { Package, CheckCircle, Clock, ShoppingBag, ArrowRight, Printer, Check, C
 
 export default function AdminTakeawayManager({ sessions, newOrders, updateStatus, onViewChange, onEdit }) {
     // Filter only takeaway sessions that aren't completed yet
-    const activeSessions = sessions.filter(s => s.orderType === 'takeaway' && s.status !== 'completed');
-    const incomingTakeaways = newOrders.filter(o => o.orderType === 'takeaway' && (o.status === 'new' || o.status === 'pending'));
+    const activeSessions = (sessions || []).filter(s => s.orderType === 'takeaway' && s.status !== 'completed');
+    const incomingTakeaways = (newOrders || []).filter(o => o.orderType === 'takeaway' && (o.status === 'new' || o.status === 'pending'));
     
     // Grouping by status for management columns
     const incoming = incomingTakeaways;
@@ -50,8 +50,8 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                                     <span className="text-[10px] font-bold text-accent uppercase tracking-widest">NEW</span>
                                 </div>
 
-                                <div className="flex-1 space-y-3 overflow-y-auto no-scrollbar mb-6 pl-4">
-                                    {order.items.map((item, i) => (
+                                <div className="flex-1 space-y-3 overflow-y-auto mb-6 pl-4">
+                                    {(order.items || []).map((item, i) => (
                                         <div key={i} className="flex justify-between items-center text-sm">
                                             <span className="text-white/80 font-serif italic">{item.name}</span>
                                             <span className="text-accent font-bold">x{item.qty}</span>
@@ -107,8 +107,8 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                                     </h3>
                                 </div>
 
-                                <div className="flex-1 space-y-3 overflow-y-auto no-scrollbar mb-6">
-                                    {order.items.map((item, i) => (
+                                <div className="flex-1 space-y-3 overflow-y-auto mb-6">
+                                    {(order.items || []).map((item, i) => (
                                         <div key={i} className="flex justify-between items-center text-sm">
                                             <span className="text-white/80 font-serif italic">{item.name}</span>
                                             <span className="text-accent font-bold">x{item.qty}</span>
@@ -171,8 +171,8 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                                     </h3>
                                 </div>
 
-                                <div className="flex-1 space-y-3 overflow-y-auto no-scrollbar mb-6">
-                                    {order.items.map((item, i) => (
+                                <div className="flex-1 space-y-3 overflow-y-auto mb-6">
+                                    {(order.items || []).map((item, i) => (
                                         <div key={i} className="flex justify-between items-center text-sm">
                                             <span className="text-white/80 font-serif italic">{item.name}</span>
                                             <span className="text-accent font-bold">x{item.qty}</span>
