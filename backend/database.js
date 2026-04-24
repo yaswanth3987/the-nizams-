@@ -4,14 +4,14 @@ const isPg = !!process.env.DATABASE_URL;
 let db, pgPool;
 
 if (isPg) {
-    pgPool = new Pool({
+    const poolConfig = {
         connectionString: process.env.DATABASE_URL,
         ssl: { rejectUnauthorized: false },
-        max: 30, 
-        connectionTimeoutMillis: 10000, // Wait up to 10 seconds to connect
-        idleTimeoutMillis: 30000,
-        query_timeout: 10000 // Wait up to 10 seconds for queries
-    });
+        max: 30,
+        connectionTimeoutMillis: 10000,
+        idleTimeoutMillis: 30000
+    };
+    pgPool = new Pool(poolConfig);
     console.log('Connected to PostgreSQL cloud database.');
     
     // Create new schemas
