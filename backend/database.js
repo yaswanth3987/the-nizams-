@@ -5,17 +5,34 @@ const isPg = !!process.env.DATABASE_URL;
 let db, pgPool;
 
 if (isPg) {
+    // Masked logging for debugging (Requirement 5)
+    try {
+        const maskedUrl = process.env.DATABASE_URL.replace(/:([^:@]+)@/, ':****@');
+        console.log(`[DB Debug] Attempting connection with URL: ${maskedUrl}`);
+    } catch (e) {
+        console.log('[DB Debug] Attempting connection with DATABASE_URL (masking failed)');
+    }
+
     const poolConfig = {
         connectionString: process.env.DATABASE_URL,
         ssl: { 
-            rejectUnauthorized: false
+            rejectUnauthorized: false // Requirement 3
         },
         max: 30,
         connectionTimeoutMillis: 10000,
         idleTimeoutMillis: 30000
     };
     pgPool = new Pool(poolConfig);
-    console.log('Connected to PostgreSQL cloud database.');
+    
+    // Immediate verification query (Requirement 6)
+    pgPool.query('SELECT 1').then(() => {
+        console.log('✅ DATABASE CONNECTED: PostgreSQL cloud connection verified.');
+    }).catch(err => {
+        if (err.code === '28P01') console.error('❌ DATABASE AUTHENTICATION FAILED: Check your password in DATABASE_URL.');
+        else if (err.code === 'ETIMEDOUT' || err.code === 'ENETUNREACH') console.error('❌ DATABASE CONNECTION TIMEOUT/UNREACHABLE: Check network/port/IPv4.');
+        else if (err.message.includes('certificate')) console.error('❌ DATABASE SSL ERROR: Certificate validation failed.');
+        else console.error('❌ DATABASE ERROR:', err.message);
+    });
     
     // Create new schemas
     const initPg = async () => {
