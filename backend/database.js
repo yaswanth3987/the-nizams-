@@ -1,4 +1,5 @@
-
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+const { Pool } = require('pg');
 const path = require('path');
 const isPg = !!process.env.DATABASE_URL;
 let db, pgPool;
