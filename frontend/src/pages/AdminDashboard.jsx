@@ -328,13 +328,13 @@ export default function AdminDashboard() {
     }
 
     const categoryCounts = {
-        orders: newOrders.filter(o => (o.status === 'new' || o.status === 'pending') && o.orderType !== 'takeaway').length,
-        confirmed: sessions.filter(s => ['confirmed', 'active', 'ready', 'served'].includes(s.status) && s.orderType !== 'takeaway').length,
-        billed: sessions.filter(s => (s.status === 'billed' || s.status === 'billing_pending') && s.orderType !== 'takeaway').length,
-        completed: sessions.filter(s => s.status === 'completed' && s.orderType !== 'takeaway').length,
-        takeaway: newOrders.filter(o => o.orderType === 'takeaway' && (o.status === 'new' || o.status === 'pending')).length + sessions.filter(s => s.orderType === 'takeaway' && s.status !== 'completed').length,
-        assistance: assistanceRequests.length,
-        hasBillRequest: assistanceRequests.some(r => r.type === 'bill' && r.status === 'pending')
+        orders: (newOrders || []).filter(o => (o.status === 'new' || o.status === 'pending') && o.orderType !== 'takeaway').length,
+        confirmed: (sessions || []).filter(s => ['confirmed', 'active', 'ready', 'served'].includes(s.status) && s.orderType !== 'takeaway').length,
+        billed: (sessions || []).filter(s => (s.status === 'billed' || s.status === 'billing_pending') && s.orderType !== 'takeaway').length,
+        completed: (sessions || []).filter(s => s.status === 'completed' && s.orderType !== 'takeaway').length,
+        takeaway: (newOrders || []).filter(o => o.orderType === 'takeaway' && (o.status === 'new' || o.status === 'pending')).length + (sessions || []).filter(s => s.orderType === 'takeaway' && s.status !== 'completed').length,
+        assistance: (assistanceRequests || []).length,
+        hasBillRequest: (assistanceRequests || []).some(r => r.type === 'bill' && r.status === 'pending')
     };
 
     return (

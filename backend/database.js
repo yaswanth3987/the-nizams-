@@ -7,7 +7,10 @@ if (isPg) {
     pgPool = new Pool({
         connectionString: process.env.DATABASE_URL,
         ssl: { rejectUnauthorized: false },
-        max: 30 // Support up to 50-60 concurrent users (assuming short-lived requests)
+        max: 30, 
+        connectionTimeoutMillis: 10000, // Wait up to 10 seconds to connect
+        idleTimeoutMillis: 30000,
+        query_timeout: 10000 // Wait up to 10 seconds for queries
     });
     console.log('Connected to PostgreSQL cloud database.');
     
@@ -331,10 +334,36 @@ const getAnalyticsDaily = async (dateStr) => {
     const colDate = isPg ? '"createdAt"' : 'createdAt';
     const colTableId = isPg ? '"tableId"' : 'tableId';
     
-    // We want orders from 'today' that are completed, billed, or archived
+    // We want orders and sessions from 'today' that are completed, billed, or archived
     const sql = isPg 
-        ? `SELECT COUNT(*) as "totalOrders", SUM("finalTotal") as "grossRevenue", SUM(subtotal) as "subtotal", SUM("serviceCharge") as "serviceCharge" FROM orders WHERE CAST("${colDate.replace(/"/g, '')}" AS DATE) = ? AND status IN ('completed', 'billed', 'archived')`
-        : `SELECT COUNT(*) as totalOrders, SUM(finalTotal) as grossRevenue, SUM(subtotal) as subtotal, SUM(serviceCharge) as serviceCharge FROM orders WHERE DATE(${colDate}) = ? AND status IN ('completed', 'billed', 'archived')`;
+        ? `
+            SELECT 
+                COUNT(*) as "totalOrders", 
+                SUM("finalTotal") as "grossRevenue", 
+                SUM(subtotal) as "subtotal", 
+                SUM("serviceCharge") as "serviceCharge" 
+            FROM (
+                SELECT "finalTotal", subtotal, "serviceCharge", status, "createdAt" FROM orders
+                UNION ALL
+                SELECT "finalTotal", subtotal, "serviceCharge", status, "createdAt" FROM table_sessions
+            ) as combined
+            WHERE CAST("createdAt" AS DATE) = ? 
+            AND status IN ('completed', 'billed', 'archived')
+          `
+        : `
+            SELECT 
+                COUNT(*) as totalOrders, 
+                SUM(finalTotal) as grossRevenue, 
+                SUM(subtotal) as subtotal, 
+                SUM(serviceCharge) as serviceCharge 
+            FROM (
+                SELECT finalTotal, subtotal, serviceCharge, status, createdAt FROM orders
+                UNION ALL
+                SELECT finalTotal, subtotal, serviceCharge, status, createdAt FROM table_sessions
+            )
+            WHERE DATE(createdAt) = ? 
+            AND status IN ('completed', 'billed', 'archived')
+          `;
     
     const res = await runQuery(sql, [today]);
     const row = res.rows[0];
@@ -628,9 +657,10 @@ const updateSessionStatus = async (id, status, additionalUpdates = {}) => {
 };
 
 const finalizePayment = async (id, paymentData) => {
-    // paymentData: { cash: number, card: number, total: number, status: string }
+    // paymentData: { cash: number, card: number, custom: number, total: number, status: string }
     const cash = Number(paymentData.cash || 0);
     const card = Number(paymentData.card || 0);
+    const custom = Number(paymentData.custom || 0);
     const total = Number(paymentData.total || 0);
     const status = paymentData.status || 'completed';
     
@@ -638,7 +668,8 @@ const finalizePayment = async (id, paymentData) => {
         total,
         payments: [
             { method: 'cash', amount: cash },
-            { method: 'card', amount: card }
+            { method: 'card', amount: card },
+            { method: 'custom', amount: custom }
         ],
         status
     });

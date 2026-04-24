@@ -595,7 +595,12 @@ export default function CustomerMenu() {
                         <X size={20} />
                     </button>
                     {previewItem.image ? (
-                        <img src={previewItem.image} alt={previewItem.name} className="w-full h-72 object-cover" />
+                        <img 
+                            src={previewItem.image} 
+                            alt={previewItem.name} 
+                            className="w-full h-72 object-cover" 
+                            onError={(e) => { e.target.src = '/logo-icon.png'; e.target.className = 'w-full h-72 object-contain p-8 bg-[#F6EFE6]'; }}
+                        />
                     ) : (
                         <div className="w-full h-72 bg-[#F6EFE6] flex items-center justify-center">
                             <ShoppingBag size={64} className="text-[#C29958]/20" />
@@ -763,14 +768,13 @@ export default function CustomerMenu() {
                                 onClick={() => setPreviewItem(item)}
                                 className="min-w-[180px] bg-white rounded-[32px] p-3 shadow-xl border border-black/5 hover:-translate-y-2 hover:shadow-[0_25px_50px_-10px_rgba(11,58,46,0.2)] active:scale-95 transition-all duration-500"
                             >
-                                <div className="relative h-32 rounded-[24px] overflow-hidden mb-3">
-                                    {item.image ? (
-                                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full bg-[#F6EFE6] flex items-center justify-center">
-                                            <ShoppingBag size={24} className="text-[#C29958]/20" />
-                                        </div>
-                                    )}
+                                <div className="relative h-32 rounded-[24px] overflow-hidden mb-3 bg-[#F6EFE6]/30">
+                                    <img 
+                                        src={item.image || '/logo-icon.png'} 
+                                        alt={item.name} 
+                                        className={`w-full h-full ${item.image ? 'object-cover' : 'object-contain p-4'}`}
+                                        onError={(e) => { e.target.src = '/logo-icon.png'; e.target.className = 'w-full h-full object-contain p-4'; }}
+                                    />
                                 </div>
                                 <h4 className="text-[#0B3A2E] font-black text-[12px] uppercase tracking-tight leading-none mb-1.5 truncate">{item.name}</h4>
                                 {renderItemBadge(item)}
@@ -794,7 +798,12 @@ export default function CustomerMenu() {
                         style={{ WebkitTapHighlightColor: 'transparent', willChange: 'transform' }}
                     >
                         {featuredItem?.image && (
-                            <img src={featuredItem.image} alt={featuredItem.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                            <img 
+                                src={featuredItem.image} 
+                                alt={featuredItem.name} 
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                onError={(e) => { e.target.src = '/logo-icon.png'; e.target.className = 'w-full h-full object-contain p-12 bg-black/20'; }}
+                            />
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-end p-8">
                             <div className="flex items-center gap-2 mb-2">
@@ -865,19 +874,13 @@ export default function CustomerMenu() {
                                                             </div>
                                                         </div>
                                                     )}
-                                                    {item.image ? (
-                                                        <img 
-                                                            src={item.image} 
-                                                            alt={item.name} 
-                                                            loading="lazy"
-                                                            className={`w-full h-full object-cover transition-all duration-700 ${item.isAvailable ? '' : 'grayscale opacity-40'} ${inCart ? 'scale-110' : ''}`} 
-                                                        />
-                                                    ) : (
-                                                        <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50/50 p-2">
-                                                            <ShoppingBag size={18} className="text-gray-200" />
-                                                            <span className="text-[7px] text-gray-300 uppercase font-black mt-1">No Image</span>
-                                                        </div>
-                                                    )}
+                                                    <img 
+                                                        src={item.image || '/logo-icon.png'} 
+                                                        alt={item.name} 
+                                                        loading="lazy"
+                                                        className={`w-full h-full transition-all duration-700 ${item.image ? 'object-cover' : 'object-contain p-4'} ${item.isAvailable ? '' : 'grayscale opacity-40'} ${inCart ? 'scale-110' : ''}`} 
+                                                        onError={(e) => { e.target.src = '/logo-icon.png'; e.target.className = 'w-full h-full object-contain p-4'; }}
+                                                    />
                                                     {!item.isAvailable && (
                                                         <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center backdrop-blur-[3px] p-2 text-center">
                                                             <span className="bg-white text-black text-[8px] font-black uppercase px-2 py-1 rounded-md tracking-[0.2em] shadow-xl mb-1.5">UNAVAILABLE</span>
@@ -1011,8 +1014,13 @@ export default function CustomerMenu() {
                             </div>
                         ) : cart.map(item => (
                             <div key={item.id} className="flex gap-6 animate-fade-in">
-                                <div className="w-24 h-24 rounded-[32px] overflow-hidden bg-white shadow-xl shrink-0 border-2 border-white">
-                                    <img src={item.image || '/logo-icon.png'} alt={item.name} className="w-full h-full object-cover" />
+                                <div className="w-24 h-24 rounded-[32px] overflow-hidden bg-white shadow-xl shrink-0 border-2 border-white flex items-center justify-center">
+                                    <img 
+                                        src={item.image || '/logo-icon.png'} 
+                                        alt={item.name} 
+                                        className={`w-full h-full ${item.image ? 'object-cover' : 'object-contain p-4'}`}
+                                        onError={(e) => { e.target.src = '/logo-icon.png'; e.target.className = 'w-full h-full object-contain p-4'; }}
+                                    />
                                 </div>
                                 <div className="flex-1 flex flex-col justify-center gap-1.5">
                                     <div className="flex justify-between items-start">
@@ -1263,8 +1271,13 @@ export default function CustomerMenu() {
                             <p className="text-center py-10 text-[#6D5D4B]/40 text-xs font-black uppercase tracking-widest italic">No past records yet</p>
                         ) : myOrders.filter(o => ['Ready to Pay', 'Completed', 'Billed'].includes(o.status)).map(order => (
                             <div key={order.id} className="bg-white rounded-[35px] p-5 flex gap-6 items-center border border-white shadow-sm hover:shadow-md transition-all active:scale-[0.98]">
-                                <div className="w-20 h-20 rounded-[28px] overflow-hidden bg-gray-50 shadow-md shrink-0 border border-white">
-                                    <img src={(order.items && order.items[0]?.image) || '/logo-icon.png'} alt="Order" className="w-full h-full object-cover" />
+                                <div className="w-20 h-20 rounded-[28px] overflow-hidden bg-gray-50 shadow-md shrink-0 border border-white flex items-center justify-center">
+                                    <img 
+                                        src={(order.items && order.items[0]?.image) || '/logo-icon.png'} 
+                                        alt="Order" 
+                                        className={`w-full h-full ${(order.items && order.items[0]?.image) ? 'object-cover' : 'object-contain p-3'}`}
+                                        onError={(e) => { e.target.src = '/logo-icon.png'; e.target.className = 'w-full h-full object-contain p-3'; }}
+                                    />
                                 </div>
                                 <div className="flex-1 min-w-0 pr-2">
                                     <div className="flex items-center gap-2 text-green-600 text-[9px] font-black uppercase tracking-[0.2em] mb-1.5 opacity-80">
@@ -1398,8 +1411,13 @@ export default function CustomerMenu() {
                                                     className="flex items-center gap-4 animate-slide-in"
                                                     onClick={() => setPreviewItem(item)}
                                                 >
-                                                    <div className="w-16 h-16 rounded-2xl overflow-hidden shrink-0 border border-black/5">
-                                                        <img src={item.image || '/logo-icon.png'} alt={item.name} className="w-full h-full object-cover" />
+                                                    <div className="w-16 h-16 rounded-2xl overflow-hidden shrink-0 border border-black/5 bg-gray-50 flex items-center justify-center">
+                                                        <img 
+                                                            src={item.image || '/logo-icon.png'} 
+                                                            alt={item.name} 
+                                                            className={`w-full h-full ${item.image ? 'object-cover' : 'object-contain p-3'}`}
+                                                            onError={(e) => { e.target.src = '/logo-icon.png'; e.target.className = 'w-full h-full object-contain p-3'; }}
+                                                        />
                                                     </div>
                                                     <div className="flex-1">
                                                         <h4 className="text-[#0B3A2E] font-black text-xs uppercase tracking-tight leading-tight">{item.name}</h4>

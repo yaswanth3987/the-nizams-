@@ -3,7 +3,6 @@ import {
     Clock, CheckCircle, AlertTriangle, Bell, Search, 
     Plus, Minus, X, Utensils, CreditCard, ArrowLeft,
     Check, LayoutGrid, ListOrdered, Settings, User, 
-    ArrowUpRight, Flame, Sparkles, Filter, MoreVertical,
     Coffee, Wine, UtensilsCrossed, Trash2
 } from 'lucide-react';
 import { socket } from '../utils/socket';
@@ -26,6 +25,8 @@ export default function WaitersPortal() {
     const [editingOrder, setEditingOrder] = useState(null); // { id, type }
     const [now, setNow] = useState(Date.now());
     const { playSound } = useSoundSystem(assistanceRequests.length > 0);
+
+    const lastScrollTop = React.useRef(0);
 
     useEffect(() => {
         document.title = "Waiter - The Great Nizam";
@@ -60,7 +61,7 @@ export default function WaitersPortal() {
             const allOrders = [
                 ...(Array.isArray(ordersData) ? ordersData.map(o => ({...o, _source: 'new'})) : []), 
                 ...(Array.isArray(sessionsData) ? sessionsData.map(o => ({...o, _source: 'session'})) : [])
-            ];
+            ].sort((a, b) => b.id - a.id);
             setActiveOrders(allOrders);
         } catch (error) {
             console.error('Failed to fetch data:', error);
@@ -69,8 +70,13 @@ export default function WaitersPortal() {
 
     useEffect(() => {
         fetchData();
+        let debounceTimer;
         const refresh = (data) => {
-            fetchData();
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                fetchData();
+            }, 300);
+            
             // Play notification sounds based on event
             if (data?.type === 'bill') playSound('bill');
             else if (data?.status === 'ready') playSound('ready');
@@ -96,6 +102,9 @@ export default function WaitersPortal() {
     }, [fetchData]);
 
     const handleUpdateOrderStatus = async (orderId, newStatus, source = 'session') => {
+        // Optimistic UI update
+        setActiveOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+        
         try {
             const endpoint = source === 'new' ? 'new-orders' : 'orders';
             await fetch(`${API_URL}/${endpoint}/${orderId}/status`, {
@@ -103,7 +112,11 @@ export default function WaitersPortal() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus })
             });
-        } catch (e) { console.error(e); }
+        } catch (e) { 
+            console.error(e); 
+            // Revert on error if needed
+            fetchData();
+        }
     };
 
     const handleClearAssistance = async (id) => {
@@ -141,14 +154,15 @@ export default function WaitersPortal() {
 
             <nav className="flex-1 px-4 space-y-2 overflow-y-auto py-4">
                 {[
-                    { id: 'tables', label: 'Tables', icon: LayoutGrid },
-                    { id: 'orders', label: 'Orders', icon: ListOrdered },
-                    { id: 'alerts', label: 'Alerts', icon: Bell, count: assistanceRequests.length },
+                    { id: 'tables', label: 'Tables', icon: LayoutGrid, count: [...new Set([...(assistanceRequests || []).map(r => (r.tableId || '').toString().toUpperCase()), ...(activeOrders || []).filter(o => o.status === 'ready').map(o => (o.tableId || '').toString().toUpperCase())])].filter(Boolean).length },
+                    { id: 'orders', label: 'Orders', icon: ListOrdered, count: (activeOrders || []).filter(o => o.status === 'ready').length },
+                    { id: 'billing', label: 'Billing', icon: CreditCard, count: (activeOrders || []).filter(o => ['billed', 'billing_pending'].includes(o.status)).length },
+                    { id: 'alerts', label: 'Alerts', icon: Bell, count: (assistanceRequests || []).length },
                 ].map(item => (
                     <button 
                         key={item.id}
                         onClick={() => { setActiveTab(item.id); setView('dashboard'); if("vibrate" in navigator) navigator.vibrate(20); }}
-                        className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 group ${activeTab === item.id ? 'bg-[#FFD700]/10 text-[#FFD700]' : 'text-[#86a69d] hover:bg-white/5'}`}
+                        className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 group ${activeTab === item.id ? 'bg-[#FFD700]/10 text-[#FFD700]' : 'text-[#86a69d] active:bg-white/5'}`}
                     >
                         <item.icon size={20} strokeWidth={activeTab === item.id ? 2.5 : 2} />
                         <span className="font-bold text-sm tracking-tight">{item.label}</span>
@@ -158,7 +172,7 @@ export default function WaitersPortal() {
             </nav>
 
             <div className="mt-auto space-y-4">
-                <button onClick={() => setView('order_entry')} className="w-full bg-[#FFD700]/10 border border-[#FFD700]/20 text-[#FFD700] py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-[#FFD700]/20 transition-all active:scale-95 flex items-center justify-center gap-2">
+                <button onClick={() => setView('order_entry')} className="w-full bg-[#FFD700]/10 border border-[#FFD700]/20 text-[#FFD700] py-4 rounded-2xl font-black uppercase text-xs tracking-widest active:bg-[#FFD700]/20 transition-all active:scale-95 flex items-center justify-center gap-2">
                     <Plus size={18} strokeWidth={3} /> New Table
                 </button>
                 <div className="flex items-center gap-3 p-4 bg-black/20 rounded-2xl">
@@ -191,7 +205,7 @@ export default function WaitersPortal() {
         const readyOrders = activeOrders.filter(o => o.status === 'ready');
         
         return (
-            <div className="flex-1 flex flex-col h-full overflow-hidden">
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
                 {/* Header */}
                 <header className="px-8 py-6 flex items-center justify-between border-b border-white/5">
                     <div className="flex items-center gap-4">
@@ -207,9 +221,14 @@ export default function WaitersPortal() {
                     </div>
                 </header>
 
-                <div className="flex-1 overflow-y-auto p-8 space-y-12">
-                    {/* Urgent Assistance */}
-                    <section>
+                <div 
+                    className="flex-1 overflow-y-auto p-8 space-y-12 min-h-0"
+                >
+
+                    
+                    {/* Urgent Assistance - Only show in Alerts tab to reduce clutter in Orders */}
+                    {activeTab === 'alerts' && (
+                        <section>
                         <h2 className="text-[#FFD700] text-2xl font-serif font-black mb-6 italic tracking-tight">Urgent Assistance</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {assistanceRequests.map(req => {
@@ -287,50 +306,194 @@ export default function WaitersPortal() {
                                 </div>
                             )}
                         </div>
-                    </section>
+                        </section>
+                    )}
 
-                    {/* Kitchen Ready Section */}
-                    {readyOrders.length > 0 && (
+                    {/* Kitchen Ready Section - Show in Orders tab */}
+                    {activeTab === 'orders' && readyOrders.length > 0 && (
                         <section className="animate-in slide-in-from-top duration-500">
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-[#FFD700] text-2xl font-serif font-black italic tracking-tight">Kitchen Dispatch</h2>
                                 <span className="bg-green-500/20 text-green-400 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">{readyOrders.length} READY TO SERVE</span>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3">
                                 {readyOrders.map(order => {
                                     const itemsArray = Array.isArray(order.items) ? order.items : [];
                                     return (
-                                        <div key={order.id} className="bg-white/5 border border-[#FFD700]/30 rounded-[40px] flex flex-col overflow-hidden hover:bg-white/10 transition-all group animate-in zoom-in-95 duration-300 relative">
+                                        <div key={order.id} className="bg-white/5 border border-[#FFD700]/30 rounded-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 relative min-h-[160px] h-auto">
                                             {/* Status Color Strip */}
-                                            <div className="absolute top-0 left-0 w-2 h-full bg-green-500 shadow-[4px_0_15px_rgba(34,197,94,0.3)]"></div>
+                                            <div className="absolute top-0 left-0 w-1.5 h-full bg-green-500"></div>
                                             
-                                            <div className="p-8 pl-10">
-                                                <div className="flex justify-between items-start mb-6">
-                                                    <div>
-                                                        <h3 className="text-[#FFD700] text-5xl font-serif font-black italic mb-1 uppercase tracking-tighter">Table {order.tableId}</h3>
-                                                        <p className="text-[#86a69d] text-sm font-black uppercase tracking-widest">ORDER #{order.id}</p>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <p className="text-green-400 text-lg font-black tabular-nums">READY</p>
-                                                        <p className="text-[#86a69d] text-[10px] font-black uppercase tracking-widest">STATUS</p>
-                                                    </div>
+                                            <div className="p-3 pl-4 flex flex-col h-full">
+                                                <div className="flex justify-between items-center mb-3 border-b border-white/5 pb-2">
+                                                    <h3 className="text-[#FFD700] text-2xl font-serif font-black italic tracking-tighter">Table {order.tableId}</h3>
+                                                    <p className="text-green-400 text-[10px] font-black tabular-nums uppercase bg-green-500/10 px-2 py-1 rounded-md">READY</p>
                                                 </div>
 
-                                                <div className="space-y-3 mb-8 border-y border-white/5 py-6">
+                                                <div className="flex-1 space-y-2 mb-3">
                                                     {itemsArray.map((item, i) => (
-                                                        <div key={i} className="flex justify-between items-center text-lg italic font-medium">
-                                                            <span className="text-white"><span className="text-[#FFD700] font-black not-italic mr-2">{item.qty}x</span> {item.name}</span>
-                                                            <span className="text-white/60 text-sm font-bold not-italic">£{(item.price * item.qty).toFixed(2)}</span>
+                                                        <div key={i} className="flex justify-between items-start text-xs italic font-medium leading-tight">
+                                                            <span className="text-white"><span className="text-[#FFD700] font-black not-italic mr-1.5">{item.qty}x</span> {item.name}</span>
                                                         </div>
                                                     ))}
                                                 </div>
 
                                                 <button 
                                                     onClick={() => handleUpdateOrderStatus(order.id, 'served', order._source)}
-                                                    className="w-full bg-green-500 text-black py-5 rounded-2xl font-black uppercase text-sm tracking-[0.2em] shadow-xl shadow-green-500/10 active:scale-95 transition-all flex items-center justify-center gap-3"
+                                                    className="w-full mt-auto bg-green-500 text-black py-2.5 rounded-xl font-black uppercase text-sm tracking-wider active:scale-95 transition-transform flex items-center justify-center gap-2"
                                                 >
-                                                    <CheckCircle size={20} /> Mark as Served
+                                                    <CheckCircle size={16} strokeWidth={3} /> Serve
                                                 </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>                        </section>
+                    )}
+
+                    {/* New & Processing Orders - Show in Orders tab */}
+                    {activeTab === 'orders' && (
+                        <section>
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-[#FFD700] text-2xl font-serif font-black italic tracking-tight">Active Floor Orders</h2>
+                                <div className="flex items-center gap-2 text-[#86a69d] text-[10px] font-black uppercase tracking-widest">
+                                    Processing {activeOrders.filter(o => ['new', 'pending', 'accepted', 'confirmed', 'active', 'ready'].includes(o.status)).length}
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3">
+                                {activeOrders.filter(o => !['completed', 'cancelled', 'ready', 'billed', 'billing_pending'].includes(o.status)).map(order => {
+                                    const isNew = order.status === 'new' || order.status === 'pending';
+                                    const isReady = order.status === 'ready';
+                                    return (
+                                        <div key={`order-${order.id}`} className={`bg-white/5 border rounded-2xl flex flex-col overflow-hidden transition-all duration-500 relative border-white/10 min-h-[160px] h-auto`}>
+                                        {/* Status Color Strip */}
+                                        <div className={`absolute top-0 left-0 w-1.5 h-full ${
+                                            isReady ? 'bg-[#FFD700]' : 
+                                            isNew ? 'bg-blue-500' : 'bg-orange-500'
+                                        }`}></div>
+
+                                        <div className="p-3 pl-4 flex flex-col h-full">
+                                            <div className="flex justify-between items-center mb-3 border-b border-white/5 pb-2">
+                                                <h3 className="text-[#FFD700] text-2xl font-serif font-black italic tracking-tighter">Table {order.tableId}</h3>
+                                                <p className={`text-[10px] font-black uppercase tabular-nums px-2 py-1 rounded-md ${isReady ? 'text-[#FFD700] bg-[#FFD700]/10' : isNew ? 'text-blue-400 bg-blue-500/10' : 'text-orange-400 bg-orange-500/10'}`}>
+                                                    {order.status}
+                                                </p>
+                                            </div>
+
+                                            <div className="flex-1 space-y-2 mb-4">
+                                                {(Array.isArray(order.items) ? order.items : []).map((item, i) => (
+                                                    <div key={i} className="flex justify-between items-start text-xs italic font-medium leading-tight">
+                                                        <span className="text-white"><span className="text-[#FFD700] font-black not-italic mr-1.5">{item.qty}x</span> {item.name}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            <div className="flex justify-between items-center mb-3 px-1 border-t border-white/5 pt-3">
+                                                <div className="text-[9px] font-black text-[#86a69d] tracking-widest uppercase">Total Due</div>
+                                                <div className="text-xl font-serif font-black text-[#FFD700]">£{Number(order.finalTotal || 0).toFixed(2)}</div>
+                                            </div>
+
+                                            <div className="mt-auto flex gap-2">
+                                                {isNew ? (
+                                                    <>
+                                                        <button 
+                                                            onClick={() => handleUpdateOrderStatus(order.id, 'confirmed', order._source)}
+                                                            className="flex-[2] bg-[#FFD700] text-[#0F3A2F] py-2 rounded-xl font-black uppercase text-xs tracking-wider active:scale-95 transition-transform flex items-center justify-center gap-1"
+                                                        >
+                                                            <CheckCircle size={14} /> Accept
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => {
+                                                                setSelectedTable(order.tableId);
+                                                                setCart(order.items || []);
+                                                                setView('order_entry');
+                                                            }}
+                                                            className="flex-1 bg-white/5 text-white/60 py-2 rounded-xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-transform border border-white/10"
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                    </>
+                                                ) : (order.status === 'billed' || order.status === 'billing_pending') ? (
+                                                    <button 
+                                                        onClick={() => { setSelectedTable(order.tableId); setView('table_details'); }}
+                                                        className="w-full bg-[#FFD700]/10 border border-[#FFD700]/20 text-[#FFD700] py-2 rounded-xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-transform"
+                                                    >
+                                                        Awaiting Settlement
+                                                    </button>
+                                                ) : (
+                                                    <>
+                                                        <button 
+                                                            onClick={() => {
+                                                                if (confirm(`Request final bill for Table ${order.tableId}? Total: £${Number(order.finalTotal).toFixed(2)}`)) {
+                                                                    handleUpdateOrderStatus(order.id, 'billing_pending', order._source);
+                                                                }
+                                                            }}
+                                                            className="flex-[2] bg-[#FFD700] text-[#0F3A2F] py-2.5 rounded-xl font-black uppercase text-[10px] tracking-wider flex items-center justify-center gap-1 active:scale-95 transition-transform"
+                                                        >
+                                                            <CreditCard size={12} /> Bill
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => {
+                                                                setSelectedTable(order.tableId);
+                                                                setCart(order.items || []);
+                                                                setEditingOrder({ id: order.id, type: order._source });
+                                                                setView('order_entry');
+                                                            }}
+                                                            className="flex-1 bg-white/10 text-white py-2.5 rounded-xl font-black uppercase text-xs tracking-widest active:scale-95 transition-transform"
+                                                        >
+                                                            Modify
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    )}
+
+                    {/* Billing Orders - Show in Billing tab */}
+                    {activeTab === 'billing' && (
+                        <section>
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-[#FFD700] text-2xl font-serif font-black italic tracking-tight">Pending Settlements</h2>
+                                <div className="flex items-center gap-2 text-[#86a69d] text-[10px] font-black uppercase tracking-widest">
+                                    Awaiting {activeOrders.filter(o => ['billed', 'billing_pending'].includes(o.status)).length}
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3">
+                                {activeOrders.filter(o => ['billed', 'billing_pending'].includes(o.status)).map(order => {
+                                    return (
+                                        <div key={`billing-${order.id}`} className={`bg-white/5 border rounded-2xl flex flex-col overflow-hidden transition-all duration-500 relative border-[#FFD700]/30 min-h-[160px] h-auto`}>
+                                            <div className="absolute top-0 left-0 w-1.5 h-full bg-[#FFD700]"></div>
+                                            <div className="p-3 pl-4 flex flex-col h-full">
+                                                <div className="flex justify-between items-center mb-3 border-b border-white/5 pb-2">
+                                                    <h3 className="text-[#FFD700] text-2xl font-serif font-black italic tracking-tighter">Table {order.tableId}</h3>
+                                                    <p className="text-[#FFD700] text-[10px] font-black uppercase tabular-nums px-2 py-1 rounded-md bg-[#FFD700]/10">
+                                                        {order.status}
+                                                    </p>
+                                                </div>
+                                                <div className="flex-1 space-y-2 mb-4">
+                                                    {(Array.isArray(order.items) ? order.items : []).map((item, i) => (
+                                                        <div key={i} className="flex justify-between items-start text-xs italic font-medium leading-tight">
+                                                            <span className="text-white"><span className="text-[#FFD700] font-black not-italic mr-1.5">{item.qty}x</span> {item.name}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div className="flex justify-between items-center mb-3 px-1 border-t border-white/5 pt-3">
+                                                    <div className="text-[9px] font-black text-[#86a69d] tracking-widest uppercase">Total Due</div>
+                                                    <div className="text-xl font-serif font-black text-[#FFD700]">£{Number(order.finalTotal || 0).toFixed(2)}</div>
+                                                </div>
+                                                <div className="mt-auto">
+                                                    <button 
+                                                        onClick={() => { setSelectedTable(order.tableId); setView('table_details'); }}
+                                                        className="w-full bg-[#FFD700]/10 border border-[#FFD700]/20 text-[#FFD700] py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-transform"
+                                                    >
+                                                        Awaiting Settlement at Counter
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     );
@@ -338,140 +501,10 @@ export default function WaitersPortal() {
                             </div>
                         </section>
                     )}
-
-                    {/* New & Processing Orders */}
-                    <section>
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-[#FFD700] text-2xl font-serif font-black italic tracking-tight">Active Floor Orders</h2>
-                            <div className="flex items-center gap-2 text-[#86a69d] text-[10px] font-black uppercase tracking-widest">
-                                Processing {activeOrders.filter(o => ['new', 'pending', 'accepted', 'confirmed', 'active', 'ready', 'billed', 'billing_pending'].includes(o.status)).length}
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {activeOrders.filter(o => !['completed', 'cancelled'].includes(o.status)).map(order => {
-                                const isNew = order.status === 'new' || order.status === 'pending';
-                                const isReady = order.status === 'ready';
-                                return (
-                                    <div key={order.id} className={`bg-white/5 border rounded-[40px] flex flex-col overflow-hidden transition-all duration-500 relative ${isReady ? 'border-[#FFD700]/50 shadow-[0_0_50px_rgba(255,215,0,0.1)]' : 'border-white/10'}`}>
-                                        {/* Status Color Strip */}
-                                        <div className={`absolute top-0 left-0 w-2 h-full shadow-[4px_0_15px_rgba(0,0,0,0.3)] ${
-                                            isReady ? 'bg-[#FFD700]' : 
-                                            isNew ? 'bg-blue-500' : 'bg-orange-500'
-                                        }`}></div>
-
-                                        <div className="p-8 pl-10">
-                                            <div className="flex justify-between items-start mb-6">
-                                                <div>
-                                                    <h3 className="text-[#FFD700] text-5xl font-serif font-black italic mb-1 uppercase tracking-tighter">Table {order.tableId}</h3>
-                                                    <p className="text-[#86a69d] text-sm font-black uppercase tracking-widest">ORDER #{order.id}</p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className={`text-lg font-black uppercase tabular-nums ${isReady ? 'text-[#FFD700]' : isNew ? 'text-blue-400' : 'text-orange-400'}`}>
-                                                        {order.status}
-                                                    </p>
-                                                    <p className="text-[#86a69d] text-[10px] font-black uppercase tracking-widest">STATUS</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-3 mb-8 border-y border-white/5 py-6">
-                                                {(Array.isArray(order.items) ? order.items : []).map((item, i) => (
-                                                    <div key={i} className="flex justify-between items-center text-lg italic font-medium">
-                                                        <span className="text-white"><span className="text-[#FFD700] font-black not-italic mr-2">{item.qty}x</span> {item.name}</span>
-                                                        <span className="text-white/60 text-sm font-bold not-italic">£{(item.price * item.qty).toFixed(2)}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-
-                                            {/* Live Bill Total Integration */}
-                                            <div className="flex justify-between items-center mb-8 px-2">
-                                                <div className="text-[10px] font-black text-[#86a69d] tracking-widest uppercase">Running Total</div>
-                                                <div className="text-3xl font-serif font-black text-[#FFD700]">£{Number(order.finalTotal).toFixed(2)}</div>
-                                            </div>
-
-                                                <div className="flex flex-col gap-3">
-                                                    {isReady ? (
-                                                        <div className="flex gap-3">
-                                                            <button 
-                                                                onClick={() => handleUpdateOrderStatus(order.id, 'served', order._source)}
-                                                                className="flex-[2] bg-[#FFD700] text-[#0F3A2F] py-5 rounded-2xl font-black uppercase text-sm tracking-[0.2em] shadow-xl shadow-[#FFD700]/10 active:scale-95 transition-all flex items-center justify-center gap-3"
-                                                            >
-                                                                <CheckCircle size={20} /> Served
-                                                            </button>
-                                                            <button 
-                                                                onClick={() => { setSelectedTable(order.tableId); setView('table_details'); }}
-                                                                className="flex-1 bg-white/5 border border-white/10 text-white rounded-2xl flex items-center justify-center active:scale-95 transition-all"
-                                                            >
-                                                                <CreditCard size={20} />
-                                                            </button>
-                                                        </div>
-                                                    ) : isNew ? (
-                                                        <div className="flex gap-3">
-                                                            <button 
-                                                                onClick={() => handleUpdateOrderStatus(order.id, 'confirmed', order._source)}
-                                                                className="flex-[2] bg-[#FFD700] text-[#0F3A2F] py-5 rounded-2xl font-black uppercase text-sm tracking-[0.2em] active:scale-95 transition-all shadow-xl shadow-[#FFD700]/10 flex items-center justify-center gap-3"
-                                                            >
-                                                                <CheckCircle size={20} /> Accept
-                                                            </button>
-                                                            <button 
-                                                                onClick={() => {
-                                                                    setSelectedTable(order.tableId);
-                                                                    setCart(order.items || []);
-                                                                    setView('order_entry');
-                                                                }}
-                                                                className="flex-1 bg-white/5 text-white/40 py-5 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all border border-white/10"
-                                                            >
-                                                                Edit
-                                                            </button>
-                                                        </div>
-                                                    ) : (order.status === 'billed' || order.status === 'billing_pending') ? (
-                                                        <div className="flex flex-col gap-3">
-                                                            <div className="bg-[#FFD700]/10 border border-[#FFD700]/20 rounded-2xl p-4 text-center">
-                                                                <p className="text-[#FFD700] text-[10px] font-black uppercase tracking-[0.2em] mb-1">Status</p>
-                                                                <p className="text-white text-xs font-bold italic">Awaiting Settlement at Counter</p>
-                                                            </div>
-                                                            <button 
-                                                                onClick={() => { setSelectedTable(order.tableId); setView('table_details'); }}
-                                                                className="w-full bg-white/5 border border-white/10 text-white py-3 rounded-xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all"
-                                                            >
-                                                                View Order History
-                                                            </button>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="flex gap-3">
-                                                            <button 
-                                                                onClick={() => {
-                                                                    if (confirm(`Request final bill for Table ${order.tableId}? Total: £${Number(order.finalTotal).toFixed(2)}`)) {
-                                                                        handleUpdateOrderStatus(order.id, 'billing_pending', order._source);
-                                                                    }
-                                                                }}
-                                                                className="flex-[2] bg-[#FFD700] text-[#0F3A2F] py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.1em] flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg"
-                                                            >
-                                                                <CreditCard size={14} /> Request Bill
-                                                            </button>
-                                                            <button 
-                                                                onClick={() => {
-                                                                    setSelectedTable(order.tableId);
-                                                                    setCart(order.items || []);
-                                                                    setEditingOrder({ id: order.id, type: order._source });
-                                                                    setView('order_entry');
-                                                                }}
-                                                                className="flex-1 bg-white/10 text-white py-3 rounded-xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all"
-                                                            >
-                                                                Modify
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                        </div>
-                    </section>
                 </div>
 
                 {/* Bottom Stats */}
-                <footer className="px-8 py-6 bg-black/20 border-t border-white/5 flex gap-6 overflow-x-auto no-scrollbar">
+                <footer className="px-8 py-6 bg-black/20 border-t border-white/5 flex gap-6 overflow-x-auto">
                     <StatCard icon={Clock} label="Avg Response Time" value="1m 42s" />
                     <StatCard icon={ArrowUpRight} label="Total Served (Shift)" value="42 Covers" />
                     <StatCard icon={CheckCircle} label="Efficiency Rating" value="98%" />
@@ -493,10 +526,10 @@ export default function WaitersPortal() {
         
     const getTableColor = (tableId) => {
         const normalizedId = tableId.toString().toUpperCase();
-        const needsHelp = assistanceRequests.some(r => r.tableId.toString().toUpperCase() === normalizedId);
+        const needsHelp = (assistanceRequests || []).some(r => (r.tableId || '').toString().toUpperCase() === normalizedId);
         if (needsHelp) return 'bg-blue-600 border-blue-400 text-white animate-pulse shadow-[0_0_20px_rgba(37,99,235,0.4)]';
         
-        const hasReadyOrder = activeOrders.some(o => o.tableId.toString().toUpperCase() === normalizedId && o.status === 'ready');
+        const hasReadyOrder = (activeOrders || []).some(o => (o.tableId || '').toString().toUpperCase() === normalizedId && o.status === 'ready');
         if (hasReadyOrder) return 'bg-[#FFD700] border-[#FFD700] text-[#0F3A2F] animate-pulse shadow-[0_0_25px_rgba(255,215,0,0.6)]';
 
         // Normalize keys in tables object for lookup
@@ -516,18 +549,32 @@ export default function WaitersPortal() {
     };
 
         return (
-            <div className="flex-1 flex flex-col h-full overflow-hidden">
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
                 <header className="px-8 py-6 border-b border-white/5">
                     <h1 className="text-2xl font-black text-white">Floor Mapping</h1>
                     <p className="text-[#86a69d] text-[10px] font-black uppercase tracking-[0.2em] mt-1">Real-time occupancy status</p>
                 </header>
-                <div className="flex-1 overflow-y-auto p-8">
-                    {[{ title: 'Royal Tables', data: tTables }, { title: 'Private Boxes', data: bTables }, { title: 'Heritage Chowkies', data: cTables }].map(section => (
-                        <div key={section.title} className="mb-12">
-                            <h2 className="text-[#FFD700] text-sm font-black uppercase tracking-[0.3em] mb-6 flex items-center gap-4">
-                                {section.title}
-                                <div className="h-px flex-1 bg-white/5"></div>
-                            </h2>
+                <div className="flex-1 overflow-y-auto p-8 min-h-0">
+                    {[{ title: 'Royal Tables', data: tTables }, { title: 'Private Boxes', data: bTables }, { title: 'Heritage Chowkies', data: cTables }].map(section => {
+                        const sectionAlerts = section.data.filter(tableId => {
+                            const normalizedId = tableId.toUpperCase();
+                            return (assistanceRequests || []).some(r => (r.tableId || '').toString().toUpperCase() === normalizedId) || 
+                                   (activeOrders || []).some(o => (o.tableId || '').toString().toUpperCase() === normalizedId && o.status === 'ready');
+                        }).length;
+
+                        return (
+                            <div key={section.title} className="mb-12">
+                                <h2 className="text-[#FFD700] text-sm font-black uppercase tracking-[0.3em] mb-6 flex items-center gap-4">
+                                    <span className="flex items-center gap-3">
+                                        {section.title}
+                                        {sectionAlerts > 0 && (
+                                            <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full animate-pulse tracking-normal">
+                                                {sectionAlerts}
+                                            </span>
+                                        )}
+                                    </span>
+                                    <div className="h-px flex-1 bg-white/5"></div>
+                                </h2>
                             <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
                                 {section.data.map(t => {
                                     const tableOrders = activeOrders.filter(o => o.tableId === t && o.status !== 'completed' && o.status !== 'rejected');
@@ -550,7 +597,8 @@ export default function WaitersPortal() {
                                 })}
                             </div>
                         </div>
-                    ))}
+                    );
+                })}
                 </div>
             </div>
         );
@@ -785,7 +833,7 @@ export default function WaitersPortal() {
                         <span>Order Basket</span>
                         <span className="bg-[#FFD700] text-[#0F3A2F] px-2 py-0.5 rounded-full text-[9px]">{cart.length} ITEMS</span>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-0">
                         {cart.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center opacity-20 italic text-sm">
                                 <Utensils size={32} className="mb-2" />
@@ -800,13 +848,13 @@ export default function WaitersPortal() {
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <div className="flex items-center gap-3 bg-black/40 rounded-xl p-1 shrink-0">
-                                            <button onClick={() => setCart(prev => prev.map(i => i.id === item.id ? { ...i, qty: Math.max(0, i.qty - 1) } : i).filter(i => i.qty > 0))} className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white"><Minus size={14} /></button>
+                                            <button onClick={() => setCart(prev => prev.map(i => i.id === item.id ? { ...i, qty: Math.max(0, i.qty - 1) } : i).filter(i => i.qty > 0))} className="w-8 h-8 flex items-center justify-center text-white/40 active:text-white"><Minus size={14} /></button>
                                             <span className="text-white font-black text-sm w-4 text-center">{item.qty}</span>
-                                            <button onClick={() => addToCart(item)} className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white"><Plus size={14} /></button>
+                                            <button onClick={() => addToCart(item)} className="w-8 h-8 flex items-center justify-center text-white/40 active:text-white"><Plus size={14} /></button>
                                         </div>
                                         <button 
                                             onClick={() => setCart(prev => prev.filter(i => i.id !== item.id))}
-                                            className="w-10 h-10 flex items-center justify-center text-red-500/40 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                                            className="w-10 h-10 flex items-center justify-center text-red-500/40 active:text-red-500 active:bg-red-500/10 rounded-xl transition-all"
                                         >
                                             <Trash2 size={16} />
                                         </button>
@@ -826,10 +874,10 @@ export default function WaitersPortal() {
     };
 
     return (
-        <div className="h-screen bg-[#0F3A2F] text-white font-sans selection:bg-[#FFD700] selection:text-[#0F3A2F] flex overflow-hidden">
+        <div className="h-[100dvh] bg-[#0F3A2F] text-white font-sans selection:bg-[#FFD700] selection:text-[#0F3A2F] flex overflow-hidden">
             <Sidebar />
             <main className="flex-1 flex flex-col overflow-hidden relative">
-                {view === 'dashboard' && (activeTab === 'tables' ? renderTableMap() : <Dashboard />)}
+                {view === 'dashboard' && (activeTab === 'tables' ? renderTableMap() : Dashboard())}
                 {view === 'table_details' && renderTableDetails()}
                 {view === 'order_entry' && renderOrderEntry()}
             </main>

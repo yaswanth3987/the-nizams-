@@ -157,14 +157,13 @@ export default function TakeawayMenu() {
                                 const inCart = cart.find(i => i.id === item.id);
                                 return (
                                     <div key={item.id} className="bg-white p-3 rounded-2xl flex gap-4 premium-shadow items-center">
-                                        <div className="w-20 h-20 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-black/5">
-                                            {item.image ? (
-                                                <img src={item.image} alt={item.name} className={`w-full h-full object-cover ${item.isAvailable ? '' : 'grayscale opacity-50'}`} />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center bg-[#F6EFE6]/50">
-                                                    <span className="text-[10px] text-black/20 font-bold">No Image</span>
-                                                </div>
-                                            )}
+                                        <div className="w-20 h-20 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-black/5 flex items-center justify-center">
+                                            <img 
+                                                src={item.image || '/logo-icon.png'} 
+                                                alt={item.name} 
+                                                className={`w-full h-full ${item.image ? 'object-cover' : 'object-contain p-3'} ${item.isAvailable ? '' : 'grayscale opacity-50'}`} 
+                                                onError={(e) => { e.target.src = '/logo-icon.png'; e.target.className = 'w-full h-full object-contain p-3'; }}
+                                            />
                                         </div>
                                         <div className="flex-1">
                                             <h3 className="font-bold text-[#0B3A2E] text-sm leading-tight">{item.name}</h3>
