@@ -57,8 +57,11 @@ export default function AdminDashboard() {
     const fetchAssistance = useCallback(() => {
         return fetch(`${API_URL}/assistance`)
             .then(res => res.json())
-            .then(data => setAssistanceRequests(data || []))
-            .catch(err => { console.error("Error fetching assistance:", err); });
+            .then(data => {
+                const active = (data || []).filter(r => r.status === 'pending' || r.status === 'attended');
+                setAssistanceRequests(active);
+            })
+            .catch(err => console.error("Error fetching assistance:", err));
     }, []);
 
     const fetchDashboardData = useCallback(async () => {
@@ -157,7 +160,7 @@ export default function AdminDashboard() {
 
         socket.on('assistanceRequested', (req) => {
             setAssistanceRequests(prev => {
-                if (prev.some(r => r.id === req.id)) return prev;
+                if (prev.some(r => r.id.toString() === req.id.toString())) return prev;
                 setTimeout(() => {
                     setUnreadAlerts(u => u + 1);
                     if (req.type === 'bill') playSound('bill');
@@ -184,7 +187,7 @@ export default function AdminDashboard() {
         });
 
         socket.on('assistanceDeleted', ({ id }) => {
-            setAssistanceRequests(prev => prev.filter(r => r.id !== id));
+            setAssistanceRequests(prev => prev.filter(r => r.id.toString() !== id.toString()));
             fetchSessions(); // Refresh sessions in case assistance was tied to a bill closure
         });
         
