@@ -155,9 +155,14 @@ const runQuery = async (sql, params = []) => {
             });
         }
     } catch (err) {
+        // Detailed Error Reporting
+        if (err.code === '28P01') console.error('❌ DATABASE AUTHENTICATION FAILED: Check your password in DATABASE_URL.');
+        else if (err.code === 'ETIMEDOUT') console.error('❌ DATABASE CONNECTION TIMEOUT: Could not reach Supabase. Check your network/region.');
+        else if (err.code === 'SELF_SIGNED_CERT_IN_CHAIN') console.error('❌ DATABASE SSL ERROR: Certificate validation failed. Check rejectUnauthorized setting.');
+        else if (err.message.includes('Tenant or user not found')) console.error('❌ DATABASE TENANT ERROR: The project-id in your hostname might be wrong.');
+        
         console.error(`❌ DATABASE ERROR [${isPg ? 'PostgreSQL' : 'SQLite'}]:`, err.message);
         console.error(`   Query: ${sql}`);
-        console.error(`   Params:`, JSON.stringify(params));
         throw err;
     }
 };
