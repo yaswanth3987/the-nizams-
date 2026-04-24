@@ -2,16 +2,20 @@ import React, { useState } from 'react';
 import { User, ReceiptText, MapPin, Printer, RotateCcw, X, CreditCard, Banknote, SplitSquareHorizontal, CheckCircle, Copy, Calculator, ArrowLeft, Wallet } from 'lucide-react';
 
 export default function AdminBilledOrders({ orders: sessions, updateStatus, printReceipt }) {
-    // Filter only standard dine-in sessions that are 'billed'
-    const activeBilledSessions = (sessions || []).filter(s => s.status === 'billed' && s.orderType !== 'takeaway');
+    // Filter sessions that are 'billed' or 'billing_pending'
+    const activeBilledSessions = (sessions || []).filter(s => 
+        (s.status === 'billed' || s.status === 'billing_pending')
+    );
 
     // Group multiple sessions for the same table into one UI card
     const groupedSessions = activeBilledSessions.reduce((acc, current) => {
-        const tableId = current.tableId;
-        if (!acc[tableId]) {
-            acc[tableId] = { ...current, items: [...current.items], ids: [current.id] };
+        // Use Table ID for dine-in, but unique ID for takeaways to prevent mixing
+        const groupKey = current.tableId === 'TAKEAWAY' ? `TAKEAWAY-${current.id}` : current.tableId;
+        
+        if (!acc[groupKey]) {
+            acc[groupKey] = { ...current, items: [...current.items], ids: [current.id] };
         } else {
-            const existing = acc[tableId];
+            const existing = acc[groupKey];
             existing.subtotal += (current.subtotal || 0);
             existing.serviceCharge += (current.serviceCharge || 0);
             existing.finalTotal += (current.finalTotal || 0);
@@ -95,12 +99,18 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
                         <div key={session.tableId} className="bg-white/5 border border-white/10 rounded-3xl p-8 flex flex-col shadow-2xl relative h-[480px]">
                             <div className="flex justify-between items-start mb-8">
                                 <div>
-                                    <div className="text-[10px] font-bold tracking-widest uppercase mb-1 text-white/40">TABLE ID</div>
-                                    <h3 className="text-3xl font-serif font-bold italic text-white">Table {session.tableId}</h3>
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <span className="bg-accent text-black px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest">
+                                            {session.tableId === 'TAKEAWAY' ? `ID #${session.id}` : `TABLE ${session.tableId}`}
+                                        </span>
+                                        <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                            BILLED
+                                        </span>
+                                    </div>
+                                    <h3 className="text-3xl font-serif font-bold italic text-white">
+                                        {session.customerName || (session.tableId === 'TAKEAWAY' ? 'Takeaway Guest' : 'Dine-in Guest')}
+                                    </h3>
                                 </div>
-                                <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                    BILLED
-                                </span>
                             </div>
 
                             <div className="flex-1 space-y-3 overflow-y-auto no-scrollbar mb-8">
@@ -152,10 +162,19 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
                                 
                                 <div className="space-y-12">
                                     <div className="flex justify-between items-start">
-                                        <div>
-                                            <p className="text-[10px] font-black text-white/20 tracking-[0.4em] uppercase mb-4">TABLE IDENTITY</p>
-                                            <h4 className="text-7xl font-serif font-bold text-nizam-gold tracking-tighter">Table {paymentModal.session.tableId}</h4>
+                                        <div className="flex items-center gap-4 mb-4">
+                                            <span className="bg-nizam-gold text-black px-4 py-2 rounded-xl text-2xl font-black uppercase tracking-tighter">
+                                                {paymentModal.session.tableId === 'TAKEAWAY' ? `ID #${paymentModal.session.id}` : `TABLE ${paymentModal.session.tableId}`}
+                                            </span>
+                                            {paymentModal.session.phone && (
+                                                <span className="text-white/40 text-lg font-bold">
+                                                    {paymentModal.session.phone}
+                                                </span>
+                                            )}
                                         </div>
+                                        <h4 className="text-7xl font-serif font-bold text-white tracking-tighter italic">
+                                            {paymentModal.session.customerName || (paymentModal.session.tableId === 'TAKEAWAY' ? 'Takeaway Guest' : 'Dine-in Guest')}
+                                        </h4>
                                     </div>
 
                                     <div className="pt-12 border-t border-white/5">

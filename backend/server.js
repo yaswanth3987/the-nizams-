@@ -155,7 +155,6 @@ app.put('/api/orders/:id/status', async (req, res) => {
         
         // Auto-update table status on billing/completion
         if (status === 'billed') {
-            await clearSession(updatedSession.tableId);
             const tStatus = await updateTableStatus(updatedSession.tableId, 'billing');
             io.emit('tableStatusUpdated', tStatus);
         } else if (status === 'completed') {
@@ -165,9 +164,15 @@ app.put('/api/orders/:id/status', async (req, res) => {
         }
 
         // Real-time notification for billing portal
-        if (status === 'billing_pending') {
+        if (status === 'billing_pending' || status === 'billed') {
             console.log("Order moved to billing:", req.params.id);
+            if (updatedSession.tableId !== 'TAKEAWAY') {
+                await updateTableStatus(updatedSession.tableId, 'billing');
+            }
             io.emit('NEW_BILLING_ORDER', updatedSession);
+            if (updatedSession.tableId !== 'TAKEAWAY') {
+                io.emit('tableStatusUpdated', { tableId: updatedSession.tableId, status: 'billing' });
+            }
         }
 
         io.emit('sessionUpdated', updatedSession);
@@ -270,6 +275,14 @@ app.put('/api/new-orders/:id/status', async (req, res) => {
         if ((status === 'accepted' || status === 'confirmed') && row && row.tableId && row.tableId !== 'TAKEAWAY') {
             const tStatus = await updateTableStatus(row.tableId, 'occupied');
             io.emit('tableStatusUpdated', tStatus);
+        }
+ 
+        // Trigger billing event if moved to settlement
+        if (status === 'billing_pending' || status === 'billed') {
+            io.emit('NEW_BILLING_ORDER', row);
+            if (row.tableId && row.tableId !== 'TAKEAWAY') {
+                await updateTableStatus(row.tableId, 'billing');
+            }
         }
 
         // Broadcast event to refresh New Orders and Table Sessions tabs

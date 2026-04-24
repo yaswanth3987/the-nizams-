@@ -45,7 +45,7 @@ export default function AdminDashboard() {
 
     // --- Define Callbacks first for Hook Stability ---
     const fetchSessions = useCallback(() => {
-        return fetch(`${API_URL}/orders?statuses=confirmed,active,ready,served,billed`)
+        return fetch(`${API_URL}/orders?statuses=confirmed,active,ready,served,billed,billing_pending`)
             .then(res => {
                 if(!res.ok) throw new Error("Orders API Failed");
                 return res.json();
@@ -336,7 +336,7 @@ export default function AdminDashboard() {
     const categoryCounts = {
         orders: newOrders.filter(o => (o.status === 'new' || o.status === 'pending') && o.orderType !== 'takeaway').length,
         confirmed: sessions.filter(s => ['confirmed', 'active', 'ready', 'served'].includes(s.status) && s.orderType !== 'takeaway').length,
-        billed: sessions.filter(s => s.status === 'billed' && s.orderType !== 'takeaway').length,
+        billed: sessions.filter(s => (s.status === 'billed' || s.status === 'billing_pending') && s.orderType !== 'takeaway').length,
         completed: sessions.filter(s => s.status === 'completed' && s.orderType !== 'takeaway').length,
         takeaway: newOrders.filter(o => o.orderType === 'takeaway' && (o.status === 'new' || o.status === 'pending')).length + sessions.filter(s => s.orderType === 'takeaway' && s.status !== 'completed').length,
         assistance: assistanceRequests.length,

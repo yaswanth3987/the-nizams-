@@ -107,6 +107,7 @@ if (isPg) {
             db.run(`CREATE TABLE IF NOT EXISTS daily_sales (id INTEGER PRIMARY KEY AUTOINCREMENT, date DATE NOT NULL UNIQUE, total_sales REAL NOT NULL, total_orders INTEGER NOT NULL, net_profit REAL DEFAULT 0, cash_collected REAL DEFAULT 0, card_collected REAL DEFAULT 0, upi_collected REAL DEFAULT 0, custom_collected REAL DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
             db.run(`ALTER TABLE daily_sales ADD COLUMN custom_collected REAL DEFAULT 0`, (err) => {});
             db.run(`CREATE TABLE IF NOT EXISTS item_sales (id INTEGER PRIMARY KEY AUTOINCREMENT, date DATE NOT NULL, itemName TEXT NOT NULL, quantitySold INTEGER NOT NULL, totalRevenue REAL NOT NULL, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(date, itemName))`);
+            db.run(`ALTER TABLE item_sales ADD COLUMN date DATE`, (err) => {}); // Migration for missing date column
             db.run(`CREATE TABLE IF NOT EXISTS assistance_requests (id INTEGER PRIMARY KEY AUTOINCREMENT, tableId TEXT NOT NULL, type TEXT DEFAULT 'staff', status TEXT DEFAULT 'pending', createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
             db.run(`ALTER TABLE assistance_requests ADD COLUMN type TEXT DEFAULT 'staff'`, (err) => {});
             db.run(`ALTER TABLE menu_items ADD COLUMN platterItems TEXT`, (err) => {});

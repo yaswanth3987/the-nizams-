@@ -40,7 +40,7 @@ export default function WaitersPortal() {
                 fetch(`${API_URL}/new-orders`),
                 fetch(`${API_URL}/assistance`),
                 fetch(`${API_URL}/menu`),
-                fetch(`${API_URL}/orders?statuses=confirmed,active,ready,served,billed`)
+                fetch(`${API_URL}/orders?statuses=confirmed,active,ready,served,billed,billing_pending`)
             ]);
             
             const [tablesData, ordersData, helpData, menuData, sessionsData] = await Promise.all([
@@ -125,7 +125,7 @@ export default function WaitersPortal() {
                 </div>
             </div>
 
-            <nav className="flex-1 space-y-2">
+            <nav className="flex-1 px-4 space-y-2 overflow-y-auto py-4">
                 {[
                     { id: 'tables', label: 'Tables', icon: LayoutGrid },
                     { id: 'orders', label: 'Orders', icon: ListOrdered },
@@ -193,7 +193,7 @@ export default function WaitersPortal() {
                     </div>
                 </header>
 
-                <div className="flex-1 overflow-y-auto p-8 space-y-12 no-scrollbar">
+                <div className="flex-1 overflow-y-auto p-8 space-y-12">
                     {/* Urgent Assistance */}
                     <section>
                         <h2 className="text-[#FFD700] text-2xl font-serif font-black mb-6 italic tracking-tight">Urgent Assistance</h2>
@@ -295,11 +295,11 @@ export default function WaitersPortal() {
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="text-[#FFD700] text-2xl font-serif font-black italic tracking-tight">Active Floor Orders</h2>
                             <div className="flex items-center gap-2 text-[#86a69d] text-[10px] font-black uppercase tracking-widest">
-                                Processing {activeOrders.filter(o => ['new', 'pending', 'accepted', 'confirmed', 'active', 'ready'].includes(o.status)).length}
+                                Processing {activeOrders.filter(o => ['new', 'pending', 'accepted', 'confirmed', 'active', 'ready', 'billed', 'billing_pending'].includes(o.status)).length}
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {activeOrders.filter(o => ['new', 'pending', 'accepted', 'confirmed', 'active', 'ready'].includes(o.status)).map(order => {
+                            {activeOrders.filter(o => !['completed', 'cancelled'].includes(o.status)).map(order => {
                                 const isNew = order.status === 'new' || order.status === 'pending';
                                 const isReady = order.status === 'ready';
                                 return (
@@ -331,6 +331,12 @@ export default function WaitersPortal() {
                                                         <span className="text-white/60 text-sm font-bold not-italic">£{(item.price * item.qty).toFixed(2)}</span>
                                                     </div>
                                                 ))}
+                                            </div>
+
+                                            {/* Live Bill Total Integration */}
+                                            <div className="flex justify-between items-center mb-8 px-2">
+                                                <div className="text-[10px] font-black text-[#86a69d] tracking-widest uppercase">Running Total</div>
+                                                <div className="text-3xl font-serif font-black text-[#FFD700]">£{Number(order.finalTotal).toFixed(2)}</div>
                                             </div>
 
                                                 <div className="flex flex-col gap-3">
@@ -368,13 +374,30 @@ export default function WaitersPortal() {
                                                                 Edit
                                                             </button>
                                                         </div>
+                                                    ) : (order.status === 'billed' || order.status === 'billing_pending') ? (
+                                                        <div className="flex flex-col gap-3">
+                                                            <div className="bg-[#FFD700]/10 border border-[#FFD700]/20 rounded-2xl p-4 text-center">
+                                                                <p className="text-[#FFD700] text-[10px] font-black uppercase tracking-[0.2em] mb-1">Status</p>
+                                                                <p className="text-white text-xs font-bold italic">Awaiting Settlement at Counter</p>
+                                                            </div>
+                                                            <button 
+                                                                onClick={() => { setSelectedTable(order.tableId); setView('table_details'); }}
+                                                                className="w-full bg-white/5 border border-white/10 text-white py-3 rounded-xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all"
+                                                            >
+                                                                View Order History
+                                                            </button>
+                                                        </div>
                                                     ) : (
                                                         <div className="flex gap-3">
                                                             <button 
-                                                                onClick={() => { setSelectedTable(order.tableId); setView('table_details'); }}
-                                                                className="flex-[2] bg-white/5 border border-white/10 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.1em] flex items-center justify-center gap-2 active:scale-95 transition-all"
+                                                                onClick={() => {
+                                                                    if (confirm(`Request final bill for Table ${order.tableId}? Total: £${Number(order.finalTotal).toFixed(2)}`)) {
+                                                                        handleUpdateOrderStatus(order.id, 'billing_pending', order._source);
+                                                                    }
+                                                                }}
+                                                                className="flex-[2] bg-[#FFD700] text-[#0F3A2F] py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.1em] flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg"
                                                             >
-                                                                <CreditCard size={14} /> View Bill
+                                                                <CreditCard size={14} /> Request Bill
                                                             </button>
                                                             <button 
                                                                 onClick={() => {
@@ -449,7 +472,7 @@ export default function WaitersPortal() {
                     <h1 className="text-2xl font-black text-white">Floor Mapping</h1>
                     <p className="text-[#86a69d] text-[10px] font-black uppercase tracking-[0.2em] mt-1">Real-time occupancy status</p>
                 </header>
-                <div className="flex-1 overflow-y-auto p-8 no-scrollbar">
+                <div className="flex-1 overflow-y-auto p-8">
                     {[{ title: 'Royal Tables', data: tTables }, { title: 'Private Boxes', data: bTables }, { title: 'Heritage Chowkies', data: cTables }].map(section => (
                         <div key={section.title} className="mb-12">
                             <h2 className="text-[#FFD700] text-sm font-black uppercase tracking-[0.3em] mb-6 flex items-center gap-4">
@@ -506,7 +529,7 @@ export default function WaitersPortal() {
                     </button>
                 </header>
 
-                <div className="flex-1 overflow-y-auto p-8 space-y-6 no-scrollbar">
+                <div className="flex-1 overflow-y-auto p-8 space-y-6">
                     {tableAssistance && (
                         <div className="bg-blue-600/20 border border-blue-500/50 rounded-[32px] p-8 flex items-center justify-between">
                             <div className="flex items-center gap-6">

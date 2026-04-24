@@ -46,7 +46,7 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                             <div key={order.id} className="bg-white/5 border border-accent/20 rounded-3xl p-8 flex flex-col shadow-2xl relative">
                                 <div className="absolute top-0 left-0 w-1.5 h-full bg-accent"></div>
                                 <div className="flex justify-between items-start mb-6 pl-4">
-                                    <h3 className="text-2xl font-serif font-bold text-white italic">{order.customerName || 'Guest'}</h3>
+                                    <h3 className="text-2xl font-serif font-bold text-white italic">{order.customerName || 'Takeaway Guest'}</h3>
                                     <span className="text-[10px] font-bold text-accent uppercase tracking-widest">NEW</span>
                                 </div>
 
@@ -91,9 +91,20 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                     <div className="space-y-6">
                         {preparing.map(order => (
                             <div key={order.id} className="bg-white/5 border border-white/10 rounded-3xl p-8 flex flex-col shadow-2xl relative h-[420px]">
-                                <div className="flex justify-between items-start mb-6">
-                                    <h3 className="text-2xl font-serif font-bold text-white italic">{order.customerName}</h3>
-                                    <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">TK-{order.id.toString().slice(-3)}</span>
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <span className="bg-[#FFD700] text-[#0F3A2F] px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest">
+                                            ID #{order.id}
+                                        </span>
+                                        {order.phone && (
+                                            <span className="text-[#86a69d] text-[10px] font-black uppercase tracking-widest bg-white/5 px-2 py-1 rounded-lg">
+                                                {order.phone}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <h3 className="text-white text-3xl font-serif font-bold italic truncate leading-tight">
+                                        {order.customerName || 'Takeaway Guest'}
+                                    </h3>
                                 </div>
 
                                 <div className="flex-1 space-y-3 overflow-y-auto no-scrollbar mb-6">
@@ -144,9 +155,20 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                     <div className="space-y-6">
                         {billed.map(order => (
                              <div key={order.id} className="bg-white/5 border border-white/10 rounded-3xl p-8 flex flex-col shadow-2xl relative h-[420px] group transition-all hover:bg-white/10">
-                                <div className="flex justify-between items-start mb-6">
-                                    <h3 className="text-2xl font-serif font-bold text-white italic">{order.customerName}</h3>
-                                    <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">COLLECT</span>
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <span className="bg-[#FFD700] text-[#0F3A2F] px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest">
+                                            ID #{order.id}
+                                        </span>
+                                        {order.phone && (
+                                            <span className="text-[#86a69d] text-[10px] font-black uppercase tracking-widest bg-white/5 px-2 py-1 rounded-lg">
+                                                {order.phone}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <h3 className="text-white text-3xl font-serif font-bold italic truncate leading-tight">
+                                        {order.customerName || 'Takeaway Guest'}
+                                    </h3>
                                 </div>
 
                                 <div className="flex-1 space-y-3 overflow-y-auto no-scrollbar mb-6">
@@ -174,12 +196,18 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                                     </button>
                                     <button 
                                         onClick={() => {
+                                            if (order.status === 'billing_pending') return;
                                             console.log("Order moved to billing:", order.id);
                                             updateStatus(order.id, 'billing_pending', false);
                                         }}
-                                        className="flex-[2] py-4 rounded-xl font-bold text-xs bg-white/10 text-emerald-400 border border-emerald-400/20 uppercase hover:bg-emerald-500 hover:text-black transition-all"
+                                        disabled={order.status === 'billing_pending'}
+                                        className={`flex-[2] py-4 rounded-xl font-bold text-xs uppercase transition-all ${
+                                            order.status === 'billing_pending' 
+                                            ? 'bg-emerald-500/20 text-emerald-400 cursor-default border border-emerald-500/30' 
+                                            : 'bg-white/10 text-emerald-400 border border-emerald-400/20 hover:bg-emerald-500 hover:text-black'
+                                        }`}
                                     >
-                                        Send to Billing
+                                        {order.status === 'billing_pending' ? 'In Billing Queue' : 'Send to Billing'}
                                     </button>
                                 </div>
                             </div>

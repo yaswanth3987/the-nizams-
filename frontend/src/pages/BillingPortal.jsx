@@ -43,10 +43,17 @@ function PaymentModal({ session, onClose, onComplete }) {
             <div className="bg-white rounded-[40px] w-full max-w-2xl overflow-hidden shadow-2xl border border-white/20 animate-in zoom-in-95 duration-300">
                 <div className="bg-[#0B3A2E] p-8 text-white flex justify-between items-center">
                     <div>
-                        <h2 className="text-3xl font-serif font-black italic">Final Settlement</h2>
-                        <p className="text-[#C29958] text-[10px] font-black tracking-widest uppercase mt-1">
-                            {session.tableId === 'TAKEAWAY' ? 'Takeaway Order' : `Table ${session.tableId}`} • #{session.id}
-                        </p>
+                        <div className="flex items-center gap-3 mb-2">
+                            <span className="bg-[#C29958] text-[#0B3A2E] px-4 py-1.5 rounded-xl text-lg font-black uppercase tracking-tighter shadow-lg">
+                                {session.tableId === 'TAKEAWAY' ? `ID #${session.id}` : `TABLE ${session.tableId}`}
+                            </span>
+                            {session.phone && (
+                                <span className="text-white/60 text-xs font-bold tracking-widest bg-white/10 px-3 py-1.5 rounded-xl">
+                                    {session.phone}
+                                </span>
+                            )}
+                        </div>
+                        <h2 className="text-4xl font-serif font-black italic">{session.customerName || (session.tableId === 'TAKEAWAY' ? 'Takeaway Guest' : 'Dine-in Guest')}</h2>
                     </div>
                     <button onClick={onClose} className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all">
                         <X size={24} />
@@ -162,17 +169,17 @@ export default function BillingPortal() {
     }, []);
 
     const fetchBillingSessions = useCallback(() => {
-        // SUPER-FETCH: Fetch both sessions and raw takeaway orders to ensure NO orders are hidden
-        const allActiveStatuses = 'billed,active,ready,served,accepted,confirmed,new,pending,billing_pending';
+        // SUPER-FETCH: Pull every active session and order to ensure 100% visibility
         Promise.all([
-            fetch(`${API_URL}/orders?statuses=${allActiveStatuses}`).then(res => res.json()),
-            fetch(`${API_URL}/new-orders?statuses=new,pending,ready,billing_pending`).then(res => res.json())
+            fetch(`${API_URL}/orders?statuses=confirmed,active,ready,served,billed,billing_pending,accepted`).then(res => res.json()),
+            fetch(`${API_URL}/new-orders?statuses=new,pending,ready,billing_pending,accepted`).then(res => res.json())
         ])
             .then(([sessionsData, newOrdersData]) => {
-                // Ensure raw takeaway orders that are ready or pending billing get pulled in
-                const rawTakeaways = newOrdersData.filter(o => o.status === 'billing_pending' || (o.tableId === 'TAKEAWAY' && o.status === 'ready'));
-                const combined = [...sessionsData, ...rawTakeaways];
-                const activeOnes = combined.filter(s => s.status !== 'completed');
+                const combined = [
+                    ...(Array.isArray(sessionsData) ? sessionsData : []),
+                    ...(Array.isArray(newOrdersData) ? newOrdersData : [])
+                ];
+                const activeOnes = combined.filter(s => s.status !== 'completed' && s.status !== 'cancelled');
                 
                 // Deduplicate just in case
                 const uniqueMap = new Map();
@@ -225,18 +232,10 @@ export default function BillingPortal() {
 
     const handlePrint = (session) => {
         const printWindow = window.open('', '_blank', 'width=450,height=600');
-        const itemsHtml = session.items.map(item => `
-            <div style="display: grid; grid-template-columns: repeat(12, 1fr); font-size: 11px; margin-bottom: 4px;">
-                <span style="grid-column: span 6;">${item.name.toUpperCase()}</span>
-                <span style="grid-column: span 3; text-align: center;">${item.qty}</span>
-                <span style="grid-column: span 3; text-align: right;">${(item.price * item.qty).toFixed(2)}</span>
-            </div>
-        `).join('');
-
         printWindow.document.write(`
             <html>
                 <head>
-                    <title>Order #${session.id}</title>
+                    <title>Bill #${session.id}</title>
                     <style>
                         body { font-family: monospace; padding: 20px; color: black; max-width: 300px; margin: auto; text-transform: uppercase; }
                         .header { text-align: center; margin-bottom: 15px; }
@@ -247,20 +246,29 @@ export default function BillingPortal() {
                 <body>
                     <div class="header">
                         <img src="/logo-with-name.png" style="width: 120px; filter: grayscale(1); margin-bottom: 5px;" />
+                        <div style="font-size: 11px; margin-bottom: 5px;">41-43 HIGH ST, HOUNSLOW TW3 1RH</div>
                         <div class="dashed"></div>
                         <p style="font-weight: bold; margin: 5px 0;">Order ID: ${session.id}</p>
                         <p style="font-weight: bold; margin: 5px 0;">Table: ${session.tableId === 'TAKEAWAY' ? 'TAKEAWAY' : session.tableId}</p>
-                        ${session.customerName ? `<p style="font-weight: bold; margin: 5px 0;">Guest: ${session.customerName}</p>` : ''}
+                        <p style="font-weight: bold; margin: 5px 0;">Guest: ${session.customerName || (session.tableId === 'TAKEAWAY' ? 'Takeaway Guest' : 'Dine-in Guest')}</p>
                         <p style="font-size: 10px; margin: 5px 0;">Date: ${new Date().toLocaleString('en-GB')}</p>
                         <div class="dashed"></div>
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(12, 1fr); font-weight: bold; font-size: 11px; margin-bottom: 10px;">
-                        <span style="grid-column: span 6;">ITEM</span>
-                        <span style="grid-column: span 3; text-align: center;">QTY</span>
-                        <span style="grid-column: span 3; text-align: right;">PRICE</span>
+                    <div style="display: grid; grid-template-columns: repeat(12, 1fr); font-weight: bold; font-size: 13px; margin-bottom: 12px; border-bottom: 2px solid black; padding-bottom: 8px;">
+                        <span style="grid-column: span 5;">ITEM</span>
+                        <span style="grid-column: span 2; text-align: center;">QTY</span>
+                        <span style="grid-column: span 2; text-align: center;">PRICE</span>
+                        <span style="grid-column: span 3; text-align: right;">AMOUNT</span>
                     </div>
                     <div class="items">
-                        ${itemsHtml}
+                        ${session.items.map(item => `
+                            <div style="display: grid; grid-template-columns: repeat(12, 1fr); font-size: 13px; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px;">
+                                <span style="grid-column: span 5; font-weight: 500;">${item.name.toUpperCase()}</span>
+                                <span style="grid-column: span 2; text-align: center; font-weight: bold;">${item.qty}</span>
+                                <span style="grid-column: span 2; text-align: center;">${Number(item.price).toFixed(2)}</span>
+                                <span style="grid-column: span 3; text-align: right; font-weight: bold;">${(item.price * item.qty).toFixed(2)}</span>
+                            </div>
+                        `).join('')}
                     </div>
                     <div class="dashed"></div>
                     <div class="total">
@@ -283,7 +291,11 @@ export default function BillingPortal() {
         s.customerName?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const isPending = (s) => s.status === 'billed' || s.status === 'billing_pending' || s.status === 'served' || (s.tableId === 'TAKEAWAY' && s.status === 'ready');
+    const isPending = (s) => 
+        s.status === 'billed' || 
+        s.status === 'billing_pending' || 
+        s.status === 'ready' || 
+        s.status === 'served';
 
     return (
         <div className="min-h-screen bg-[#F6EFE6] text-[#0B3A2E] font-sans flex flex-col relative overflow-hidden">
@@ -357,7 +369,21 @@ export default function BillingPortal() {
 
                                 <div className="mb-8">
                                     <div className="flex items-center justify-between mb-1">
-                                        <h3 className="text-3xl font-serif font-black italic">{session.tableId === 'TAKEAWAY' ? 'Takeaway' : `Table ${session.tableId}`}</h3>
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className="bg-[#0B3A2E] text-white px-4 py-2 rounded-xl text-lg font-black uppercase tracking-tighter">
+                                                    {session.tableId === 'TAKEAWAY' ? `ID #${session.id}` : `TABLE ${session.tableId}`}
+                                                </div>
+                                                {session.phone && (
+                                                    <span className="text-[#0B3A2E]/40 text-xs font-bold bg-black/5 px-3 py-2 rounded-xl">
+                                                        {session.phone}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <h3 className="text-4xl font-serif font-black text-[#0B3A2E] italic">
+                                                {session.customerName || (session.tableId === 'TAKEAWAY' || session.orderType === 'takeaway' ? 'Takeaway Guest' : 'Dine-in Guest')}
+                                            </h3>
+                                        </div>
                                         {session.status === 'billing_pending' && (
                                             <span className="flex h-3 w-3 relative">
                                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C29958] opacity-75"></span>
