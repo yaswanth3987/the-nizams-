@@ -3,6 +3,7 @@ const http = require('http');
 const cors = require('cors');
 const path = require('path');
 const { Server } = require('socket.io');
+const ExcelJS = require('exceljs');
 const { 
     getOrdersByStatus, createOrder, addOrderToSession, updateOrderStatus, deleteOrder, clearTableOrders, 
     getAnalyticsDaily, getItemAnalytics, getAssistanceRequests, createAssistanceRequest, 
@@ -13,7 +14,7 @@ const {
     getTableStatuses, updateTableStatus, allocateSession, getActiveSession, clearSession,
     getSessionsByTable, getOrdersByTable, updatePrepTime, updateOrderItems, resetAllSalesAndSessions,
     getUnavailabilitySchedules, createUnavailabilitySchedule, updateUnavailabilitySchedule, deleteUnavailabilitySchedule, processSchedulesTask,
-    finalizePayment
+    finalizePayment, getInventory
 } = require('./database');
 
 const app = express();
@@ -351,6 +352,77 @@ app.put('/api/table-status/:tableId', async (req, res) => {
 });
 
 // Analytics APIs
+app.get('/api/inventory', async (req, res) => {
+    try {
+        const inventory = await getInventory();
+        res.json(inventory);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/download-inventory', async (req, res) => {
+    try {
+        const inventory = await getInventory();
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Inventory');
+
+        // Define columns
+        worksheet.columns = [
+            { header: 'Item Name', key: 'name', width: 25 },
+            { header: 'Category', key: 'category', width: 15 },
+            { header: 'Quantity', key: 'stock', width: 12 },
+            { header: 'Unit', key: 'unit', width: 10 },
+            { header: 'Cost Price', key: 'price', width: 15 },
+            { header: 'Total Value', key: 'total', width: 15 },
+            { header: 'Status', key: 'status', width: 15 }
+        ];
+
+        // Style the header
+        worksheet.getRow(1).font = { bold: true };
+        worksheet.getRow(1).alignment = { horizontal: 'center' };
+
+        // Add rows
+        inventory.forEach(item => {
+            const stock = parseFloat(item.stock || 0);
+            const price = parseFloat(item.price || 0);
+            const minStock = parseFloat(item.minStock || 10);
+            const total = stock * price;
+            const status = stock <= minStock ? 'LOW STOCK' : 'IN STOCK';
+
+            const row = worksheet.addRow({
+                name: item.name,
+                category: item.category,
+                stock: stock,
+                unit: item.unit,
+                price: price,
+                total: total,
+                status: status
+            });
+
+            // Color code status
+            if (status === 'LOW STOCK') {
+                row.getCell('status').font = { color: { argb: 'FFFF0000' }, bold: true };
+            }
+        });
+
+        // Add total summary at bottom
+        const totalInventoryValue = inventory.reduce((sum, item) => sum + (parseFloat(item.stock || 0) * parseFloat(item.price || 0)), 0);
+        worksheet.addRow({});
+        worksheet.addRow({ name: 'TOTAL INVENTORY VALUE', total: totalInventoryValue }).font = { bold: true };
+
+        // Set response headers
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=Inventory_Report_' + new Date().toISOString().split('T')[0] + '.xlsx');
+
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (err) {
+        console.error('Inventory Download Error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.get('/api/analytics/daily', async (req, res) => {
     try {
         const stats = await getAnalyticsDaily(req.query.date); // optional date filter

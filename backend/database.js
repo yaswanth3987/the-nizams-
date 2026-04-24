@@ -85,6 +85,7 @@ if (isPg) {
             await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "availableFrom" TEXT;`).catch(() => {});
             await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "availableTo" TEXT;`).catch(() => {});
             await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "platterItems" TEXT;`).catch(() => {});
+            await pgPool.query(`CREATE TABLE IF NOT EXISTS inventory (id SERIAL PRIMARY KEY, name TEXT NOT NULL, stock REAL NOT NULL, unit TEXT, "minStock" REAL DEFAULT 10, category TEXT, price REAL, "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
         } catch (err) { console.error('Error creating PG tables', err); }
     };
     initPg();
@@ -146,6 +147,7 @@ if (isPg) {
             db.run(`ALTER TABLE menu_items ADD COLUMN isNew BOOLEAN DEFAULT 0`, (err) => {});
             db.run(`ALTER TABLE menu_items ADD COLUMN availableFrom TEXT`, (err) => {});
             db.run(`ALTER TABLE menu_items ADD COLUMN availableTo TEXT`, (err) => {});
+            db.run(`CREATE TABLE IF NOT EXISTS inventory (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, stock REAL NOT NULL, unit TEXT, minStock REAL DEFAULT 10, category TEXT, price REAL, updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
         }
     });
 }
@@ -911,6 +913,11 @@ const processSchedulesTask = async () => {
     return changeCount;
 };
 
+const getInventory = async () => {
+    const res = await runQuery('SELECT * FROM inventory ORDER BY name ASC');
+    return res.rows;
+};
+
 module.exports = {
     db, pgPool, runQuery, isPg, getOrdersByStatus, createOrder, addOrderToSession, updateOrderStatus,
     deleteOrder, deleteSession, clearTableOrders, getAnalyticsDaily, getItemAnalytics, resetAllSalesAndSessions,
@@ -921,5 +928,5 @@ module.exports = {
     getTableStatuses, getTableStatus, updateTableStatus, getSessionsByTable, getOrdersByTable,
     allocateSession, getActiveSession, clearSession, updatePrepTime, updateOrderItems,
     getUnavailabilitySchedules, createUnavailabilitySchedule, updateUnavailabilitySchedule, deleteUnavailabilitySchedule, processSchedulesTask,
-    finalizePayment
+    finalizePayment, getInventory
 };

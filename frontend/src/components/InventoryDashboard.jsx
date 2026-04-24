@@ -58,6 +58,26 @@ export default function InventoryDashboard() {
         window.print();
     };
 
+    const handleDownloadInventory = async () => {
+        try {
+            const response = await fetch(`${API_URL}/download-inventory`);
+            if (!response.ok) throw new Error('Download failed');
+            
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Inventory_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (err) {
+            console.error("Export Error:", err);
+            alert("Failed to export inventory. Please check server connection.");
+        }
+    };
+
     const [now] = useState(() => Date.now());
 
     // Filter Logic
@@ -344,12 +364,20 @@ export default function InventoryDashboard() {
                                 Generates a full comprehensive summary of the filtered performance for external reporting or filing.
                             </p>
                         </div>
-                        <button 
-                            onClick={handlePrintEndOfDay}
-                            className="w-full bg-accent text-black font-black uppercase tracking-[0.3em] py-4 rounded-xl hover:bg-[#FFC300] flex justify-center items-center gap-3 shadow-[0_10px_20px_rgba(255,215,0,0.2)] transition-all glow-gold active:scale-95"
-                        >
-                            <Printer size={16} /> Generate Z-Report
-                        </button>
+                        <div className="flex gap-4">
+                            <button 
+                                onClick={handlePrintEndOfDay}
+                                className="flex-1 bg-white text-black font-black uppercase tracking-[0.3em] py-4 rounded-xl hover:bg-gray-200 flex justify-center items-center gap-3 transition-all active:scale-95"
+                            >
+                                <Printer size={16} /> Z-Report
+                            </button>
+                            <button 
+                                onClick={handleDownloadInventory}
+                                className="flex-1 bg-accent text-black font-black uppercase tracking-[0.3em] py-4 rounded-xl hover:bg-[#FFC300] flex justify-center items-center gap-3 shadow-[0_10px_20px_rgba(255,215,0,0.2)] transition-all glow-gold active:scale-95"
+                            >
+                                <Package size={16} /> Export XLS
+                            </button>
+                        </div>
                     </div>
 
                     {/* E. Item-wise Sales Tracking (All-time or today based on itemAnalytics) */}
