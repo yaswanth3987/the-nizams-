@@ -48,7 +48,7 @@ export default function AdminActiveRequests({ assistanceRequests = [], updateAss
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-8">
                 {activeRequests.length === 0 && (
                     <div className="bg-nizam-card/30 border border-white/5 rounded-3xl flex flex-col justify-center items-center h-[420px] text-nizam-textMuted p-12 text-center shadow-inner">
                         <div className="w-20 h-20 bg-nizam-card rounded-full flex items-center justify-center mb-6 border border-nizam-gold/10">
@@ -112,7 +112,7 @@ function RequestCard({ req, onAttend, onClear }) {
     const isUrgent = req.state === 'urgent';
 
     return (
-        <div className={`bg-[#111311] rounded-[2rem] border relative flex flex-col p-10 transition-all shadow-2xl group ${
+        <div className={`bg-[#111311] rounded-[2rem] border relative flex flex-col p-10 transition-all shadow-2xl overflow-hidden group ${
             isCritical ? 'border-[#7f1d1d]/40 animate-pulse-gold' : 
             isUrgent ? 'border-nizam-gold/40 shadow-[inset_0_0_40px_rgba(198,168,124,0.05)] animate-pulse-gold' : 
             !isAttended ? 'border-accent/30 animate-pulse-gold' :
