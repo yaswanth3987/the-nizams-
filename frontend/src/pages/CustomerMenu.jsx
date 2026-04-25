@@ -721,7 +721,7 @@ export default function CustomerMenu() {
     };
 
     const renderPremiumMenu = () => {
-        const featuredItem = (menu || []).find(i => i.name === 'Nizami Dum Biryani') || (menu || [])[0];
+        const featuredItem = (menu || []).find(i => i.name === 'NIZAMI LAMB CURRY (REGULAR)') || (menu || []).find(i => i.name === 'Nizami Dum Biryani') || (menu || [])[0];
 
         return (
             <div 
