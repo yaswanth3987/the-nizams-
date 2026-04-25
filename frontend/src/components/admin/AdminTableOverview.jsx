@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Layers, RotateCcw, AlertCircle, Sparkles } from 'lucide-react';
+import { Layers, RotateCcw, AlertCircle, Sparkles, X } from 'lucide-react';
 
 export default function AdminTableOverview({ socket, API_URL }) {
     const tableCategories = [
@@ -19,6 +19,7 @@ export default function AdminTableOverview({ socket, API_URL }) {
             updatedAt: null
         }))
     );
+    const [resetModal, setResetModal] = useState({ isOpen: false, tableId: null });
 
     const fetchStatuses = useCallback(async () => {
         try {
@@ -64,7 +65,14 @@ export default function AdminTableOverview({ socket, API_URL }) {
     }, [socket, fetchStatuses]);
 
     const handleReset = async (tableId) => {
-        if (!confirm(`Emergency reset Table ${tableId}? This action clears all active session data.`)) return;
+        setResetModal({ isOpen: true, tableId });
+    };
+
+    const confirmReset = async () => {
+        const tableId = resetModal.tableId;
+        if (!tableId) return;
+
+        setResetModal({ isOpen: false, tableId: null });
         
         // Optimistic update
         setTableStatuses(prev => prev.map(t => 
@@ -74,7 +82,6 @@ export default function AdminTableOverview({ socket, API_URL }) {
         try {
             const res = await fetch(`${API_URL}/tables/${encodeURIComponent(tableId)}/orders`, { method: 'DELETE' });
             if (!res.ok) throw new Error('Failed to reset table');
-            // If the socket is slow, we already have the optimistic update
         } catch (err) {
             console.error('Reset failed:', err);
             fetchStatuses(); // Revert on error
@@ -194,6 +201,52 @@ export default function AdminTableOverview({ socket, API_URL }) {
                     <p className="text-[13px] text-white/40 leading-loose italic max-w-4xl font-medium">Seating statuses update in real-time based on guest check-ins and billing events. The master override (Reset) should be reserved for exceptional operational cleanup to maintain data integrity across the concierge shard.</p>
                 </div>
             </div>
+
+            {/* Custom Premium Reset Modal */}
+            {resetModal.isOpen && (
+                <div className="fixed inset-0 bg-black/95 backdrop-blur-2xl z-[100] flex items-center justify-center p-8 animate-in fade-in duration-500">
+                    <div className="bg-[#111311] border border-white/5 rounded-[3rem] w-full max-w-lg overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.8)] relative">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500/50 to-transparent"></div>
+                        
+                        <div className="p-12 border-b border-white/5 text-center relative bg-black/40">
+                            <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-red-500/20">
+                                <RotateCcw className="w-10 h-10 text-red-500" />
+                            </div>
+                            <h3 className="text-5xl font-serif text-white font-bold tracking-tight mb-2 italic">Reset Protocol</h3>
+                            <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] italic">Table {resetModal.tableId} Purge Authorization</p>
+                            <button 
+                                onClick={() => setResetModal({ isOpen: false, tableId: null })}
+                                className="absolute right-10 top-12 w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white/20 hover:text-white transition-all"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="p-12 space-y-10">
+                            <p className="text-[15px] text-white/40 leading-relaxed text-center italic font-medium">
+                                Are you sure you want to <span className="text-red-500 font-bold uppercase tracking-widest px-2 underline decoration-red-500/30 underline-offset-8">RESET</span> Table <span className="text-white font-bold">{resetModal.tableId}</span>?
+                                <br/><br/>
+                                This will permanently clear all active orders, sessions, and mark the unit as <span className="text-emerald-400 font-bold italic">FREE</span>. This action cannot be reversed.
+                            </p>
+
+                            <div className="grid grid-cols-2 gap-6 pt-4">
+                                <button 
+                                    onClick={() => setResetModal({ isOpen: false, tableId: null })}
+                                    className="h-20 bg-white/5 hover:bg-white/10 text-white py-4 rounded-[2rem] font-black uppercase tracking-[0.4em] text-[10px] transition-all border border-white/5"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    onClick={confirmReset}
+                                    className="h-20 bg-gradient-to-r from-red-600 to-red-800 text-white py-4 rounded-[2rem] font-black uppercase tracking-[0.4em] text-[10px] shadow-[0_15px_30px_rgba(220,38,38,0.2)] hover:brightness-125 transition-all flex justify-center items-center gap-4"
+                                >
+                                    Confirm Reset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
