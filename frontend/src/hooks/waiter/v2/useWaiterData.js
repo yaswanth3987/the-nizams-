@@ -18,7 +18,7 @@ export const useWaiterData = () => {
                 fetch(`${API_URL}/new-orders`),
                 fetch(`${API_URL}/assistance`),
                 fetch(`${API_URL}/menu`),
-                fetch(`${API_URL}/orders?statuses=new,pending,confirmed,active,ready,served,billed,billing_pending`)
+                fetch(`${API_URL}/orders?statuses=confirmed,active,ready,served,billed,billing_pending`)
             ]);
             
             const [tablesData, ordersData, helpData, menuData, sessionsData] = await Promise.all([
@@ -129,7 +129,7 @@ export const useWaiterData = () => {
 
     const badgeCounts = useMemo(() => ({
         tables: [...new Set([...(assistanceRequests || []).map(r => (r?.tableId || '').toString().toUpperCase()), ...(activeOrders || []).filter(o => o?.status === 'ready').map(o => (o?.tableId || '').toString().toUpperCase())])].filter(Boolean).length,
-        takeaway: activeOrders.filter(o => o.orderType === 'takeaway' && o.status !== 'completed').length,
+        takeaway: activeOrders.filter(o => o.orderType === 'takeaway' && (o.status === 'new' || o.status === 'pending')).length,
         new_orders: activeOrders.filter(o => o._source === 'new' && (o.status === 'new' || o.status === 'pending')).length,
         ready: activeOrders.filter(o => o.status === 'ready').length,
         confirmed: activeOrders.filter(o => ['confirmed', 'active', 'ready', 'served'].includes(o.status) && o.orderType !== 'takeaway').length,

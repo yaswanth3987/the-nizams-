@@ -88,7 +88,6 @@ if (isPg) {
             await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "availableTo" TEXT;`).catch(() => {});
             await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "platterItems" TEXT;`).catch(() => {});
             await pgPool.query(`CREATE TABLE IF NOT EXISTS inventory (id SERIAL PRIMARY KEY, name TEXT NOT NULL, stock REAL NOT NULL, unit TEXT, "minStock" REAL DEFAULT 10, category TEXT, price REAL, "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
-            await pgPool.query(`CREATE TABLE IF NOT EXISTS categories (id SERIAL PRIMARY KEY, name TEXT NOT NULL UNIQUE, subtitle TEXT);`);
         } catch (err) { console.error('Error creating PG tables', err); }
     };
     initPg();
@@ -99,63 +98,60 @@ if (isPg) {
         if (err) console.error('Error opening local SQLite database', err.message);
         else {
             console.log('Connected to the local SQLite database.');
-            db.serialize(() => {
-                db.run(`CREATE TABLE IF NOT EXISTS categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, subtitle TEXT);`);
-                db.run('PRAGMA journal_mode=WAL'); // Enable WAL mode for better concurrency support (multiple readers, one writer)
-                db.run(`CREATE TABLE IF NOT EXISTS menu_items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, price REAL NOT NULL, category TEXT NOT NULL, image TEXT, description TEXT, isAvailable BOOLEAN DEFAULT 1, unavailableUntil DATETIME, isPopular BOOLEAN DEFAULT 0, isRecommended BOOLEAN DEFAULT 0, isBestSeller BOOLEAN DEFAULT 0, isNew BOOLEAN DEFAULT 0, availableFrom TEXT, availableTo TEXT, platterItems TEXT)`);
-                db.run(`CREATE TABLE IF NOT EXISTS table_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, tableId TEXT NOT NULL, items TEXT NOT NULL, finalTotal REAL NOT NULL, subtotal REAL DEFAULT 0, serviceCharge REAL DEFAULT 0, status TEXT DEFAULT 'active', createdAt DATETIME DEFAULT CURRENT_TIMESTAMP, settled BOOLEAN DEFAULT 0, paymentDetails TEXT)`);
-                db.run(`ALTER TABLE table_sessions RENAME COLUMN net TO subtotal`, (err) => {});
-                db.run(`ALTER TABLE table_sessions RENAME COLUMN vat TO serviceCharge`, (err) => {});
-                db.run(`ALTER TABLE table_sessions RENAME COLUMN total TO finalTotal`, (err) => {});
-                db.run(`ALTER TABLE table_sessions ADD COLUMN orderType TEXT DEFAULT 'dine-in'`, (err) => {});
-                db.run(`ALTER TABLE table_sessions ADD COLUMN customerName TEXT`, (err) => {});
-                db.run(`ALTER TABLE table_sessions ADD COLUMN phone TEXT`, (err) => {});
-                db.run(`ALTER TABLE table_sessions ADD COLUMN sessionId TEXT`, (err) => {});
-                db.run(`ALTER TABLE table_sessions ADD COLUMN prepTime INTEGER`, (err) => {});
-                db.run(`ALTER TABLE table_sessions ADD COLUMN prepStartedAt DATETIME`, (err) => {});
-                db.run(`ALTER TABLE table_sessions ADD COLUMN settled BOOLEAN DEFAULT 0`, (err) => {});
-                db.run(`ALTER TABLE table_sessions ADD COLUMN paymentDetails TEXT`, (err) => {});
+            db.run('PRAGMA journal_mode=WAL'); // Enable WAL mode for better concurrency support (multiple readers, one writer)
+            db.run(`CREATE TABLE IF NOT EXISTS menu_items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, price REAL NOT NULL, category TEXT NOT NULL, image TEXT, description TEXT, isAvailable BOOLEAN DEFAULT 1, unavailableUntil DATETIME, isPopular BOOLEAN DEFAULT 0, isRecommended BOOLEAN DEFAULT 0, isBestSeller BOOLEAN DEFAULT 0, isNew BOOLEAN DEFAULT 0, availableFrom TEXT, availableTo TEXT, platterItems TEXT)`);
+            db.run(`CREATE TABLE IF NOT EXISTS table_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, tableId TEXT NOT NULL, items TEXT NOT NULL, finalTotal REAL NOT NULL, subtotal REAL DEFAULT 0, serviceCharge REAL DEFAULT 0, status TEXT DEFAULT 'active', createdAt DATETIME DEFAULT CURRENT_TIMESTAMP, settled BOOLEAN DEFAULT 0, paymentDetails TEXT)`);
+            db.run(`ALTER TABLE table_sessions RENAME COLUMN net TO subtotal`, (err) => {});
+            db.run(`ALTER TABLE table_sessions RENAME COLUMN vat TO serviceCharge`, (err) => {});
+            db.run(`ALTER TABLE table_sessions RENAME COLUMN total TO finalTotal`, (err) => {});
+            db.run(`ALTER TABLE table_sessions ADD COLUMN orderType TEXT DEFAULT 'dine-in'`, (err) => {});
+            db.run(`ALTER TABLE table_sessions ADD COLUMN customerName TEXT`, (err) => {});
+            db.run(`ALTER TABLE table_sessions ADD COLUMN phone TEXT`, (err) => {});
+            db.run(`ALTER TABLE table_sessions ADD COLUMN sessionId TEXT`, (err) => {});
+            db.run(`ALTER TABLE table_sessions ADD COLUMN prepTime INTEGER`, (err) => {});
+            db.run(`ALTER TABLE table_sessions ADD COLUMN prepStartedAt DATETIME`, (err) => {});
+            db.run(`ALTER TABLE table_sessions ADD COLUMN settled BOOLEAN DEFAULT 0`, (err) => {});
+            db.run(`ALTER TABLE table_sessions ADD COLUMN paymentDetails TEXT`, (err) => {});
 
-                db.run(`CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY AUTOINCREMENT, tableId TEXT NOT NULL, items TEXT NOT NULL, finalTotal REAL NOT NULL, subtotal REAL DEFAULT 0, serviceCharge REAL DEFAULT 0, status TEXT DEFAULT 'new', createdAt DATETIME DEFAULT CURRENT_TIMESTAMP, settled BOOLEAN DEFAULT 0, paymentDetails TEXT)`);
-                db.run(`ALTER TABLE orders RENAME COLUMN net TO subtotal`, (err) => {});
-                db.run(`ALTER TABLE orders RENAME COLUMN vat TO serviceCharge`, (err) => {});
-                db.run(`ALTER TABLE orders RENAME COLUMN total TO finalTotal`, (err) => {});
-                db.run(`ALTER TABLE orders ADD COLUMN orderType TEXT DEFAULT 'dine-in'`, (err) => {});
-                db.run(`ALTER TABLE orders ADD COLUMN customerName TEXT`, (err) => {});
-                db.run(`ALTER TABLE orders ADD COLUMN phone TEXT`, (err) => {});
-                db.run(`ALTER TABLE orders ADD COLUMN sessionId TEXT`, (err) => {});
-                db.run(`ALTER TABLE orders ADD COLUMN prepTime INTEGER`, (err) => {});
-                db.run(`ALTER TABLE orders ADD COLUMN prepStartedAt DATETIME`, (err) => {});
-                db.run(`ALTER TABLE orders ADD COLUMN settled BOOLEAN DEFAULT 0`, (err) => {});
-                db.run(`ALTER TABLE orders ADD COLUMN paymentDetails TEXT`, (err) => {});
-                
-                db.run(`CREATE TABLE IF NOT EXISTS table_status (tableId TEXT PRIMARY KEY, status TEXT NOT NULL, updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
-                db.run(`CREATE TABLE IF NOT EXISTS active_sessions (tableId TEXT PRIMARY KEY, sessionId TEXT NOT NULL, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
-                db.run(`CREATE TABLE IF NOT EXISTS qr_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, seating_id TEXT NOT NULL, session_token TEXT NOT NULL, status TEXT DEFAULT 'ACTIVE', start_time DATETIME DEFAULT CURRENT_TIMESTAMP, end_time DATETIME)`);
-                db.run(`CREATE TABLE IF NOT EXISTS waitlist (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, party_size INTEGER NOT NULL, phone TEXT NOT NULL, status TEXT DEFAULT 'waiting', createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
-                db.run(`CREATE TABLE IF NOT EXISTS daily_sales (id INTEGER PRIMARY KEY AUTOINCREMENT, date DATE NOT NULL UNIQUE, total_sales REAL NOT NULL, total_orders INTEGER NOT NULL, net_profit REAL DEFAULT 0, cash_collected REAL DEFAULT 0, card_collected REAL DEFAULT 0, upi_collected REAL DEFAULT 0, custom_collected REAL DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
-                db.run(`ALTER TABLE daily_sales ADD COLUMN custom_collected REAL DEFAULT 0`, (err) => {});
-                db.run(`CREATE TABLE IF NOT EXISTS item_sales (id INTEGER PRIMARY KEY AUTOINCREMENT, date DATE NOT NULL, itemName TEXT NOT NULL, quantitySold INTEGER NOT NULL, totalRevenue REAL NOT NULL, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(date, itemName))`);
-                db.run(`ALTER TABLE item_sales ADD COLUMN date DATE`, (err) => {}); // Migration for missing date column
-                db.run(`CREATE TABLE IF NOT EXISTS assistance_requests (id INTEGER PRIMARY KEY AUTOINCREMENT, tableId TEXT NOT NULL, type TEXT DEFAULT 'staff', status TEXT DEFAULT 'pending', createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
-                db.run(`ALTER TABLE assistance_requests ADD COLUMN type TEXT DEFAULT 'staff'`, (err) => {});
-                db.run(`ALTER TABLE menu_items ADD COLUMN platterItems TEXT`, (err) => {});
-                db.run(`CREATE TABLE IF NOT EXISTS employees (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, phone TEXT NOT NULL, shiftTimings TEXT, designation TEXT, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
-                db.run(`CREATE TABLE IF NOT EXISTS attendance (id INTEGER PRIMARY KEY AUTOINCREMENT, employeeId INTEGER NOT NULL, date DATE NOT NULL, checkInTime DATETIME DEFAULT CURRENT_TIMESTAMP, checkOutTime DATETIME, verified BOOLEAN DEFAULT 0, UNIQUE(date, employeeId))`);
-                db.run(`ALTER TABLE attendance ADD COLUMN checkOutTime DATETIME`, (err) => {});
-                db.run(`CREATE TABLE IF NOT EXISTS unavailability_schedules (id INTEGER PRIMARY KEY AUTOINCREMENT, itemIds TEXT, category TEXT, type TEXT NOT NULL, startDate DATE, startTime TEXT NOT NULL, endTime TEXT NOT NULL, daysOfWeek TEXT, isEnabled BOOLEAN DEFAULT 1, label TEXT, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
-                db.run(`ALTER TABLE employees ADD COLUMN shiftTimings TEXT`, (err) => {});
-                db.run(`ALTER TABLE employees ADD COLUMN designation TEXT`, (err) => {});
-                db.run(`ALTER TABLE employees ADD COLUMN pin TEXT`, (err) => {});
-                // Add badge columns to menu_items if they don't exist
-                db.run(`ALTER TABLE menu_items ADD COLUMN isPopular BOOLEAN DEFAULT 0`, (err) => {});
-                db.run(`ALTER TABLE menu_items ADD COLUMN isRecommended BOOLEAN DEFAULT 0`, (err) => {});
-                db.run(`ALTER TABLE menu_items ADD COLUMN isBestSeller BOOLEAN DEFAULT 0`, (err) => {});
-                db.run(`ALTER TABLE menu_items ADD COLUMN isNew BOOLEAN DEFAULT 0`, (err) => {});
-                db.run(`ALTER TABLE menu_items ADD COLUMN availableFrom TEXT`, (err) => {});
-                db.run(`ALTER TABLE menu_items ADD COLUMN availableTo TEXT`, (err) => {});
-                db.run(`CREATE TABLE IF NOT EXISTS inventory (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, stock REAL NOT NULL, unit TEXT, minStock REAL DEFAULT 10, category TEXT, price REAL, updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
-            });
+            db.run(`CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY AUTOINCREMENT, tableId TEXT NOT NULL, items TEXT NOT NULL, finalTotal REAL NOT NULL, subtotal REAL DEFAULT 0, serviceCharge REAL DEFAULT 0, status TEXT DEFAULT 'new', createdAt DATETIME DEFAULT CURRENT_TIMESTAMP, settled BOOLEAN DEFAULT 0, paymentDetails TEXT)`);
+            db.run(`ALTER TABLE orders RENAME COLUMN net TO subtotal`, (err) => {});
+            db.run(`ALTER TABLE orders RENAME COLUMN vat TO serviceCharge`, (err) => {});
+            db.run(`ALTER TABLE orders RENAME COLUMN total TO finalTotal`, (err) => {});
+            db.run(`ALTER TABLE orders ADD COLUMN orderType TEXT DEFAULT 'dine-in'`, (err) => {});
+            db.run(`ALTER TABLE orders ADD COLUMN customerName TEXT`, (err) => {});
+            db.run(`ALTER TABLE orders ADD COLUMN phone TEXT`, (err) => {});
+            db.run(`ALTER TABLE orders ADD COLUMN sessionId TEXT`, (err) => {});
+            db.run(`ALTER TABLE orders ADD COLUMN prepTime INTEGER`, (err) => {});
+            db.run(`ALTER TABLE orders ADD COLUMN prepStartedAt DATETIME`, (err) => {});
+            db.run(`ALTER TABLE orders ADD COLUMN settled BOOLEAN DEFAULT 0`, (err) => {});
+            db.run(`ALTER TABLE orders ADD COLUMN paymentDetails TEXT`, (err) => {});
+            
+            db.run(`CREATE TABLE IF NOT EXISTS table_status (tableId TEXT PRIMARY KEY, status TEXT NOT NULL, updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+            db.run(`CREATE TABLE IF NOT EXISTS active_sessions (tableId TEXT PRIMARY KEY, sessionId TEXT NOT NULL, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+            db.run(`CREATE TABLE IF NOT EXISTS qr_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, seating_id TEXT NOT NULL, session_token TEXT NOT NULL, status TEXT DEFAULT 'ACTIVE', start_time DATETIME DEFAULT CURRENT_TIMESTAMP, end_time DATETIME)`);
+            db.run(`CREATE TABLE IF NOT EXISTS waitlist (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, party_size INTEGER NOT NULL, phone TEXT NOT NULL, status TEXT DEFAULT 'waiting', createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+            db.run(`CREATE TABLE IF NOT EXISTS daily_sales (id INTEGER PRIMARY KEY AUTOINCREMENT, date DATE NOT NULL UNIQUE, total_sales REAL NOT NULL, total_orders INTEGER NOT NULL, net_profit REAL DEFAULT 0, cash_collected REAL DEFAULT 0, card_collected REAL DEFAULT 0, upi_collected REAL DEFAULT 0, custom_collected REAL DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+            db.run(`ALTER TABLE daily_sales ADD COLUMN custom_collected REAL DEFAULT 0`, (err) => {});
+            db.run(`CREATE TABLE IF NOT EXISTS item_sales (id INTEGER PRIMARY KEY AUTOINCREMENT, date DATE NOT NULL, itemName TEXT NOT NULL, quantitySold INTEGER NOT NULL, totalRevenue REAL NOT NULL, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(date, itemName))`);
+            db.run(`ALTER TABLE item_sales ADD COLUMN date DATE`, (err) => {}); // Migration for missing date column
+            db.run(`CREATE TABLE IF NOT EXISTS assistance_requests (id INTEGER PRIMARY KEY AUTOINCREMENT, tableId TEXT NOT NULL, type TEXT DEFAULT 'staff', status TEXT DEFAULT 'pending', createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+            db.run(`ALTER TABLE assistance_requests ADD COLUMN type TEXT DEFAULT 'staff'`, (err) => {});
+            db.run(`ALTER TABLE menu_items ADD COLUMN platterItems TEXT`, (err) => {});
+            db.run(`CREATE TABLE IF NOT EXISTS employees (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, phone TEXT NOT NULL, shiftTimings TEXT, designation TEXT, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+            db.run(`CREATE TABLE IF NOT EXISTS attendance (id INTEGER PRIMARY KEY AUTOINCREMENT, employeeId INTEGER NOT NULL, date DATE NOT NULL, checkInTime DATETIME DEFAULT CURRENT_TIMESTAMP, checkOutTime DATETIME, verified BOOLEAN DEFAULT 0, UNIQUE(date, employeeId))`);
+            db.run(`ALTER TABLE attendance ADD COLUMN checkOutTime DATETIME`, (err) => {});
+            db.run(`CREATE TABLE IF NOT EXISTS unavailability_schedules (id INTEGER PRIMARY KEY AUTOINCREMENT, itemIds TEXT, category TEXT, type TEXT NOT NULL, startDate DATE, startTime TEXT NOT NULL, endTime TEXT NOT NULL, daysOfWeek TEXT, isEnabled BOOLEAN DEFAULT 1, label TEXT, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+            db.run(`ALTER TABLE employees ADD COLUMN shiftTimings TEXT`, (err) => {});
+            db.run(`ALTER TABLE employees ADD COLUMN designation TEXT`, (err) => {});
+            db.run(`ALTER TABLE employees ADD COLUMN pin TEXT`, (err) => {});
+            // Add badge columns to menu_items if they don't exist
+            db.run(`ALTER TABLE menu_items ADD COLUMN isPopular BOOLEAN DEFAULT 0`, (err) => {});
+            db.run(`ALTER TABLE menu_items ADD COLUMN isRecommended BOOLEAN DEFAULT 0`, (err) => {});
+            db.run(`ALTER TABLE menu_items ADD COLUMN isBestSeller BOOLEAN DEFAULT 0`, (err) => {});
+            db.run(`ALTER TABLE menu_items ADD COLUMN isNew BOOLEAN DEFAULT 0`, (err) => {});
+            db.run(`ALTER TABLE menu_items ADD COLUMN availableFrom TEXT`, (err) => {});
+            db.run(`ALTER TABLE menu_items ADD COLUMN availableTo TEXT`, (err) => {});
+            db.run(`CREATE TABLE IF NOT EXISTS inventory (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, stock REAL NOT NULL, unit TEXT, minStock REAL DEFAULT 10, category TEXT, price REAL, updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
         }
     });
 }
@@ -978,24 +974,6 @@ const getInventory = async () => {
     return res.rows;
 };
 
-const getCategories = async () => {
-    return await runQuery(`SELECT * FROM categories ORDER BY id ASC`);
-};
-
-const updateCategoryMetadata = async (name, subtitle) => {
-    const sql = isPg 
-        ? `INSERT INTO categories (name, subtitle) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET subtitle = $2 RETURNING *`
-        : `INSERT INTO categories (name, subtitle) VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET subtitle = excluded.subtitle`;
-    
-    if (isPg) {
-        const res = await pgPool.query(sql, [name, subtitle]);
-        return res.rows[0];
-    } else {
-        await runQuery(sql, [name, subtitle]);
-        return { name, subtitle };
-    }
-};
-
 module.exports = {
     db, pgPool, runQuery, isPg, getOrdersByStatus, createOrder, addOrderToSession, updateOrderStatus,
     deleteOrder, deleteNewOrder, deleteSession, clearTableOrders, getAnalyticsDaily, getItemAnalytics, resetAllSalesAndSessions,
@@ -1006,5 +984,5 @@ module.exports = {
     getTableStatuses, getTableStatus, updateTableStatus, getSessionsByTable, getOrdersByTable,
     allocateSession, getActiveSession, clearSession, updatePrepTime, updateOrderItems,
     getUnavailabilitySchedules, createUnavailabilitySchedule, updateUnavailabilitySchedule, deleteUnavailabilitySchedule, processSchedulesTask,
-    finalizePayment, getInventory, checkoutAttendance, getCategories, updateCategoryMetadata
+    finalizePayment, getInventory, checkoutAttendance
 };

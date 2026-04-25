@@ -31,7 +31,7 @@ import {
     Info,
     PoundSterling
 } from 'lucide-react';
-import { menuData } from '../data/menu.js';
+import { categoriesData, menuData } from '../data/menu.js';
 import { socket } from '../utils/socket';
 import { SoundContext } from '../context/SoundContextDefinition';
 
@@ -55,8 +55,7 @@ export default function CustomerMenu() {
     const tableParam = searchParams.get('table');
     const [selectedTable, setSelectedTable] = useState(tableParam || null);
 
-    const [menu, setMenu] = useState([]);
-    const [categories, setCategories] = useState([]);
+    const [menu, setMenu] = useState(menuData);
     const [cart, setCart] = useState([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [orderStatus, setOrderStatus] = useState(null);
@@ -158,21 +157,22 @@ export default function CustomerMenu() {
     const fetchRemoteMenu = useCallback(() => {
         setIsMenuLoading(true);
         setMenuError(null);
-        
-        Promise.all([
-            fetch(`${API_URL}/menu`).then(res => res.json()),
-            fetch(`${API_URL}/categories`).then(res => res.json())
-        ])
-        .then(([menuData, catsData]) => {
-            if (menuData && menuData.length > 0) setMenu(menuData);
-            if (catsData && catsData.length > 0) setCategories(catsData);
-            setIsMenuLoading(false);
-        })
-        .catch((err) => {
-            console.error('Menu load error:', err);
-            setIsMenuLoading(false);
-            setMenuError('Temporary connection issue. Please refresh.');
-        });
+        fetch(`${API_URL}/menu`)
+            .then(res => {
+                if (!res.ok) throw new Error('Failed to load menu');
+                return res.json();
+            })
+            .then(data => {
+                if(data && data.length > 0) {
+                    setMenu(data);
+                }
+                setIsMenuLoading(false);
+            })
+            .catch((err) => {
+                console.error('Menu load error:', err);
+                setIsMenuLoading(false);
+                setMenuError('Temporary connection issue. Please refresh.');
+            });
     }, []);
 
     useEffect(() => {
@@ -729,7 +729,7 @@ export default function CustomerMenu() {
                 onScroll={handleScroll}
             >
                 <div className="flex overflow-x-auto px-6 py-5 gap-8 sticky top-0 bg-[#F9F6F0] z-[45] border-b border-[#0B3A2E]/5 shadow-sm">
-                    {categories.map(cat => (
+                    {categoriesData.map(cat => (
                         <button 
                             key={cat.id}
                             onClick={() => {
@@ -830,7 +830,7 @@ export default function CustomerMenu() {
                             </div>
                         ))
                     ) : (
-                        categories.map(cat => (
+                        categoriesData.map(cat => (
                             <div key={cat.id} id={`cat-${cat.name}`} className="space-y-5 pt-2 scroll-mt-24">
                                 <div className="flex items-center gap-4 mb-2">
                                     <h3 className="text-[#0B3A2E] text-xl font-bold font-serif opacity-90">{cat.name}</h3>
@@ -1074,7 +1074,7 @@ export default function CustomerMenu() {
                                      <button 
                                          onClick={() => {
                                              const waterId = 'dr3';
-                                             const waterItem = (menu || []).find(i => i.id === waterId);
+                                             const waterItem = (menu || []).find(i => i.id === waterId) || menuData.find(i => i.id === waterId);
                                              if (waterItem) {
                                                  const inCart = (cart || []).find(i => i.id === waterId);
                                                  if (!inCart) {

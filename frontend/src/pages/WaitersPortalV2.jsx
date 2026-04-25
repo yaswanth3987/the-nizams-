@@ -28,8 +28,6 @@ const WaitersPortalV2 = () => {
     const [selectedTable, setSelectedTable] = useState(null);
     const [cart, setCart] = useState([]);
     const [editingOrder, setEditingOrder] = useState(null);
-    const [orderType, setOrderType] = useState('dine-in');
-    const [customerName, setCustomerName] = useState('');
     const [serviceChargeEnabled, setServiceChargeEnabled] = useState(true);
 
     // 3. UI Feedback State
@@ -108,15 +106,7 @@ const WaitersPortalV2 = () => {
             const url = editingOrder ? `${API_URL}/orders/${editingOrder.id}/items` : `${API_URL}/orders`;
             const body = editingOrder 
                 ? { items: cart, finalTotal: subtotal, type: editingOrder.type }
-                : { 
-                    tableId: orderType === 'takeaway' ? 'TAKEAWAY' : selectedTable, 
-                    items: cart, 
-                    finalTotal: subtotal, 
-                    status: 'new', 
-                    orderType: orderType, 
-                    customerName: customerName,
-                    isStaff: true 
-                  };
+                : { tableId: selectedTable, items: cart, finalTotal: subtotal, status: 'new', orderType: 'dine-in', isStaff: true };
 
             const res = await fetch(url, {
                 method,
@@ -127,13 +117,11 @@ const WaitersPortalV2 = () => {
             if (res.ok) {
                 setCart([]);
                 setEditingOrder(null);
-                setOrderType('dine-in');
-                setCustomerName('');
                 setView('dashboard');
                 showToast(editingOrder ? 'Order updated' : 'Order dispatched to kitchen', 'success');
             }
         } catch (err) { console.error(err); }
-    }, [cart, selectedTable, editingOrder, orderType, customerName, showToast]);
+    }, [cart, selectedTable, editingOrder, showToast]);
 
     // 6. Final Render
     if (isLoading) return (
@@ -157,10 +145,7 @@ const WaitersPortalV2 = () => {
             <SidebarV2 
                 activeTab={activeTab} setActiveTab={setActiveTab} setView={setView}
                 badgeCounts={badgeCounts}
-                assistanceRequests={assistanceRequests}
-                activeOrders={activeOrders}
                 onNewTable={() => { setSelectedTable(null); setCart([]); setEditingOrder(null); setView('order_entry'); }}
-                onClearAssistance={clearAssistance}
             />
 
             <main className="flex-1 flex flex-col min-w-0 h-full relative">
@@ -196,8 +181,6 @@ const WaitersPortalV2 = () => {
                     <OrderEntryV2 
                         menu={menu} selectedTable={selectedTable} editingOrder={editingOrder} 
                         cart={cart} setCart={setCart}
-                        orderType={orderType} setOrderType={setOrderType}
-                        customerName={customerName} setCustomerName={setCustomerName}
                         onBack={() => setView(selectedTable ? 'table_details' : 'dashboard')}
                         onSubmit={handleOrderSubmit}
                     />

@@ -14,8 +14,7 @@ const {
     getTableStatuses, updateTableStatus, allocateSession, getActiveSession, clearSession,
     getSessionsByTable, getOrdersByTable, updatePrepTime, updateOrderItems, resetAllSalesAndSessions,
     getUnavailabilitySchedules, createUnavailabilitySchedule, updateUnavailabilitySchedule, deleteUnavailabilitySchedule, processSchedulesTask,
-    getInventory, updateSessionServiceCharge,
-    getCategories, updateCategoryMetadata
+    getInventory, updateSessionServiceCharge
 } = require('./database');
 
 const app = express();
@@ -87,25 +86,6 @@ app.delete('/api/menu/:id', async (req, res) => {
         const fullMenu = await getMenuItems();
         io.emit('menuReset', fullMenu);
         res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-app.get('/api/categories', async (req, res) => {
-    try {
-        const cats = await getCategories();
-        res.json(cats);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-app.post('/api/categories/metadata', async (req, res) => {
-    try {
-        const { name, subtitle } = req.body;
-        const cat = await updateCategoryMetadata(name, subtitle);
-        res.json(cat);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -718,24 +698,6 @@ app.use((req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
-// Seed categories if empty
-const seedCategories = async () => {
-    try {
-        const existing = await getCategories();
-        if (existing.length === 0) {
-            console.log('🌱 Seeding categories metadata...');
-            const { categoriesData } = require('../frontend/src/data/menu.js');
-            for (const cat of categoriesData) {
-                await updateCategoryMetadata(cat.name, cat.sub);
-            }
-            console.log('✅ Categories seeded.');
-        }
-    } catch (err) {
-        console.error('Category seeding skipped (probably building or frontend path missing):', err.message);
-    }
-};
-seedCategories();
-
 server.listen(PORT, '0.0.0.0', async () => {
     console.log(`Server running on port ${PORT}`);
     

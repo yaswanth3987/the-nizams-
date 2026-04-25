@@ -20,14 +20,6 @@ const OrderCardV2 = ({
         return 'bg-orange-500 text-white border-orange-500';
     };
 
-    const getStatusLabel = () => {
-        if (order.status === 'billing_pending') return 'Bill Requested';
-        if (order.status === 'billed') return 'Billed';
-        if (order.status === 'ready') return 'Ready to Serve';
-        if (order.status === 'confirmed') return 'In Progress';
-        return order.status;
-    };
-
     return (
         <div className="bg-white/5 border border-white/10 rounded-[2.5rem] flex flex-col overflow-hidden transition-all hover:bg-white/[0.07] relative group">
             {/* Header Color Strip */}
@@ -36,57 +28,45 @@ const OrderCardV2 = ({
             <div className="p-6 pl-8 flex flex-col h-full">
                 {/* Order Header */}
                 <div className="flex justify-between items-start mb-4">
-                    <div className="min-w-0 flex-1 pr-4">
+                    <div>
                         <div className="flex items-center gap-2 mb-1">
                             <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${getStatusStyles()}`}>
-                                {getStatusLabel()}
+                                {order.status}
                             </span>
                             {isNew && <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>}
-                            {order.orderType === 'takeaway' && (
-                                <span className="bg-white/5 text-[#86a69d] text-[8px] font-black px-2 py-0.5 rounded-md border border-white/10 uppercase tracking-widest">
-                                    ID #{order.id}
-                                </span>
-                            )}
                         </div>
-                        <h3 className="text-[#FFD700] text-3xl font-serif font-black italic tracking-tighter uppercase truncate">
-                            {order.orderType === 'takeaway' 
-                                ? (order.customerName || 'Takeaway') 
-                                : `Table ${order.tableId}`}
-                        </h3>
-                        {order.orderType === 'takeaway' && order.phone && (
-                            <p className="text-[#86a69d] text-[10px] font-bold mt-1 uppercase tracking-widest">{order.phone}</p>
-                        )}
+                        <h3 className="text-[#FFD700] text-3xl font-serif font-black italic tracking-tighter uppercase">Table {order.tableId}</h3>
                     </div>
-                    <div className="text-right shrink-0">
+                    <div className="text-right">
                         <p className="text-white text-lg font-black tabular-nums">£{Number(order.finalTotal || 0).toFixed(2)}</p>
                         <p className="text-[#86a69d] text-[9px] font-black uppercase tracking-[0.2em]">{order.orderType}</p>
                     </div>
                 </div>
 
-                {/* Items Preview - Full List for Takeaway, Preview for Dine-in */}
-                <div className={`flex-1 space-y-1.5 mb-6 overflow-y-auto no-scrollbar ${order.orderType === 'takeaway' ? 'max-h-[120px]' : ''}`}>
-                    {(order.orderType === 'takeaway' ? items : items.slice(0, 4)).map((item, i) => (
-                        <div key={i} className="flex justify-between items-center text-xs font-medium border-b border-white/5 pb-1">
+                {/* Items Preview */}
+                <div className="flex-1 space-y-1.5 mb-6 overflow-hidden">
+                    {items.slice(0, 4).map((item, i) => (
+                        <div key={i} className="flex justify-between items-center text-xs font-medium">
                             <span className="text-white/80 truncate pr-4">
                                 <span className="text-[#FFD700] font-black mr-2">{item.qty}x</span>
                                 {item.name}
                             </span>
                         </div>
                     ))}
-                    {items.length > 4 && order.orderType !== 'takeaway' && (
+                    {items.length > 4 && (
                         <p className="text-[#86a69d] text-[10px] font-bold italic pt-1">+ {items.length - 4} more items...</p>
                     )}
                 </div>
 
-                {/* Actions - Enhanced for Takeaway */}
+                {/* Actions */}
                 <div className="grid grid-cols-2 gap-3 mt-auto pt-4 border-t border-white/5">
                     {isNew ? (
                         <>
                             <button 
-                                onClick={() => onStatusUpdate(order.id, order.orderType === 'takeaway' ? 'accepted' : 'confirmed', order._source)}
+                                onClick={() => onStatusUpdate(order.id, 'confirmed', order._source)}
                                 className="col-span-2 bg-[#FFD700] text-[#0a261f] py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2"
                             >
-                                <CheckCircle size={14} strokeWidth={3} /> {order.orderType === 'takeaway' ? 'Accept Order' : 'Accept Order'}
+                                <CheckCircle size={14} strokeWidth={3} /> Accept Order
                             </button>
                         </>
                     ) : isReady ? (
@@ -96,21 +76,6 @@ const OrderCardV2 = ({
                         >
                             <CheckCircle size={14} strokeWidth={3} /> Mark Served
                         </button>
-                    ) : order.orderType === 'takeaway' && order.status !== 'billing_pending' && order.status !== 'billed' ? (
-                        <>
-                            <button 
-                                onClick={() => onEdit(order)}
-                                className="bg-white/10 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2 border border-white/10"
-                            >
-                                <Edit3 size={14} /> Edit
-                            </button>
-                            <button 
-                                onClick={() => onStatusUpdate(order.id, 'billing_pending', order._source)}
-                                className="bg-emerald-500/10 text-emerald-500 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2 border border-emerald-500/20"
-                            >
-                                <ArrowRight size={14} /> Ready
-                            </button>
-                        </>
                     ) : (
                         <>
                             <button 
