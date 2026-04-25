@@ -245,7 +245,7 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
                                         
                                         <div className="flex justify-between items-end bg-black/20 p-8 rounded-[2rem] border border-nizam-gold/20 shadow-2xl mt-8">
                                             <div>
-                                                <p className="text-[10px] font-black text-nizam-gold/60 tracking-[0.4em] uppercase mb-2">SETTLEMENT AMOUNT</p>
+                                                <p className="text-[10px] font-black text-nizam-gold/60 tracking-[0.4em] uppercase mb-2">Grand Total (Items + Service Charge)</p>
                                                 <span className="text-xl font-serif font-bold text-nizam-gold mr-3">£</span>
                                                 <span className="text-6xl font-serif font-bold text-nizam-gold tracking-tight">{Number(total).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                             </div>

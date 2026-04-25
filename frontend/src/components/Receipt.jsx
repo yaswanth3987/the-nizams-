@@ -61,7 +61,7 @@ const Receipt = React.forwardRef(({ order: session }, ref) => {
 
             <div className="space-y-2 pt-2 text-[12px] font-bold uppercase w-full">
                 <div className="flex justify-between w-full">
-                    <span>Subtotal</span>
+                    <span>Ordered Items Total</span>
                     <span>{(session.subtotal || 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between w-full">
@@ -71,7 +71,7 @@ const Receipt = React.forwardRef(({ order: session }, ref) => {
             </div>
 
             <div className="flex justify-between items-center font-black text-sm border-t-2 border-black pt-3 mt-3 w-full uppercase">
-                <span className="text-[14px]">Final Total</span>
+                <span className="text-[14px]">Grand Total (Items + Service Charge)</span>
                 <span className="text-[18px]">£ {(session.finalTotal || 0).toFixed(2)}</span>
             </div>
 
