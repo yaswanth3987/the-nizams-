@@ -419,7 +419,7 @@ const getItemAnalytics = async () => {
 };
 
 const resetAllSalesAndSessions = async () => {
-    const tablesToClear = ['orders', 'table_sessions', 'item_sales', 'daily_sales', 'assistance_requests', 'table_status'];
+    const tablesToClear = ['orders', 'table_sessions', 'item_sales', 'daily_sales', 'assistance_requests', 'table_status', 'inventory'];
     for (const table of tablesToClear) {
         await runQuery(`DELETE FROM ${table}`);
     }
