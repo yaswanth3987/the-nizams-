@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Search, ArrowLeft, Utensils, Plus, Minus, Trash2, Send } from 'lucide-react';
 
 const OrderEntryV2 = ({ 
@@ -11,14 +11,35 @@ const OrderEntryV2 = ({
     onSubmit 
 }) => {
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('All');
     const [orderType, setOrderType] = useState(editingOrder?.orderType || (selectedTable ? 'dine-in' : 'takeaway'));
     const [customerName, setCustomerName] = useState(editingOrder?.customerName || '');
     const [phone, setPhone] = useState(editingOrder?.phone || '');
 
-    const filteredMenu = (menu || []).filter(item => 
-        (item.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
-        (item.category || '').toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    // 1. Category logic
+    const categories = useMemo(() => {
+        const raw = Array.from(new Set((menu || []).map(item => item.category)));
+        const priority = ['Nizami Mandi', 'Mandi Platters', 'Non Veg Starters', 'Veg Starters', 'Sea Food'];
+        
+        const sorted = raw.sort((a, b) => {
+            const indexA = priority.indexOf(a);
+            const indexB = priority.indexOf(b);
+            
+            if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+            if (indexA !== -1) return -1;
+            if (indexB !== -1) return 1;
+            return a.localeCompare(b);
+        });
+        
+        return ['All', ...sorted];
+    }, [menu]);
+
+    const filteredMenu = (menu || []).filter(item => {
+        const matchesSearch = (item.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+                            (item.category || '').toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
+        return matchesSearch && matchesCategory;
+    });
 
     const addToCart = (item) => {
         setCart(prev => {
@@ -42,47 +63,66 @@ const OrderEntryV2 = ({
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0 bg-black/10">
             {/* Menu Section */}
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                <header className="px-8 py-8 border-b border-white/5 bg-[#0F3A2F]/40 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-6 shrink-0">
-                    <div className="flex items-center gap-6 w-full sm:w-auto">
-                        <button onClick={onBack} className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-white hover:bg-white/10 active:scale-95 transition-all">
-                            <ArrowLeft size={24} />
-                        </button>
-                        <div>
-                            <h1 className="text-3xl font-serif font-black text-white italic truncate tracking-tight">
-                                {editingOrder ? 'Edit Order' : 'New Order'}
-                            </h1>
-                            <p className="text-[#FFD700] text-[10px] font-black uppercase tracking-[0.3em]">
-                                {orderType === 'takeaway' ? 'Takeaway Order' : `Table ${selectedTable || 'N/A'}`}
-                            </p>
+                <header className="px-8 pt-8 pb-4 border-b border-white/5 bg-[#0F3A2F]/40 backdrop-blur-md flex flex-col shrink-0">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mb-8">
+                        <div className="flex items-center gap-6 w-full sm:w-auto">
+                            <button onClick={onBack} className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-white hover:bg-white/10 active:scale-95 transition-all">
+                                <ArrowLeft size={24} />
+                            </button>
+                            <div>
+                                <h1 className="text-3xl font-serif font-black text-white italic truncate tracking-tight">
+                                    {editingOrder ? 'Edit Order' : 'New Order'}
+                                </h1>
+                                <p className="text-[#FFD700] text-[10px] font-black uppercase tracking-[0.3em]">
+                                    {orderType === 'takeaway' ? 'Takeaway Order' : `Table ${selectedTable || 'N/A'}`}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 w-full sm:w-auto">
+                            <div className="bg-black/40 p-1.5 rounded-2xl border border-white/5 flex gap-2">
+                                <button 
+                                    onClick={() => setOrderType('dine-in')}
+                                    className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${orderType === 'dine-in' ? 'bg-[#FFD700] text-[#0a261f]' : 'text-white/40 hover:text-white'}`}
+                                >
+                                    Dine-in
+                                </button>
+                                <button 
+                                    onClick={() => setOrderType('takeaway')}
+                                    className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${orderType === 'takeaway' ? 'bg-[#FFD700] text-[#0a261f]' : 'text-white/40 hover:text-white'}`}
+                                >
+                                    Takeaway
+                                </button>
+                            </div>
+
+                            <div className="relative flex-1 sm:w-64">
+                                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/30" size={20} />
+                                <input 
+                                    type="text" 
+                                    placeholder="Find dishes..." 
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full bg-black/40 border border-white/10 rounded-[2rem] pl-16 pr-6 py-4 text-sm text-white focus:outline-none focus:border-[#FFD700] transition-colors"
+                                />
+                            </div>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-4 w-full sm:w-auto">
-                        <div className="bg-black/40 p-1.5 rounded-2xl border border-white/5 flex gap-2">
-                            <button 
-                                onClick={() => setOrderType('dine-in')}
-                                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${orderType === 'dine-in' ? 'bg-[#FFD700] text-[#0a261f]' : 'text-white/40 hover:text-white'}`}
+                    {/* Category Scroll */}
+                    <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-4 -mx-2 px-2">
+                        {categories.map(cat => (
+                            <button
+                                key={cat}
+                                onClick={() => setSelectedCategory(cat)}
+                                className={`px-8 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all border shrink-0 ${
+                                    selectedCategory === cat 
+                                    ? 'bg-[#FFD700] text-[#0a261f] border-[#FFD700] shadow-xl shadow-[#FFD700]/20' 
+                                    : 'bg-white/5 text-white/40 border-white/5 hover:border-white/20 hover:text-white'
+                                }`}
                             >
-                                Dine-in
+                                {cat}
                             </button>
-                            <button 
-                                onClick={() => setOrderType('takeaway')}
-                                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${orderType === 'takeaway' ? 'bg-[#FFD700] text-[#0a261f]' : 'text-white/40 hover:text-white'}`}
-                            >
-                                Takeaway
-                            </button>
-                        </div>
-
-                        <div className="relative flex-1 sm:w-64">
-                            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/30" size={20} />
-                            <input 
-                                type="text" 
-                                placeholder="Find dishes..." 
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-black/40 border border-white/10 rounded-[2rem] pl-16 pr-6 py-4 text-sm text-white focus:outline-none focus:border-[#FFD700] transition-colors"
-                            />
-                        </div>
+                        ))}
                     </div>
                 </header>
 
@@ -117,7 +157,7 @@ const OrderEntryV2 = ({
                             <button 
                                 key={item.id} 
                                 onClick={() => addToCart(item)} 
-                                className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 text-left hover:bg-[#FFD700] hover:text-[#0a261f] transition-all group active:scale-95 flex flex-col"
+                                className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 text-left hover:bg-[#FFD700] hover:text-[#0a261f] transition-all group active:scale-95 flex flex-col min-h-[180px]"
                             >
                                 <p className="text-[#86a69d] group-hover:text-[#0a261f]/60 text-[9px] font-black uppercase tracking-[0.2em] mb-2">{item.category}</p>
                                 <h3 className="text-white group-hover:text-[#0a261f] font-serif font-black italic text-xl leading-tight mb-4 flex-1">{item.name}</h3>
