@@ -810,7 +810,7 @@ export default function CustomerMenu() {
                                 <div className="h-px w-6 bg-[#C29958]"></div>
                                 <span className="text-[#C29958] text-[10px] font-black uppercase tracking-[0.25em]">Chef's Signature</span>
                             </div>
-                            <h2 className="text-white text-4xl font-black font-serif leading-tight drop-shadow-2xl">{featuredItem?.name}</h2>
+                            <h2 className="text-white text-4xl font-black font-serif leading-tight drop-shadow-2xl">{featuredItem?.name?.replace(' (REGULAR)', '')}</h2>
                         </div>
                     </div>
                 </div>
