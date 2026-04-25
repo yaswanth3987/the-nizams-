@@ -88,15 +88,16 @@ const OrderEntryV2 = ({
                                 />
                             </div>
                         )}
-                    <div className="relative w-full sm:w-80">
-                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/30" size={20} />
-                        <input 
-                            type="text" 
-                            placeholder="Find dishes..." 
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-black/40 border border-white/10 rounded-[2rem] pl-16 pr-6 py-4 text-sm text-white focus:outline-none focus:border-[#FFD700] transition-colors"
-                        />
+                        <div className="relative w-full sm:w-80">
+                            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/30" size={20} />
+                            <input 
+                                type="text" 
+                                placeholder="Find dishes..." 
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full bg-black/40 border border-white/10 rounded-[2rem] pl-16 pr-6 py-4 text-sm text-white focus:outline-none focus:border-[#FFD700] transition-colors"
+                            />
+                        </div>
                     </div>
                 </header>
 

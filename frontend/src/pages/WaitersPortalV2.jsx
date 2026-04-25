@@ -157,7 +157,10 @@ const WaitersPortalV2 = () => {
             <SidebarV2 
                 activeTab={activeTab} setActiveTab={setActiveTab} setView={setView}
                 badgeCounts={badgeCounts}
+                assistanceRequests={assistanceRequests}
+                activeOrders={activeOrders}
                 onNewTable={() => { setSelectedTable(null); setCart([]); setEditingOrder(null); setView('order_entry'); }}
+                onClearAssistance={clearAssistance}
             />
 
             <main className="flex-1 flex flex-col min-w-0 h-full relative">
