@@ -187,19 +187,22 @@ export default function WaitersPortal() {
     };
 
     const clearTable = async (tableId) => {
-        const tableSessions = (activeOrders || []).filter(s => s.tableId === tableId && s._source === 'session');
-        if (tableSessions.length === 0) {
-            try {
-                await fetch(`${API_URL}/tables/${encodeURIComponent(tableId)}/orders`, { method: 'DELETE' });
-                fetchData();
-            } catch (e) { console.error(e); }
-            return;
-        }
-        if (!confirm(`Clear session for Table ${tableId}?`)) return;
+        if (!confirm(`Are you sure you want to RESET Table ${tableId}? This will clear all active orders and mark the table as FREE.`)) return;
+        
         try {
-            await fetch(`${API_URL}/tables/${encodeURIComponent(tableId)}/orders`, { method: 'DELETE' });
+            const res = await fetch(`${API_URL}/tables/${encodeURIComponent(tableId)}/orders`, { method: 'DELETE' });
+            if (res.ok) {
+                fetchData();
+                setView('dashboard');
+                alert(`Table ${tableId} has been reset.`);
+            } else {
+                throw new Error('Failed to reset table');
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error resetting table. Please try again.");
             fetchData();
-        } catch (err) { console.error(err); }
+        }
     };
 
     const printReceipt = (order) => {
@@ -894,11 +897,8 @@ export default function WaitersPortal() {
                             <CreditCard size={24} /> Settle & Bill Table
                         </button>
                         <button 
-                            onClick={() => {
-                                clearTable(selectedTable);
-                                setView('dashboard');
-                            }}
-                            className="flex-1 bg-red-600/10 border border-red-500/20 text-red-500 py-6 rounded-[2rem] font-black uppercase text-[10px] tracking-widest active:bg-red-600 active:text-white transition-all flex items-center justify-center gap-2"
+                            onClick={() => clearTable(selectedTable)}
+                            className="flex-1 bg-red-600/10 border border-red-500/20 text-red-500 py-6 rounded-[2rem] font-black uppercase text-[10px] tracking-widest hover:bg-red-600 hover:text-white active:scale-95 transition-all flex items-center justify-center gap-2"
                         >
                             <Trash2 size={18} /> Reset Table
                         </button>
