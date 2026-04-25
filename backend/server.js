@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const path = require('path');
@@ -613,7 +613,7 @@ app.post('/api/attendance/request-otp', (req, res) => {
     // Generate 4 digit OTP
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
     console.log(`\n==========================================`);
-    console.log(`🛡️  ATTENDANCE OTP FOR EMPLOYEE #${employeeId}: ${otp}`);
+    console.log(`ðŸ›¡ï¸  ATTENDANCE OTP FOR EMPLOYEE #${employeeId}: ${otp}`);
     console.log(`==========================================\n`);
 
     // Store PIN valid for 5 mins
@@ -650,7 +650,7 @@ app.post('/api/attendance/verify', async (req, res) => {
 app.post('/api/attendance/biometric', async (req, res) => {
     const { employeeId, biometricType } = req.body;
     if (!employeeId) return res.status(400).json({ error: 'employeeId required' });
-    console.log(`\n=== 🧬 BIOMETRIC MATCH: ${biometricType} for Emp #${employeeId} ===\n`);
+    console.log(`\n=== ðŸ§¬ BIOMETRIC MATCH: ${biometricType} for Emp #${employeeId} ===\n`);
     
     try {
         const { markAttendance } = require('./database');
@@ -729,6 +729,8 @@ server.listen(PORT, '0.0.0.0', async () => {
         }
     }, 60000);
 });
-/ /   D e p l o y m e n t   t r i g g e r   c o m m i t  
- / /   P l a n   u p g r a d e d ,   r e t r y i n g   b u i l d  
+/ /   D e p l o y m e n t   t r i g g e r   c o m m i t 
  
+ / /   P l a n   u p g r a d e d ,   r e t r y i n g   b u i l d 
+// Deployment trigger commit
+// Plan upgraded, retrying build
