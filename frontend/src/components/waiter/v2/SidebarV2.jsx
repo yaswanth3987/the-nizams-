@@ -22,7 +22,6 @@ const SidebarV2 = ({
         { id: 'billing', label: 'Settlement', icon: CreditCard, count: badgeCounts.billing },
         { id: 'alerts', label: 'Urgent Alerts', icon: Bell, count: badgeCounts.alerts },
         { id: 'completed', label: 'History', icon: CheckSquare, count: badgeCounts.completed },
-        { id: 'attendance', label: 'Attendance', icon: UserPlus, count: 0 },
         { id: 'scheduler', label: 'Scheduler', icon: Clock, count: 0 }
     ];
 

@@ -11,6 +11,9 @@ const OrderEntryV2 = ({
     onSubmit 
 }) => {
     const [searchQuery, setSearchQuery] = useState('');
+    const [orderType, setOrderType] = useState(editingOrder?.orderType || (selectedTable ? 'dine-in' : 'takeaway'));
+    const [customerName, setCustomerName] = useState(editingOrder?.customerName || '');
+    const [phone, setPhone] = useState(editingOrder?.phone || '');
 
     const filteredMenu = (menu || []).filter(item => 
         (item.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -49,23 +52,66 @@ const OrderEntryV2 = ({
                                 {editingOrder ? 'Edit Order' : 'New Order'}
                             </h1>
                             <p className="text-[#FFD700] text-[10px] font-black uppercase tracking-[0.3em]">
-                                Table {selectedTable || 'N/A'}
+                                {orderType === 'takeaway' ? 'Takeaway Order' : `Table ${selectedTable || 'N/A'}`}
                             </p>
                         </div>
                     </div>
-                    <div className="relative w-full sm:w-80">
-                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/30" size={20} />
-                        <input 
-                            type="text" 
-                            placeholder="Find dishes..." 
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-black/40 border border-white/10 rounded-[2rem] pl-16 pr-6 py-4 text-sm text-white focus:outline-none focus:border-[#FFD700] transition-colors"
-                        />
+
+                    <div className="flex items-center gap-4 w-full sm:w-auto">
+                        <div className="bg-black/40 p-1.5 rounded-2xl border border-white/5 flex gap-2">
+                            <button 
+                                onClick={() => setOrderType('dine-in')}
+                                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${orderType === 'dine-in' ? 'bg-[#FFD700] text-[#0a261f]' : 'text-white/40 hover:text-white'}`}
+                            >
+                                Dine-in
+                            </button>
+                            <button 
+                                onClick={() => setOrderType('takeaway')}
+                                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${orderType === 'takeaway' ? 'bg-[#FFD700] text-[#0a261f]' : 'text-white/40 hover:text-white'}`}
+                            >
+                                Takeaway
+                            </button>
+                        </div>
+
+                        <div className="relative flex-1 sm:w-64">
+                            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/30" size={20} />
+                            <input 
+                                type="text" 
+                                placeholder="Find dishes..." 
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full bg-black/40 border border-white/10 rounded-[2rem] pl-16 pr-6 py-4 text-sm text-white focus:outline-none focus:border-[#FFD700] transition-colors"
+                            />
+                        </div>
                     </div>
                 </header>
 
                 <div className="flex-1 overflow-y-auto overscroll-contain p-8 no-scrollbar scroll-smooth">
+                    {orderType === 'takeaway' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 animate-in fade-in slide-in-from-top-4 duration-500">
+                            <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
+                                <label className="block text-[10px] font-black text-[#86a69d] uppercase tracking-[0.3em] mb-3">Customer Name</label>
+                                <input 
+                                    type="text" 
+                                    placeholder="Enter name..." 
+                                    value={customerName}
+                                    onChange={(e) => setCustomerName(e.target.value)}
+                                    className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-[#FFD700] transition-colors"
+                                />
+                            </div>
+                            <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
+                                <label className="block text-[10px] font-black text-[#86a69d] uppercase tracking-[0.3em] mb-3">Phone (Optional)</label>
+                                <input 
+                                    type="tel" 
+                                    placeholder="Enter phone..." 
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                    className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-[#FFD700] transition-colors"
+                                />
+                            </div>
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 pb-20">
                         {filteredMenu.map(item => (
                             <button 
@@ -123,7 +169,7 @@ const OrderEntryV2 = ({
                         <span className="text-[#FFD700] text-4xl font-serif font-black italic">£{subtotal.toFixed(2)}</span>
                     </div>
                     <button 
-                        onClick={onSubmit} 
+                        onClick={() => onSubmit(cart, orderType, customerName, phone)} 
                         disabled={cart.length === 0} 
                         className="w-full bg-[#FFD700] text-[#0a261f] py-6 rounded-[2.5rem] font-black uppercase tracking-[0.2em] text-sm active:scale-95 shadow-2xl shadow-[#FFD700]/20 disabled:opacity-20 transition-all flex items-center justify-center gap-4"
                     >

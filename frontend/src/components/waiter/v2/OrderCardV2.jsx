@@ -28,16 +28,21 @@ const OrderCardV2 = ({
             <div className="p-6 pl-8 flex flex-col h-full">
                 {/* Order Header */}
                 <div className="flex justify-between items-start mb-4">
-                    <div>
+                    <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1">
                             <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${getStatusStyles()}`}>
                                 {order.status}
                             </span>
                             {isNew && <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>}
                         </div>
-                        <h3 className="text-[#FFD700] text-3xl font-serif font-black italic tracking-tighter uppercase">Table {order.tableId}</h3>
+                        <h3 className="text-[#FFD700] text-2xl font-serif font-black italic tracking-tighter uppercase truncate pr-4">
+                            {order.orderType === 'takeaway' ? (order.customerName || 'Takeaway') : `Table ${order.tableId}`}
+                        </h3>
+                        {order.orderType === 'takeaway' && order.phone && (
+                            <p className="text-[#86a69d] text-[10px] font-bold mt-1 uppercase tracking-widest">{order.phone}</p>
+                        )}
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0">
                         <p className="text-white text-lg font-black tabular-nums">£{Number(order.finalTotal || 0).toFixed(2)}</p>
                         <p className="text-[#86a69d] text-[9px] font-black uppercase tracking-[0.2em]">{order.orderType}</p>
                     </div>
@@ -45,7 +50,7 @@ const OrderCardV2 = ({
 
                 {/* Items Preview */}
                 <div className="flex-1 space-y-1.5 mb-6 overflow-hidden">
-                    {items.slice(0, 4).map((item, i) => (
+                    {items.slice(0, order.orderType === 'takeaway' ? 8 : 4).map((item, i) => (
                         <div key={i} className="flex justify-between items-center text-xs font-medium">
                             <span className="text-white/80 truncate pr-4">
                                 <span className="text-[#FFD700] font-black mr-2">{item.qty}x</span>
@@ -53,8 +58,8 @@ const OrderCardV2 = ({
                             </span>
                         </div>
                     ))}
-                    {items.length > 4 && (
-                        <p className="text-[#86a69d] text-[10px] font-bold italic pt-1">+ {items.length - 4} more items...</p>
+                    {items.length > (order.orderType === 'takeaway' ? 8 : 4) && (
+                        <p className="text-[#86a69d] text-[10px] font-bold italic pt-1">+ {items.length - (order.orderType === 'takeaway' ? 8 : 4)} more items...</p>
                     )}
                 </div>
 

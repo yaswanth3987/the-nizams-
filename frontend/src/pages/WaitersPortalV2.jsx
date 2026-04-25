@@ -97,16 +97,25 @@ const WaitersPortalV2 = () => {
         } catch (err) { console.error(err); }
     }, [selectedTable, showToast]);
 
-    const handleOrderSubmit = useCallback(async () => {
-        if (cart.length === 0) return;
-        const subtotal = cart.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.qty || 0)), 0);
+    const handleOrderSubmit = useCallback(async (cartItems, orderType = 'dine-in', customerName = '', phone = '') => {
+        if (!cartItems || cartItems.length === 0) return;
+        const subtotal = cartItems.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.qty || 0)), 0);
         
         try {
             const method = editingOrder ? 'PUT' : 'POST';
             const url = editingOrder ? `${API_URL}/orders/${editingOrder.id}/items` : `${API_URL}/orders`;
             const body = editingOrder 
-                ? { items: cart, finalTotal: subtotal, type: editingOrder.type }
-                : { tableId: selectedTable, items: cart, finalTotal: subtotal, status: 'new', orderType: 'dine-in', isStaff: true };
+                ? { items: cartItems, finalTotal: subtotal, type: editingOrder.type }
+                : { 
+                    tableId: orderType === 'takeaway' ? 'TAKEAWAY' : selectedTable, 
+                    items: cartItems, 
+                    finalTotal: subtotal, 
+                    status: 'new', 
+                    orderType: orderType, 
+                    customerName: customerName,
+                    phone: phone,
+                    isStaff: true 
+                  };
 
             const res = await fetch(url, {
                 method,
@@ -121,7 +130,7 @@ const WaitersPortalV2 = () => {
                 showToast(editingOrder ? 'Order updated' : 'Order dispatched to kitchen', 'success');
             }
         } catch (err) { console.error(err); }
-    }, [cart, selectedTable, editingOrder, showToast]);
+    }, [selectedTable, editingOrder, showToast]);
 
     // 6. Final Render
     if (isLoading) return (
