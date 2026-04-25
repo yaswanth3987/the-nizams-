@@ -2,6 +2,8 @@ import React from 'react';
 import { Package, CheckCircle, Clock, ShoppingBag, ArrowRight, Printer, Check, CreditCard, XCircle, Utensils, Plus, Trash2 } from 'lucide-react';
 
 export default function AdminTakeawayManager({ sessions, newOrders, updateStatus, deleteOrder, onViewChange, onEdit }) {
+    const [confirmDelete, setConfirmDelete] = React.useState({ isOpen: false, id: null, isRaw: false, name: '' });
+
     // Filter only takeaway sessions that aren't completed yet
     const activeSessions = (sessions || []).filter(s => s.orderType === 'takeaway' && s.status !== 'completed');
     const incomingTakeaways = (newOrders || []).filter(o => o.orderType === 'takeaway' && (o.status === 'new' || o.status === 'pending'));
@@ -49,11 +51,11 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                                     <h3 className="text-2xl font-serif font-bold text-white italic">{order.customerName || 'Takeaway Guest'}</h3>
                                     <div className="flex items-center gap-4">
                                         <button 
-                                            onClick={() => deleteOrder?.(order.id, true)}
-                                            className="p-2 bg-white/5 hover:bg-red-500/10 text-white/20 hover:text-red-500 rounded-lg transition-all"
+                                            onClick={() => setConfirmDelete({ isOpen: true, id: order.id, isRaw: true, name: order.customerName || 'Takeaway Guest' })}
+                                            className="p-3 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl transition-all border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.1)] group/del"
                                             title="Delete Order"
                                         >
-                                            <Trash2 size={16} />
+                                            <Trash2 size={18} className="group-hover/del:scale-110 transition-transform" />
                                         </button>
                                         <span className="text-[10px] font-bold text-accent uppercase tracking-widest">NEW</span>
                                     </div>
@@ -116,11 +118,11 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                                             {order.customerName || 'Takeaway Guest'}
                                         </h3>
                                         <button 
-                                            onClick={() => deleteOrder?.(order.id)}
-                                            className="p-2 bg-white/5 hover:bg-red-500/10 text-white/20 hover:text-red-500 rounded-lg transition-all"
+                                            onClick={() => setConfirmDelete({ isOpen: true, id: order.id, isRaw: false, name: order.customerName || 'Takeaway Guest' })}
+                                            className="p-3 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl transition-all border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.1)] group/del"
                                             title="Delete Order"
                                         >
-                                            <Trash2 size={16} />
+                                            <Trash2 size={18} className="group-hover/del:scale-110 transition-transform" />
                                         </button>
                                     </div>
                                 </div>
@@ -189,11 +191,11 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                                             {order.customerName || 'Takeaway Guest'}
                                         </h3>
                                         <button 
-                                            onClick={() => deleteOrder?.(order.id)}
-                                            className="p-2 bg-white/5 hover:bg-red-500/10 text-white/20 hover:text-red-500 rounded-lg transition-all"
+                                            onClick={() => setConfirmDelete({ isOpen: true, id: order.id, isRaw: false, name: order.customerName || 'Takeaway Guest' })}
+                                            className="p-3 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl transition-all border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.1)] group/del"
                                             title="Delete Order"
                                         >
-                                            <Trash2 size={16} />
+                                            <Trash2 size={18} className="group-hover/del:scale-110 transition-transform" />
                                         </button>
                                     </div>
                                 </div>
@@ -247,6 +249,55 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                     </div>
                 </div>
             </div>
+
+            {/* Custom Premium Delete Modal */}
+            {confirmDelete.isOpen && (
+                <div className="fixed inset-0 bg-black/95 backdrop-blur-2xl z-[100] flex items-center justify-center p-8 animate-in fade-in zoom-in duration-500">
+                    <div className="bg-[#111311] border border-white/5 rounded-[3rem] w-full max-w-lg overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.8)] relative">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500/50 to-transparent"></div>
+                        
+                        <div className="p-12 border-b border-white/5 text-center relative bg-black/40">
+                            <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-red-500/20">
+                                <Trash2 className="w-10 h-10 text-red-500" />
+                            </div>
+                            <h3 className="text-5xl font-serif text-white font-bold tracking-tight mb-2 italic">Confirm Purge</h3>
+                            <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] italic">Takeaway ID #{confirmDelete.id}</p>
+                            <button 
+                                onClick={() => setConfirmDelete({ isOpen: false, id: null, isRaw: false, name: '' })}
+                                className="absolute right-10 top-12 w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white/20 hover:text-white transition-all"
+                            >
+                                <XCircle size={20} />
+                            </button>
+                        </div>
+
+                        <div className="p-12 space-y-10">
+                            <p className="text-[15px] text-white/40 leading-relaxed text-center italic font-medium">
+                                Are you sure you want to permanently <span className="text-red-500 font-bold uppercase tracking-widest px-2 underline decoration-red-500/30 underline-offset-8">DELETE</span> the order for <span className="text-white font-bold">{confirmDelete.name}</span>?
+                                <br/><br/>
+                                This action is <span className="text-emerald-400 font-bold italic">IRREVERSIBLE</span> and will remove all records from the system.
+                            </p>
+
+                            <div className="grid grid-cols-2 gap-6 pt-4">
+                                <button 
+                                    onClick={() => setConfirmDelete({ isOpen: false, id: null, isRaw: false, name: '' })}
+                                    className="h-20 bg-white/5 hover:bg-white/10 text-white py-4 rounded-[2rem] font-black uppercase tracking-[0.4em] text-[10px] transition-all border border-white/5"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    onClick={() => {
+                                        deleteOrder?.(confirmDelete.id, confirmDelete.isRaw);
+                                        setConfirmDelete({ isOpen: false, id: null, isRaw: false, name: '' });
+                                    }}
+                                    className="h-20 bg-gradient-to-r from-red-600 to-red-800 text-white py-4 rounded-[2rem] font-black uppercase tracking-[0.4em] text-[10px] shadow-[0_15px_30px_rgba(220,38,38,0.2)] hover:brightness-125 transition-all"
+                                >
+                                    Confirm Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

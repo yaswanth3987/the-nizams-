@@ -214,6 +214,16 @@ app.delete('/api/orders/:id', async (req, res) => {
     }
 });
 
+app.delete('/api/new-orders/:id', async (req, res) => {
+    try {
+        await deleteOrder(req.params.id);
+        io.emit('orderDeleted', { id: parseInt(req.params.id, 10) });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.delete('/api/sessions/:id', async (req, res) => {
     try {
         await deleteSession(req.params.id);

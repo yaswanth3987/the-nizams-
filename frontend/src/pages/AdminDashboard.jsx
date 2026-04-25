@@ -252,7 +252,6 @@ export default function AdminDashboard() {
     };
 
     const deleteOrder = async (id, isRawOrder = false) => {
-        if (!confirm('Permanently DELETE this order? This cannot be undone.')) return;
         try {
             const endpoint = isRawOrder ? `${API_URL}/new-orders/${id}` : `${API_URL}/orders/${id}`;
             const res = await fetch(endpoint, { method: 'DELETE' });
