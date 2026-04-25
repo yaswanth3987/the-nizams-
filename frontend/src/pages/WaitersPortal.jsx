@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
     Clock, CheckCircle, AlertTriangle, Bell, Search, 
     Plus, Minus, X, Utensils, CreditCard, ArrowLeft,
-    Check, LayoutGrid, ListOrdered, Settings, User, 
+    Check, LayoutGrid, ListOrdered, Settings, User, UserPlus,
     Trash2, Sparkles, ArrowUpRight, ShoppingBag, FileText, SquareCheck as CheckSquare
 } from 'lucide-react';
 import { socket } from '../utils/socket';
@@ -17,6 +17,7 @@ import AdminTakeawayManager from '../components/admin/AdminTakeawayManager';
 import AdminTakeawayPOS from '../components/admin/AdminTakeawayPOS';
 import AdminUnavailabilityScheduler from '../components/admin/AdminUnavailabilityScheduler';
 import AdminBilledOrders from '../components/admin/AdminBilledOrders';
+import AdminAttendance from '../components/admin/AdminAttendance';
 import Receipt from '../components/Receipt';
 
 const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
