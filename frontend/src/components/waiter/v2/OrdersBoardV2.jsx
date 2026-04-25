@@ -24,6 +24,12 @@ const OrdersBoardV2 = ({
         if (activeTab === 'billing') {
             return activeOrders.filter(o => ['billed', 'billing_pending'].includes(o.status));
         }
+        if (activeTab === 'all-in-one') {
+            // Show new requests + ready items + bill requests
+            return activeOrders.filter(o => 
+                (o.status === 'new' || o.status === 'pending' || o.status === 'ready' || o.status === 'billing_pending')
+            );
+        }
         if (activeTab === 'takeaway') {
             return activeOrders.filter(o => o.orderType === 'takeaway' && o.status !== 'completed');
         }

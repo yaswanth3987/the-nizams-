@@ -8,7 +8,12 @@ const OrderEntryV2 = ({
     cart, 
     setCart, 
     onBack, 
-    onSubmit 
+    onBack, 
+    onSubmit,
+    orderType,
+    setOrderType,
+    customerName,
+    setCustomerName
 }) => {
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -49,10 +54,40 @@ const OrderEntryV2 = ({
                                 {editingOrder ? 'Edit Order' : 'New Order'}
                             </h1>
                             <p className="text-[#FFD700] text-[10px] font-black uppercase tracking-[0.3em]">
-                                Table {selectedTable || 'N/A'}
+                                {orderType === 'takeaway' ? 'Takeaway Order' : `Table ${selectedTable || 'N/A'}`}
                             </p>
                         </div>
                     </div>
+
+                    {!editingOrder && (
+                        <div className="flex bg-white/5 rounded-2xl p-1 border border-white/10 shrink-0">
+                            <button 
+                                onClick={() => setOrderType('dine-in')}
+                                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${orderType === 'dine-in' ? 'bg-[#FFD700] text-[#0a261f]' : 'text-[#86a69d] hover:text-white'}`}
+                            >
+                                Dine-In
+                            </button>
+                            <button 
+                                onClick={() => setOrderType('takeaway')}
+                                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${orderType === 'takeaway' ? 'bg-[#FFD700] text-[#0a261f]' : 'text-[#86a69d] hover:text-white'}`}
+                            >
+                                Takeaway
+                            </button>
+                        </div>
+                    )}
+
+                    <div className="flex gap-4 w-full sm:w-auto">
+                        {orderType === 'takeaway' && (
+                            <div className="relative flex-1 sm:w-64">
+                                <input 
+                                    type="text" 
+                                    placeholder="Customer Name..." 
+                                    value={customerName}
+                                    onChange={(e) => setCustomerName(e.target.value)}
+                                    className="w-full bg-black/40 border border-white/10 rounded-[2rem] px-6 py-4 text-sm text-white focus:outline-none focus:border-[#FFD700] transition-colors"
+                                />
+                            </div>
+                        )}
                     <div className="relative w-full sm:w-80">
                         <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/30" size={20} />
                         <input 
