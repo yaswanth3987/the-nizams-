@@ -61,7 +61,7 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                                     </div>
                                 </div>
 
-                                <div className="flex-1 space-y-3 overflow-y-auto mb-6 pl-4">
+                                <div className="flex-1 space-y-3 mb-6 pl-4">
                                     {(order.items || []).map((item, i) => (
                                         <div key={i} className="flex justify-between items-center text-sm">
                                             <span className="text-white/80 font-serif italic">{item.name}</span>
@@ -101,7 +101,7 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                     </h3>
                     <div className="space-y-6">
                         {preparing.map(order => (
-                            <div key={order.id} className="bg-white/5 border border-white/10 rounded-3xl p-8 flex flex-col shadow-2xl relative h-[420px]">
+                            <div key={order.id} className="bg-white/5 border border-white/10 rounded-3xl p-8 flex flex-col shadow-2xl relative min-h-[420px] h-auto">
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-2">
                                         <span className="bg-[#FFD700] text-[#0F3A2F] px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest">
@@ -127,7 +127,7 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                                     </div>
                                 </div>
 
-                                <div className="flex-1 space-y-3 overflow-y-auto mb-6">
+                                <div className="flex-1 space-y-3 mb-6">
                                     {(order.items || []).map((item, i) => (
                                         <div key={i} className="flex justify-between items-center text-sm">
                                             <span className="text-white/80 font-serif italic">{item.name}</span>
@@ -174,7 +174,7 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                     </h3>
                     <div className="space-y-6">
                         {billed.map(order => (
-                             <div key={order.id} className="bg-white/5 border border-white/10 rounded-3xl p-8 flex flex-col shadow-2xl relative h-[420px] group transition-all hover:bg-white/10">
+                             <div key={order.id} className="bg-white/5 border border-white/10 rounded-3xl p-8 flex flex-col shadow-2xl relative min-h-[420px] h-auto group transition-all hover:bg-white/10">
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-2">
                                         <span className="bg-[#FFD700] text-[#0F3A2F] px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest">
@@ -200,7 +200,7 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                                     </div>
                                 </div>
 
-                                <div className="flex-1 space-y-3 overflow-y-auto mb-6">
+                                <div className="flex-1 space-y-3 mb-6">
                                     {(order.items || []).map((item, i) => (
                                         <div key={i} className="flex justify-between items-center text-sm">
                                             <span className="text-white/80 font-serif italic">{item.name}</span>

@@ -34,8 +34,13 @@ export default function WaitersPortal() {
     const [searchQuery, setSearchQuery] = useState('');
     const [editingOrder, setEditingOrder] = useState(null); // { id, type }
     const [serviceChargeEnabled, setServiceChargeEnabled] = useState(true);
-    const [now, setNow] = useState(Date.now());
     const { playSound } = useSoundSystem((assistanceRequests || []).some(r => r.status === 'pending'));
+    
+    const [toast, setToast] = useState({ visible: false, message: '', type: '' });
+    const showToast = useCallback((message, type = 'info') => {
+        setToast({ visible: true, message, type });
+        setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 5000);
+    }, []);
 
     // Admin integration states
     const [editingTakeaway, setEditingTakeaway] = useState(null);
@@ -45,8 +50,6 @@ export default function WaitersPortal() {
 
     useEffect(() => {
         document.title = "Waiter - The Great Nizam";
-        const timer = setInterval(() => setNow(Date.now()), 1000);
-        return () => clearInterval(timer);
     }, []);
 
     const fetchData = useCallback(async () => {
@@ -95,12 +98,18 @@ export default function WaitersPortal() {
             // Play notification sounds based on event type and content
             if (data?.type === 'bill') {
                 playSound('bill');
+                showToast(`Table ${data.tableId} requested the bill!`, 'urgent');
+                if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
             } else if (data?.status === 'ready') {
                 playSound('ready');
             } else if (data?.status === 'new' || data?.status === 'pending' || data?.type === 'assistance') {
                 // Only play newOrder for actually NEW things, not every status update
                 if (data?.type === 'assistance' || data?.tableId) {
                     playSound('newOrder');
+                }
+                if (data?.type === 'assistance') {
+                    showToast(`Table ${data.tableId} requires assistance!`, 'urgent');
+                    if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
                 }
             }
         };
@@ -233,7 +242,7 @@ export default function WaitersPortal() {
 
     // UI Components
     const Sidebar = () => (
-        <aside className="w-64 bg-[#0a261f] border-r border-white/5 flex flex-col p-6 hidden lg:flex">
+        <aside className="w-64 bg-[#0a261f] border-r border-white/5 flex flex-col p-6 hidden md:flex shrink-0 z-50">
             <div className="flex items-center gap-3 mb-12">
                 <img src="/logo-icon.png" className="w-12 h-12 object-contain" alt="Logo" />
                 <div>
@@ -326,7 +335,7 @@ export default function WaitersPortal() {
                 </header>
 
                 <div 
-                    className="flex-1 overflow-y-auto p-8 space-y-12 min-h-0"
+                    className="flex-1 overflow-y-auto overscroll-contain overscroll-contain p-8 space-y-12 min-h-0"
                 >
 
                     
@@ -703,7 +712,7 @@ export default function WaitersPortal() {
                     <h1 className="text-2xl font-black text-white">Floor Mapping</h1>
                     <p className="text-[#86a69d] text-[10px] font-black uppercase tracking-[0.2em] mt-1">Real-time occupancy status</p>
                 </header>
-                <div className="flex-1 overflow-y-auto p-8 min-h-0">
+                <div className="flex-1 overflow-y-auto overscroll-contain p-8 min-h-0">
                     {[{ title: 'Royal Tables', data: tTables }, { title: 'Private Boxes', data: bTables }, { title: 'Heritage Chowkies', data: cTables }].map(section => {
                         const sectionAlerts = section.data.filter(tableId => {
                             const normalizedId = tableId.toUpperCase();
@@ -764,7 +773,7 @@ export default function WaitersPortal() {
         const totalBill = subtotal + serviceCharge;
 
         return (
-            <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#0a261f]/30">
+            <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#0a261f]/30 min-h-0">
                 <header className="px-8 py-6 border-b border-white/5 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <button onClick={() => setView('dashboard')} className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-white/10 transition-all text-white">
@@ -780,7 +789,7 @@ export default function WaitersPortal() {
                     </button>
                 </header>
 
-                <div className="flex-1 overflow-y-auto p-8 space-y-6">
+                <div className="flex-1 overflow-y-auto overscroll-contain p-8 space-y-6">
                     {tableAssistance && (
                         <div className="bg-blue-600/20 border border-blue-500/50 rounded-[32px] p-8 flex items-center justify-between">
                             <div className="flex items-center gap-6">
@@ -995,8 +1004,8 @@ export default function WaitersPortal() {
         };
 
         return (
-            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-                <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
+                <div className="flex-1 flex flex-col min-w-0 overflow-hidden min-h-0">
                     <header className="px-4 md:px-8 py-6 border-b border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
                         <div className="flex items-center gap-4 w-full sm:w-auto">
                             <button onClick={() => setView('table_details')} className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white"><ArrowLeft size={20} /></button>
@@ -1013,7 +1022,7 @@ export default function WaitersPortal() {
                             />
                         </div>
                     </header>
-                    <div className="flex-1 overflow-y-auto p-4 md:p-8">
+                    <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-8">
                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                             {filteredMenu.map(item => (
                                 <button key={item.id} onClick={() => addToCart(item)} className="bg-white/5 border border-white/5 rounded-[32px] p-6 text-left hover:bg-[#FFD700]/5 transition-all group active:scale-95">
@@ -1032,7 +1041,7 @@ export default function WaitersPortal() {
                         <span>Order Basket</span>
                         <span className="bg-[#FFD700] text-[#0F3A2F] px-2 py-0.5 rounded-full text-[9px]">{cart.length} ITEMS</span>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-0">
+                    <div className="flex-1 overflow-y-auto overscroll-contain p-6 space-y-4 min-h-0">
                         {cart.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center opacity-20 italic text-sm">
                                 <Utensils size={32} className="mb-2" />
@@ -1073,13 +1082,24 @@ export default function WaitersPortal() {
     };
 
     return (
-        <div className="h-[100dvh] bg-[#0F3A2F] text-white font-sans selection:bg-[#FFD700] selection:text-[#0F3A2F] flex overflow-hidden">
-            <Sidebar />
-            <main className="flex-1 flex flex-col overflow-hidden relative">
+        <div className="fixed inset-0 bg-[#0F3A2F] text-white font-sans selection:bg-[#FFD700] selection:text-[#0F3A2F] flex overflow-hidden">
+            {Sidebar()}
+            <main className="flex-1 flex flex-col overflow-hidden relative min-h-0 min-w-0">
                 {view === 'dashboard' && (activeTab === 'tables' ? renderTableMap() : Dashboard())}
                 {view === 'table_details' && renderTableDetails()}
                 {view === 'order_entry' && renderOrderEntry()}
             </main>
+
+            {/* Toast Notification */}
+            <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-[300] transition-all duration-500 ${toast.visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10 pointer-events-none'}`}>
+                <div className={`px-6 py-4 rounded-2xl flex items-center gap-4 shadow-2xl font-black uppercase tracking-widest text-xs border ${toast.type === 'urgent' ? 'bg-red-600/90 border-red-500/50 text-white backdrop-blur-xl' : 'bg-[#FFD700]/90 border-[#FFD700]/50 text-[#0F3A2F] backdrop-blur-xl'}`}>
+                    {toast.type === 'urgent' ? <AlertTriangle size={20} className="animate-pulse" /> : <Bell size={20} />}
+                    {toast.message}
+                    {toast.type === 'urgent' && (
+                        <button onClick={() => { setView('dashboard'); setActiveTab('alerts'); setToast({...toast, visible: false}); }} className="ml-4 bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-all border border-white/10 active:scale-95 text-white">View</button>
+                    )}
+                </div>
+            </div>
         </div>
     );
 }
