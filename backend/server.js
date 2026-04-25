@@ -8,7 +8,7 @@ const {
     getOrdersByStatus, createOrder, addOrderToSession, updateOrderStatus, deleteOrder, clearTableOrders, 
     getAnalyticsDaily, getItemAnalytics, getAssistanceRequests, createAssistanceRequest, 
     updateAssistanceStatus, deleteAssistanceRequest, getEmployees, createEmployee, 
-    updateEmployee, deleteEmployee, markAttendance, getAttendanceToday,
+    updateEmployee, deleteEmployee, markAttendance, getAttendanceToday, checkoutAttendance,
     getMenuItems, addMenuItem, updateMenuItem, deleteMenuItem, seedMenu,
     updateMenuItemStatus, checkMenuAvailabilityReset, getSessionsByStatus, updateSessionStatus, updateCategoryItemStatus,
     getTableStatuses, updateTableStatus, allocateSession, getActiveSession, clearSession,
@@ -567,11 +567,22 @@ app.post('/api/attendance', async (req, res) => {
         const { employeeId } = req.body;
         if (!employeeId) return res.status(400).json({ error: 'employeeId required' });
         
-        const { markAttendance } = require('./database');
         const log = await markAttendance(employeeId);
         res.status(201).json(log);
     } catch (err) {
         res.status(400).json({ error: err.message });
+    }
+});
+
+app.put('/api/attendance/checkout', async (req, res) => {
+    try {
+        const { employeeId } = req.body;
+        if (!employeeId) return res.status(400).json({ error: 'employeeId required' });
+        
+        const log = await checkoutAttendance(employeeId);
+        res.json(log);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 

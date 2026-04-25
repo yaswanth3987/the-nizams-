@@ -70,6 +70,23 @@ export default function AdminAttendance() {
         } catch (err) { console.error(err); }
     };
 
+    const handleCheckOut = async (staff) => {
+        if (!confirm(`Check-out ${staff.name} for today?`)) return;
+        try {
+            const res = await fetch(`${API_URL}/attendance/checkout`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ employeeId: staff.id })
+            });
+            if (res.ok) {
+                fetchData();
+            } else {
+                const data = await res.json();
+                alert(data.error || "Failed to check-out");
+            }
+        } catch (err) { console.error(err); }
+    };
+
     const filteredStaff = staffList.filter(s => 
         s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         s.phone.includes(searchQuery)
@@ -167,6 +184,19 @@ export default function AdminAttendance() {
                                                     >
                                                         <Clock size={16} /> Check-in
                                                     </button>
+                                                )}
+                                                {attended && !attended.checkOutTime && (
+                                                    <button 
+                                                        onClick={() => handleCheckOut(staff)}
+                                                        className="px-6 py-2.5 rounded-xl bg-red-900/20 text-red-400 border border-red-900/30 hover:bg-red-900/40 transition-all text-xs font-bold uppercase tracking-wider flex items-center gap-2"
+                                                    >
+                                                        <Clock size={16} /> Check-out
+                                                    </button>
+                                                )}
+                                                {attended && attended.checkOutTime && (
+                                                    <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest bg-white/5 px-4 py-2 rounded-lg border border-white/5">
+                                                        Completed
+                                                    </span>
                                                 )}
                                                 <button onClick={() => handleDeleteStaff(staff.id)} className="p-3 text-white/10 hover:text-red-500 transition-colors">
                                                     <Trash2 size={16} />

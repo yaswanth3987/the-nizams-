@@ -73,7 +73,8 @@ if (isPg) {
             await pgPool.query(`CREATE TABLE IF NOT EXISTS assistance_requests (id SERIAL PRIMARY KEY, "tableId" TEXT NOT NULL, type TEXT DEFAULT 'staff', status TEXT DEFAULT 'pending', "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
             await pgPool.query(`ALTER TABLE assistance_requests ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'staff';`).catch(() => {});
             await pgPool.query(`CREATE TABLE IF NOT EXISTS employees (id SERIAL PRIMARY KEY, name TEXT NOT NULL, phone TEXT NOT NULL, "shiftTimings" TEXT, "designation" TEXT, "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
-            await pgPool.query(`CREATE TABLE IF NOT EXISTS attendance (id SERIAL PRIMARY KEY, "employeeId" INTEGER NOT NULL, date DATE NOT NULL, "checkInTime" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, verified BOOLEAN DEFAULT false, UNIQUE(date, "employeeId"));`);
+            await pgPool.query(`CREATE TABLE IF NOT EXISTS attendance (id SERIAL PRIMARY KEY, "employeeId" INTEGER NOT NULL, date DATE NOT NULL, "checkInTime" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "checkOutTime" TIMESTAMP, verified BOOLEAN DEFAULT false, UNIQUE(date, "employeeId"));`);
+            await pgPool.query(`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS "checkOutTime" TIMESTAMP;`).catch(() => {});
             await pgPool.query(`CREATE TABLE IF NOT EXISTS unavailability_schedules (id SERIAL PRIMARY KEY, "itemIds" TEXT, category TEXT, type TEXT NOT NULL, "startDate" DATE, "startTime" TEXT NOT NULL, "endTime" TEXT NOT NULL, "daysOfWeek" TEXT, "isEnabled" BOOLEAN DEFAULT true, label TEXT, "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
             await pgPool.query(`ALTER TABLE employees ADD COLUMN "shiftTimings" TEXT;`).catch(() => {});
             await pgPool.query(`ALTER TABLE employees ADD COLUMN "designation" TEXT;`).catch(() => {});
@@ -136,7 +137,8 @@ if (isPg) {
             db.run(`ALTER TABLE assistance_requests ADD COLUMN type TEXT DEFAULT 'staff'`, (err) => {});
             db.run(`ALTER TABLE menu_items ADD COLUMN platterItems TEXT`, (err) => {});
             db.run(`CREATE TABLE IF NOT EXISTS employees (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, phone TEXT NOT NULL, shiftTimings TEXT, designation TEXT, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
-            db.run(`CREATE TABLE IF NOT EXISTS attendance (id INTEGER PRIMARY KEY AUTOINCREMENT, employeeId INTEGER NOT NULL, date DATE NOT NULL, checkInTime DATETIME DEFAULT CURRENT_TIMESTAMP, verified BOOLEAN DEFAULT 0, UNIQUE(date, employeeId))`);
+            db.run(`CREATE TABLE IF NOT EXISTS attendance (id INTEGER PRIMARY KEY AUTOINCREMENT, employeeId INTEGER NOT NULL, date DATE NOT NULL, checkInTime DATETIME DEFAULT CURRENT_TIMESTAMP, checkOutTime DATETIME, verified BOOLEAN DEFAULT 0, UNIQUE(date, employeeId))`);
+            db.run(`ALTER TABLE attendance ADD COLUMN checkOutTime DATETIME`, (err) => {});
             db.run(`CREATE TABLE IF NOT EXISTS unavailability_schedules (id INTEGER PRIMARY KEY AUTOINCREMENT, itemIds TEXT, category TEXT, type TEXT NOT NULL, startDate DATE, startTime TEXT NOT NULL, endTime TEXT NOT NULL, daysOfWeek TEXT, isEnabled BOOLEAN DEFAULT 1, label TEXT, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
             db.run(`ALTER TABLE employees ADD COLUMN shiftTimings TEXT`, (err) => {});
             db.run(`ALTER TABLE employees ADD COLUMN designation TEXT`, (err) => {});
@@ -913,6 +915,20 @@ const processSchedulesTask = async () => {
     return changeCount;
 };
 
+const checkoutAttendance = async (employeeId) => {
+    const today = new Date().toISOString().split('T')[0];
+    if (isPg) {
+        return runQuery(`UPDATE attendance SET "checkOutTime" = CURRENT_TIMESTAMP WHERE "employeeId" = $1 AND date = $2 RETURNING *`, [employeeId, today]);
+    } else {
+        return new Promise((resolve, reject) => {
+            db.run(`UPDATE attendance SET checkOutTime = CURRENT_TIMESTAMP WHERE employeeId = ? AND date = ?`, [employeeId, today], function(err) {
+                if (err) reject(err);
+                else resolve({ rows: [{ employeeId }] });
+            });
+        });
+    }
+};
+
 const getInventory = async () => {
     const res = await runQuery('SELECT * FROM inventory ORDER BY name ASC');
     return res.rows;
@@ -928,5 +944,5 @@ module.exports = {
     getTableStatuses, getTableStatus, updateTableStatus, getSessionsByTable, getOrdersByTable,
     allocateSession, getActiveSession, clearSession, updatePrepTime, updateOrderItems,
     getUnavailabilitySchedules, createUnavailabilitySchedule, updateUnavailabilitySchedule, deleteUnavailabilitySchedule, processSchedulesTask,
-    finalizePayment, getInventory
+    finalizePayment, getInventory, checkoutAttendance
 };
