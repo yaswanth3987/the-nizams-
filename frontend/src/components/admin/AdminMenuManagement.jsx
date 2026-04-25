@@ -178,12 +178,27 @@ export default function AdminMenuManagement() {
                         Manage your kitchen catalog, categories, and item availability.
                     </p>
                 </div>
-                <button 
-                    onClick={() => setIsAddModalOpen(true)}
-                    className="h-14 px-8 rounded-xl bg-emerald-600 text-white font-bold text-sm flex items-center gap-3 transition-all hover:bg-emerald-500 shadow-lg"
-                >
-                    <Plus size={20} /> Add New Item
-                </button>
+                    <div className="flex gap-4">
+                        <button 
+                            onClick={async () => {
+                                if (window.confirm("This will refresh the entire menu with the latest images and metadata from the system seed. Continue?")) {
+                                    try {
+                                        const res = await fetch(`${API_URL}/menu/seed`, { method: 'POST' });
+                                        if (res.ok) alert("Menu seeded successfully!");
+                                    } catch (e) { alert("Seed failed"); }
+                                }
+                            }}
+                            className="bg-white/5 border border-white/10 text-white/40 px-6 py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] hover:bg-white/10 transition-all flex items-center gap-3"
+                        >
+                            <Utensils size={14} /> Seed Menu
+                        </button>
+                        <button 
+                            onClick={() => setIsAddModalOpen(true)}
+                            className="bg-accent text-black px-8 py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-2xl hover:bg-white transition-all flex items-center gap-3"
+                        >
+                            <Plus size={16} /> Add Item
+                        </button>
+                    </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end mb-8">
