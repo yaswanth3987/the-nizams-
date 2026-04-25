@@ -156,7 +156,7 @@ export default function AdminAttendance() {
                             {filteredStaff.length === 0 ? (
                                 <tr><td colSpan="6" className="text-center py-20 text-white/20 font-serif italic text-xl">No matching personnel detected.</td></tr>
                             ) : filteredStaff.map(staff => {
-                                const attended = attendanceToday.find(a => (a.employeeId || a.employeeid) === staff.id);
+                                const attended = attendanceToday.find(a => Number(a.employeeId || a.employeeid) === Number(staff.id));
                                 const isCheckedOut = attended && (attended.checkOutTime || attended.checkouttime);
                                 return (
                                     <tr key={staff.id} className="border-b border-white/10 hover:bg-white/[0.02] transition-colors group">
