@@ -251,6 +251,24 @@ export default function AdminDashboard() {
         }
     };
 
+    const deleteOrder = async (id, isRawOrder = false) => {
+        if (!confirm('Permanently DELETE this order? This cannot be undone.')) return;
+        try {
+            const endpoint = isRawOrder ? `${API_URL}/new-orders/${id}` : `${API_URL}/orders/${id}`;
+            const res = await fetch(endpoint, { method: 'DELETE' });
+            if (!res.ok) {
+                // If direct delete fails, try the session delete endpoint as fallback
+                const fallback = isRawOrder ? null : `${API_URL}/sessions/${id}`;
+                if (fallback) await fetch(fallback, { method: 'DELETE' });
+            }
+            
+            await fetchSessions();
+            await fetchNewOrders();
+        } catch (err) {
+            console.error('Delete failed:', err);
+        }
+    };
+
     const clearTable = async (tableId) => {
         // Relaxing the filter to allow "Force Reset" for any session state (confirmed/active included)
         const tableSessions = sessions.filter(s => s.tableId === tableId);
@@ -402,6 +420,7 @@ export default function AdminDashboard() {
                         sessions={sessions}
                         newOrders={newOrders}
                         updateStatus={updateStatus}
+                        deleteOrder={deleteOrder}
                         onViewChange={setActiveView}
                         onEdit={(order) => {
                             setEditingTakeaway(order);

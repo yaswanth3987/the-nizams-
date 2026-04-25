@@ -169,6 +169,21 @@ export default function WaitersPortal() {
         }
     };
 
+    const deleteOrder = async (id, isRawOrder = false) => {
+        if (!confirm('Permanently DELETE this order? This cannot be undone.')) return;
+        try {
+            const endpoint = isRawOrder ? `${API_URL}/new-orders/${id}` : `${API_URL}/orders/${id}`;
+            const res = await fetch(endpoint, { method: 'DELETE' });
+            if (!res.ok) {
+                const fallback = isRawOrder ? null : `${API_URL}/sessions/${id}`;
+                if (fallback) await fetch(fallback, { method: 'DELETE' });
+            }
+            fetchData();
+        } catch (err) {
+            console.error('Delete failed:', err);
+        }
+    };
+
     // Admin Wrapper Methods
     const adminUpdateStatus = async (id, status, isRawOrder = false) => {
         handleUpdateOrderStatus(id, status, isRawOrder ? 'new' : 'session');
@@ -582,6 +597,7 @@ export default function WaitersPortal() {
                                 sessions={activeOrders.filter(o => o._source === 'session')}
                                 newOrders={activeOrders.filter(o => o._source === 'new')}
                                 updateStatus={adminUpdateStatus}
+                                deleteOrder={deleteOrder}
                                 onViewChange={handleAdminViewChange}
                                 onEdit={(order) => {
                                     setEditingTakeaway(order);

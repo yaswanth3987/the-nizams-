@@ -1,7 +1,7 @@
 import React from 'react';
-import { Package, CheckCircle, Clock, ShoppingBag, ArrowRight, Printer, Check, CreditCard, XCircle, Utensils, Plus } from 'lucide-react';
+import { Package, CheckCircle, Clock, ShoppingBag, ArrowRight, Printer, Check, CreditCard, XCircle, Utensils, Plus, Trash2 } from 'lucide-react';
 
-export default function AdminTakeawayManager({ sessions, newOrders, updateStatus, onViewChange, onEdit }) {
+export default function AdminTakeawayManager({ sessions, newOrders, updateStatus, deleteOrder, onViewChange, onEdit }) {
     // Filter only takeaway sessions that aren't completed yet
     const activeSessions = (sessions || []).filter(s => s.orderType === 'takeaway' && s.status !== 'completed');
     const incomingTakeaways = (newOrders || []).filter(o => o.orderType === 'takeaway' && (o.status === 'new' || o.status === 'pending'));
@@ -47,7 +47,16 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                                 <div className="absolute top-0 left-0 w-1.5 h-full bg-accent"></div>
                                 <div className="flex justify-between items-start mb-6 pl-4">
                                     <h3 className="text-2xl font-serif font-bold text-white italic">{order.customerName || 'Takeaway Guest'}</h3>
-                                    <span className="text-[10px] font-bold text-accent uppercase tracking-widest">NEW</span>
+                                    <div className="flex items-center gap-4">
+                                        <button 
+                                            onClick={() => deleteOrder?.(order.id, true)}
+                                            className="p-2 bg-white/5 hover:bg-red-500/10 text-white/20 hover:text-red-500 rounded-lg transition-all"
+                                            title="Delete Order"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                        <span className="text-[10px] font-bold text-accent uppercase tracking-widest">NEW</span>
+                                    </div>
                                 </div>
 
                                 <div className="flex-1 space-y-3 overflow-y-auto mb-6 pl-4">
@@ -102,9 +111,18 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                                             </span>
                                         )}
                                     </div>
-                                    <h3 className="text-white text-3xl font-serif font-bold italic truncate leading-tight">
-                                        {order.customerName || 'Takeaway Guest'}
-                                    </h3>
+                                    <div className="flex justify-between items-start">
+                                        <h3 className="text-white text-3xl font-serif font-bold italic truncate leading-tight">
+                                            {order.customerName || 'Takeaway Guest'}
+                                        </h3>
+                                        <button 
+                                            onClick={() => deleteOrder?.(order.id)}
+                                            className="p-2 bg-white/5 hover:bg-red-500/10 text-white/20 hover:text-red-500 rounded-lg transition-all"
+                                            title="Delete Order"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div className="flex-1 space-y-3 overflow-y-auto mb-6">
@@ -166,9 +184,18 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                                             </span>
                                         )}
                                     </div>
-                                    <h3 className="text-white text-3xl font-serif font-bold italic truncate leading-tight">
-                                        {order.customerName || 'Takeaway Guest'}
-                                    </h3>
+                                    <div className="flex justify-between items-start">
+                                        <h3 className="text-white text-3xl font-serif font-bold italic truncate leading-tight">
+                                            {order.customerName || 'Takeaway Guest'}
+                                        </h3>
+                                        <button 
+                                            onClick={() => deleteOrder?.(order.id)}
+                                            className="p-2 bg-white/5 hover:bg-red-500/10 text-white/20 hover:text-red-500 rounded-lg transition-all"
+                                            title="Delete Order"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div className="flex-1 space-y-3 overflow-y-auto mb-6">
