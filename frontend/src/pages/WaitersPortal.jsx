@@ -234,6 +234,7 @@ export default function WaitersPortal() {
                     { id: 'orders', label: 'Ready Orders', icon: ListOrdered, count: (activeOrders || []).filter(o => o?.status === 'ready').length },
                     { id: 'confirmed', label: 'Confirmed', icon: CheckCircle, count: (activeOrders || []).filter(o => ['confirmed', 'active', 'ready', 'served'].includes(o?.status) && o?.orderType !== 'takeaway').length },
                     { id: 'billing', label: 'Billing', icon: CreditCard, count: (activeOrders || []).filter(o => ['billed', 'billing_pending'].includes(o?.status)).length },
+                    { id: 'attendance', label: 'Attendance', icon: UserPlus, count: 0 },
                     { id: 'alerts', label: 'Alerts', icon: Bell, count: (assistanceRequests || []).filter(r => r?.status === 'pending').length },
                     { id: 'completed', label: 'Completed', icon: CheckSquare, count: (activeOrders || []).filter(o => o?.status === 'completed' && o?.orderType !== 'takeaway').length },
                     { id: 'scheduler', label: 'Scheduler', icon: Clock, count: 0 }
@@ -540,7 +541,12 @@ export default function WaitersPortal() {
                         </section>
                     )}
 
-                    {/* Billing Orders - Show in Billing tab */}
+                    {activeTab === 'attendance' && (
+                        <div className="w-full">
+                            <AdminAttendance />
+                        </div>
+                    )}
+
                     {activeTab === 'billing' && (
                         <div className="w-full">
                             <AdminBilledOrders 
