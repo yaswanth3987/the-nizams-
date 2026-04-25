@@ -1,5 +1,5 @@
 const menuData = [
-    { name: 'NIZAMI LAMB CURRY (REGULAR)', price: 12.99, category: "Chef's Specials", description: 'Slow cooked tender lamb in our signature Nizami spice blend.', isPopular: true, isRecommended: true, isNew: true, image: '/nizami lamb special curry regular.jpg' },
+    { name: 'NIZAMI LAMB CURRY (REGULAR)', price: 12.99, category: "Chef's Specials", description: 'Slow cooked tender lamb in our signature Nizami spice blend.', isPopular: true, isRecommended: true, isNew: true, image: '/nazami lamb curry.jpeg' },
     { name: 'NIZAMI LAMB CURRY (LARGE)', price: 18.99, category: "Chef's Specials", description: 'Signature lamb curry - Family Size', isPopular: true, isRecommended: true, isNew: true, image: '/nizami lamb curry large.jpg' },
     { name: 'CHICKEN CORN SOUP', price: 5.99, category: 'Soups', description: 'Classic chicken and sweetcorn soup' },
     { name: 'CHICKEN HOT & SOUR SOUP', price: 5.99, category: 'Soups', description: 'Spicy and tangy chicken soup' },

@@ -25,7 +25,7 @@ export const categoriesData = [
 
 export const menuData = [
     // Chef's Specials
-    { id: 'cs1', name: 'NIZAMI LAMB CURRY (REGULAR)', price: 12.99, category: "Chef's Specials", spice: 2, veg: false, isPopular: true, isRecommended: true, isNew: true, image: '/nizami lamb special curry regular.jpg' },
+    { id: 'cs1', name: 'NIZAMI LAMB CURRY (REGULAR)', price: 12.99, category: "Chef's Specials", spice: 2, veg: false, isPopular: true, isRecommended: true, isNew: true, image: '/nazami lamb curry.jpeg' },
     { id: 'cs2', name: 'NIZAMI LAMB CURRY (LARGE)', price: 18.99, category: "Chef's Specials", spice: 2, veg: false, isPopular: true, isRecommended: true, isNew: true, image: '/nizami lamb curry large.jpg' },
 
     // Soups
