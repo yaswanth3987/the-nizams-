@@ -65,18 +65,24 @@ const OrderCardV2 = ({
                 </div>
 
                 {/* Actions */}
-                <div className="grid grid-cols-2 gap-3 mt-auto pt-4 border-t border-white/5">
+                <div className={`grid ${isNew ? 'grid-cols-3' : 'grid-cols-2'} gap-2 mt-auto pt-4 border-t border-white/5`}>
                     {isNew ? (
                         <>
                             <button 
+                                onClick={() => { if(window.confirm('Delete this incoming order?')) onDelete(order); }}
+                                className="bg-red-500/10 text-red-500 py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest active:scale-95 transition-all flex items-center justify-center gap-1.5 border border-red-500/20 hover:bg-red-500 hover:text-white"
+                            >
+                                <Trash2 size={14} /> Del
+                            </button>
+                            <button 
                                 onClick={() => onEdit(order)}
-                                className="bg-white/10 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2 border border-white/10"
+                                className="bg-white/10 text-white py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest active:scale-95 transition-all flex items-center justify-center gap-1.5 border border-white/10"
                             >
                                 <Edit3 size={14} /> Edit
                             </button>
                             <button 
                                 onClick={() => onStatusUpdate(order.id, 'confirmed', order._source)}
-                                className="bg-[#FFD700] text-[#0a261f] py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#FFD700]/10"
+                                className="bg-[#FFD700] text-[#0a261f] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-[#FFD700]/10"
                             >
                                 <CheckCircle size={14} strokeWidth={3} /> Accept
                             </button>
@@ -115,13 +121,15 @@ const OrderCardV2 = ({
                 </div>
             </div>
 
-            {/* Quick Delete - Relocated to avoid overlap */}
-            <button 
-                onClick={(e) => { e.stopPropagation(); onDelete(order); }}
-                className="absolute top-2 right-2 w-8 h-8 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white z-10"
-            >
-                <Trash2 size={14} />
-            </button>
+            {/* Quick Delete - Relocated to avoid overlap (hidden for new orders since they have explicit delete) */}
+            {!isNew && (
+                <button 
+                    onClick={(e) => { e.stopPropagation(); if(window.confirm('Delete this order?')) onDelete(order); }}
+                    className="absolute top-2 right-2 w-8 h-8 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white z-10"
+                >
+                    <Trash2 size={14} />
+                </button>
+            )}
         </div>
     );
 };

@@ -343,7 +343,7 @@ const deleteOrder = async (id) => {
 };
 
 const deleteNewOrder = async (id) => {
-    await runQuery(`DELETE FROM new_orders WHERE id = ?`, [id]);
+    await runQuery(`DELETE FROM orders WHERE id = ?`, [id]);
     return { id };
 };
 
@@ -355,9 +355,9 @@ const deleteSession = async (id) => {
 const clearTableOrders = async (tableId) => {
     const colName = isPg ? '"tableId"' : 'tableId';
     // Archive orders
-    await runQuery(`UPDATE orders SET status = 'archived' WHERE ${colName} = ? AND status IN ('completed', 'billed', 'accepted') AND ${isPg ? '"orderType"' : 'orderType'} != 'takeaway'`, [tableId.toString()]);
+    await runQuery(`UPDATE orders SET status = 'archived' WHERE ${colName} = ? AND ${isPg ? '"orderType"' : 'orderType'} != 'takeaway'`, [tableId.toString()]);
     // Archive sessions
-    const res = await runQuery(`UPDATE table_sessions SET status = 'archived' WHERE ${colName} = ? AND status IN ('active', 'confirmed', 'billed', 'completed') AND ${isPg ? '"orderType"' : 'orderType'} != 'takeaway'`, [tableId.toString()]);
+    const res = await runQuery(`UPDATE table_sessions SET status = 'archived' WHERE ${colName} = ? AND ${isPg ? '"orderType"' : 'orderType'} != 'takeaway'`, [tableId.toString()]);
     
     // End active session
     await clearSession(tableId);
