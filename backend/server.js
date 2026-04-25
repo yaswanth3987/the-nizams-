@@ -5,7 +5,7 @@ const path = require('path');
 const { Server } = require('socket.io');
 const ExcelJS = require('exceljs');
 const { 
-    getOrdersByStatus, createOrder, addOrderToSession, updateOrderStatus, deleteOrder, clearTableOrders, 
+    getOrdersByStatus, createOrder, addOrderToSession, updateOrderStatus, deleteOrder, deleteNewOrder, clearTableOrders, 
     getAnalyticsDaily, getItemAnalytics, getAssistanceRequests, createAssistanceRequest, 
     updateAssistanceStatus, deleteAssistanceRequest, getEmployees, createEmployee, 
     updateEmployee, deleteEmployee, markAttendance, getAttendanceToday, checkoutAttendance,
@@ -216,7 +216,7 @@ app.delete('/api/orders/:id', async (req, res) => {
 
 app.delete('/api/new-orders/:id', async (req, res) => {
     try {
-        await deleteOrder(req.params.id);
+        await deleteNewOrder(req.params.id);
         io.emit('orderDeleted', { id: parseInt(req.params.id, 10) });
         res.json({ success: true });
     } catch (err) {

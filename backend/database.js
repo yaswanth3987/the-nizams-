@@ -342,6 +342,11 @@ const deleteOrder = async (id) => {
     return { id };
 };
 
+const deleteNewOrder = async (id) => {
+    await runQuery(`DELETE FROM new_orders WHERE id = ?`, [id]);
+    return { id };
+};
+
 const deleteSession = async (id) => {
     await runQuery(`DELETE FROM table_sessions WHERE id = ?`, [id]);
     return { id };
@@ -971,7 +976,7 @@ const getInventory = async () => {
 
 module.exports = {
     db, pgPool, runQuery, isPg, getOrdersByStatus, createOrder, addOrderToSession, updateOrderStatus,
-    deleteOrder, deleteSession, clearTableOrders, getAnalyticsDaily, getItemAnalytics, resetAllSalesAndSessions,
+    deleteOrder, deleteNewOrder, deleteSession, clearTableOrders, getAnalyticsDaily, getItemAnalytics, resetAllSalesAndSessions,
     getAssistanceRequests, createAssistanceRequest, updateAssistanceStatus, deleteAssistanceRequest,
     getEmployees, createEmployee, updateEmployee, deleteEmployee, markAttendance, getAttendanceToday,
     getMenuItems, addMenuItem, updateMenuItem, deleteMenuItem, seedMenu,
