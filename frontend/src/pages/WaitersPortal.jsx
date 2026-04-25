@@ -29,12 +29,11 @@ export default function WaitersPortal() {
     const [menu, setMenu] = useState([]);
     const [selectedTable, setSelectedTable] = useState(null);
     const [activeTab, setActiveTab] = useState('alerts'); // 'tables' | 'orders' | 'alerts'
-    const [view, setView] = useState('dashboard'); // 'dashboard' | 'table_details' | 'order_entry'
-    
-    // Order entry state
-    const [searchQuery, setSearchQuery] = useState('');
+    const [view, setView] = useState('dashboard'); // 'dashboard' | 'table_details' | 'order_entry' | 'takeaway_details'
     const [cart, setCart] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
     const [editingOrder, setEditingOrder] = useState(null); // { id, type }
+    const [serviceChargeEnabled, setServiceChargeEnabled] = useState(true);
     const [now, setNow] = useState(Date.now());
     const { playSound } = useSoundSystem((assistanceRequests || []).some(r => r.status === 'pending'));
 
@@ -743,7 +742,6 @@ export default function WaitersPortal() {
         
         // Use the service charge from the first order or default to 10%
         const firstOrder = tableOrders[0] || {};
-        const [serviceChargeEnabled, setServiceChargeEnabled] = useState(true);
         const serviceCharge = serviceChargeEnabled ? (parseFloat(firstOrder.serviceCharge) || (subtotal * 0.1)) : 0;
         const totalBill = subtotal + serviceCharge;
 
