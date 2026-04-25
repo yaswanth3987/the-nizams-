@@ -263,6 +263,39 @@ export default function AdminOverview({ itemAnalytics = [], salesList = [] }) {
                     </div>
                 </div>
             </div>
+
+            {/* System Management Section */}
+            <div className="pt-12 border-t border-white/10">
+                <div className="bg-red-500/5 border border-red-500/20 rounded-[2.5rem] p-12 flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl">
+                    <div className="max-w-xl text-center md:text-left">
+                        <h3 className="text-3xl font-serif text-white font-bold italic mb-3">System Management</h3>
+                        <p className="text-white/40 text-sm leading-relaxed">
+                            Perform a complete factory reset to clear all active sessions, historical orders, sales analytics, and inventory data. <span className="text-red-400/60 font-bold uppercase tracking-tighter ml-1">Warning: This action is irreversible.</span>
+                        </p>
+                    </div>
+                    <button 
+                        onClick={async () => {
+                            if (window.confirm("CRITICAL WARNING: This will PERMANENTLY DELETE all orders, sales history, and inventory records. Are you absolutely sure?")) {
+                                try {
+                                    const res = await fetch(`${API_URL}/factory-reset`, { method: 'DELETE' });
+                                    const data = await res.json();
+                                    if (data.success) {
+                                        alert("System reset successful. The application will now refresh.");
+                                        window.location.reload();
+                                    } else {
+                                        throw new Error(data.error || "Reset failed");
+                                    }
+                                } catch (err) {
+                                    alert("System reset failed: " + err.message);
+                                }
+                            }
+                        }}
+                        className="px-10 py-5 rounded-2xl bg-red-500 text-white font-black uppercase tracking-[0.2em] text-[10px] shadow-[0_0_30px_rgba(239,68,68,0.3)] hover:bg-red-600 transition-all active:scale-95 flex items-center gap-3 shrink-0"
+                    >
+                        <TrendingUp className="rotate-180" size={16} /> Force Factory Reset
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }
