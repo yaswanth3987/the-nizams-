@@ -20,6 +20,14 @@ const OrderCardV2 = ({
         return 'bg-orange-500 text-white border-orange-500';
     };
 
+    const getStatusLabel = () => {
+        if (order.status === 'billing_pending') return 'Bill Requested';
+        if (order.status === 'billed') return 'Billed';
+        if (order.status === 'ready') return 'Ready to Serve';
+        if (order.status === 'confirmed') return 'In Progress';
+        return order.status;
+    };
+
     return (
         <div className="bg-white/5 border border-white/10 rounded-[2.5rem] flex flex-col overflow-hidden transition-all hover:bg-white/[0.07] relative group">
             {/* Header Color Strip */}
@@ -28,16 +36,20 @@ const OrderCardV2 = ({
             <div className="p-6 pl-8 flex flex-col h-full">
                 {/* Order Header */}
                 <div className="flex justify-between items-start mb-4">
-                    <div>
+                    <div className="min-w-0 flex-1 pr-4">
                         <div className="flex items-center gap-2 mb-1">
                             <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${getStatusStyles()}`}>
-                                {order.status}
+                                {getStatusLabel()}
                             </span>
                             {isNew && <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>}
                         </div>
-                        <h3 className="text-[#FFD700] text-3xl font-serif font-black italic tracking-tighter uppercase">Table {order.tableId}</h3>
+                        <h3 className="text-[#FFD700] text-3xl font-serif font-black italic tracking-tighter uppercase truncate">
+                            {order.orderType === 'takeaway' 
+                                ? (order.customerName || 'Takeaway') 
+                                : `Table ${order.tableId}`}
+                        </h3>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0">
                         <p className="text-white text-lg font-black tabular-nums">£{Number(order.finalTotal || 0).toFixed(2)}</p>
                         <p className="text-[#86a69d] text-[9px] font-black uppercase tracking-[0.2em]">{order.orderType}</p>
                     </div>

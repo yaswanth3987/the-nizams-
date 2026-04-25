@@ -5,11 +5,11 @@
 [36mvite v8.0.1 [32mbuilding client environment for production...[36m[39m
 [2K
 transforming...Γ£ô 2361 modules transformed.
-node.exe : [31mΓ£ù[39m Build failed in 896ms
+node.exe : [31mΓ£ù[39m Build failed in 947ms
 At line:1 char:1
 + & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
 + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: ([31mΓ£ù[39m Build failed in 896ms:String) [], RemoteException
+    + CategoryInfo          : NotSpecified: ([31mΓ£ù[39m Build failed in 947ms:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
  
 [31merror during build:

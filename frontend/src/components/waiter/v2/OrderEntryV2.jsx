@@ -8,7 +8,6 @@ const OrderEntryV2 = ({
     cart, 
     setCart, 
     onBack, 
-    onBack, 
     onSubmit,
     orderType,
     setOrderType,
