@@ -16,6 +16,7 @@ import AdminCompletedView from '../components/admin/AdminCompletedView';
 import AdminTakeawayManager from '../components/admin/AdminTakeawayManager';
 import AdminTakeawayPOS from '../components/admin/AdminTakeawayPOS';
 import AdminUnavailabilityScheduler from '../components/admin/AdminUnavailabilityScheduler';
+import AdminBilledOrders from '../components/admin/AdminBilledOrders';
 import Receipt from '../components/Receipt';
 
 const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
@@ -541,50 +542,13 @@ export default function WaitersPortal() {
 
                     {/* Billing Orders - Show in Billing tab */}
                     {activeTab === 'billing' && (
-                        <section>
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-[#FFD700] text-2xl font-serif font-black italic tracking-tight">Pending Settlements</h2>
-                                <div className="flex items-center gap-2 text-[#86a69d] text-[10px] font-black uppercase tracking-widest">
-                                    Awaiting {(activeOrders || []).filter(o => ['billed', 'billing_pending'].includes(o.status)).length}
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3">
-                                {(activeOrders || []).filter(o => ['billed', 'billing_pending'].includes(o.status)).map(order => {
-                                    return (
-                                        <div key={`billing-${order.id}`} className={`bg-white/5 border rounded-2xl flex flex-col overflow-hidden transition-all duration-500 relative border-[#FFD700]/30 min-h-[160px] h-auto`}>
-                                            <div className="absolute top-0 left-0 w-1.5 h-full bg-[#FFD700]"></div>
-                                            <div className="p-3 pl-4 flex flex-col h-full">
-                                                <div className="flex justify-between items-center mb-3 border-b border-white/5 pb-2">
-                                                    <h3 className="text-[#FFD700] text-2xl font-serif font-black italic tracking-tighter">Table {order.tableId}</h3>
-                                                    <p className="text-[#FFD700] text-[10px] font-black uppercase tabular-nums px-2 py-1 rounded-md bg-[#FFD700]/10">
-                                                        {order.status}
-                                                    </p>
-                                                </div>
-                                                <div className="flex-1 space-y-2 mb-4">
-                                                    {(Array.isArray(order.items) ? order.items : []).map((item, i) => (
-                                                        <div key={i} className="flex justify-between items-start text-xs italic font-medium leading-tight">
-                                                            <span className="text-white"><span className="text-[#FFD700] font-black not-italic mr-1.5">{item.qty}x</span> {item.name}</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                                <div className="flex justify-between items-center mb-3 px-1 border-t border-white/5 pt-3">
-                                                    <div className="text-[9px] font-black text-[#86a69d] tracking-widest uppercase">Total Due</div>
-                                                    <div className="text-xl font-serif font-black text-[#FFD700]">£{Number(order.finalTotal || 0).toFixed(2)}</div>
-                                                </div>
-                                                <div className="mt-auto">
-                                                    <button 
-                                                        onClick={() => { setSelectedTable(order.tableId); setView('table_details'); }}
-                                                        className="w-full bg-[#FFD700]/10 border border-[#FFD700]/20 text-[#FFD700] py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-transform"
-                                                    >
-                                                        Awaiting Settlement at Counter
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </section>
+                        <div className="w-full">
+                            <AdminBilledOrders 
+                                orders={activeOrders.filter(o => o._source === 'session')}
+                                updateStatus={adminUpdateStatus}
+                                printReceipt={printReceipt}
+                            />
+                        </div>
                     )}
 
                     {/* Admin Integrated Views */}
