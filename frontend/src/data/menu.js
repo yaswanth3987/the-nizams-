@@ -78,6 +78,8 @@ export const menuData = [
     // Chicken Main Course
     { id: 'cmc1', name: 'DUM KA CHICKEN', price: 12.99, category: 'Chicken Main Course', spice: 2, veg: false, image: '/dum-ka-chicken.jpg' },
     { id: 'cmc2', name: 'BUTTER CHICKEN', price: 12.99, category: 'Chicken Main Course', spice: 1, veg: false, isPopular: true, image: '/Butter Chicken.jpg' },
+    { id: 'cmc3', name: 'HYDERABADI CHICKEN KARAHI', price: 12.99, category: 'Chicken Main Course', spice: 2, veg: false },
+    { id: 'cmc4', name: 'CHICKEN MASALA', price: 12.99, category: 'Chicken Main Course', spice: 2, veg: false },
 
     // Mutton Main Course
     { id: 'mmc1', name: 'BHEJA FRY MASALA', price: 14.99, category: 'Mutton Main Course', spice: 2, veg: false, image: '/Bheja Fry Mumbai.jpg' },
@@ -85,6 +87,9 @@ export const menuData = [
     { id: 'mmc3', name: 'KALEJI FRY MASALA', price: 14.99, category: 'Mutton Main Course', spice: 2, veg: false, image: '/Kaleji fry masala.jpg' },
     { id: 'mmc4', name: 'TALAWA GOSHT', price: 16.99, category: 'Mutton Main Course', spice: 2, veg: false, isRecommended: true, image: '/Talawa Gosht.jpg' },
     { id: 'mmc5', name: 'MUTTON MASALA', price: 16.99, category: 'Mutton Main Course', spice: 2, veg: false, image: '/mutton masala.jpg' },
+    { id: 'mmc6', name: 'HYDERABADI LAMB KARAHI', price: 14.99, category: 'Mutton Main Course', spice: 2, veg: false },
+    { id: 'mmc7', name: 'ROGAN JOSH', price: 16.99, category: 'Mutton Main Course', spice: 2, veg: false },
+    { id: 'mmc8', name: 'NIZAMI GOSHT', price: 16.99, category: 'Mutton Main Course', spice: 2, veg: false },
 
     // Rice
     { id: 'r1', name: 'PLAIN RICE', price: 4.99, category: 'Rice', spice: 0, veg: true, image: '/Instant Pot Basmati Rice.jpg' },
