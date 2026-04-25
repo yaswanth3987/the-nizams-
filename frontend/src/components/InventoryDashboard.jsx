@@ -236,14 +236,19 @@ export default function InventoryDashboard() {
                 <div className="flex-1 flex justify-end gap-4">
                     <button 
                         onClick={async () => {
-                            if (window.confirm("ARE YOU SURE? This will PERMANENTLY DELETE ALL INVENTORY RECORDS.")) {
-                                try {
-                                    const res = await fetch(`${API_URL}/analytics/reset`, { method: 'DELETE' });
-                                    if (res.ok) {
-                                        alert("Inventory cleared!");
-                                        window.location.reload();
-                                    }
-                                } catch (e) { alert("Reset failed"); }
+                            const pwd = window.prompt("ENTER MASTER PASSWORD TO RESET SYSTEM:");
+                            if (pwd === '1819219') {
+                                if (window.confirm("FINAL WARNING: This will PERMANENTLY DELETE ALL INVENTORY RECORDS.")) {
+                                    try {
+                                        const res = await fetch(`${API_URL}/analytics/reset`, { method: 'DELETE' });
+                                        if (res.ok) {
+                                            alert("Inventory cleared!");
+                                            window.location.reload();
+                                        }
+                                    } catch (e) { alert("Reset failed"); }
+                                }
+                            } else if (pwd !== null) {
+                                alert("Invalid Master Password. Action Denied.");
                             }
                         }}
                         className="h-10 px-6 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 font-black uppercase tracking-[0.2em] text-[10px] hover:bg-red-500 hover:text-white transition-all active:scale-95 flex items-center gap-2"

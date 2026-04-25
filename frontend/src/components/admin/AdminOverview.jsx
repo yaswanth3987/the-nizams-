@@ -275,19 +275,24 @@ export default function AdminOverview({ itemAnalytics = [], salesList = [] }) {
                     </div>
                     <button 
                         onClick={async () => {
-                            if (window.confirm("CRITICAL WARNING: This will PERMANENTLY DELETE all orders, sales history, and inventory records. Are you absolutely sure?")) {
-                                try {
-                                    const res = await fetch(`${API_URL}/factory-reset`, { method: 'DELETE' });
-                                    const data = await res.json();
-                                    if (data.success) {
-                                        alert("System reset successful. The application will now refresh.");
-                                        window.location.reload();
-                                    } else {
-                                        throw new Error(data.error || "Reset failed");
+                            const pwd = window.prompt("ENTER MASTER PASSWORD FOR FACTORY RESET:");
+                            if (pwd === '1819219') {
+                                if (window.confirm("CRITICAL WARNING: This will PERMANENTLY DELETE all orders, sales history, and inventory records. Are you absolutely sure?")) {
+                                    try {
+                                        const res = await fetch(`${API_URL}/factory-reset`, { method: 'DELETE' });
+                                        const data = await res.json();
+                                        if (data.success) {
+                                            alert("System reset successful. The application will now refresh.");
+                                            window.location.reload();
+                                        } else {
+                                            throw new Error(data.error || "Reset failed");
+                                        }
+                                    } catch (err) {
+                                        alert("System reset failed: " + err.message);
                                     }
-                                } catch (err) {
-                                    alert("System reset failed: " + err.message);
                                 }
+                            } else if (pwd !== null) {
+                                alert("Invalid Master Password. Action Denied.");
                             }
                         }}
                         className="px-10 py-5 rounded-2xl bg-red-500 text-white font-black uppercase tracking-[0.2em] text-[10px] shadow-[0_0_30px_rgba(239,68,68,0.3)] hover:bg-red-600 transition-all active:scale-95 flex items-center gap-3 shrink-0"
