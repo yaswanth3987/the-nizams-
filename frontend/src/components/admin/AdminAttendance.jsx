@@ -156,7 +156,8 @@ export default function AdminAttendance() {
                             {filteredStaff.length === 0 ? (
                                 <tr><td colSpan="6" className="text-center py-20 text-white/20 font-serif italic text-xl">No matching personnel detected.</td></tr>
                             ) : filteredStaff.map(staff => {
-                                const attended = attendanceToday.find(a => a.employeeId === staff.id);
+                                const attended = attendanceToday.find(a => (a.employeeId || a.employeeid) === staff.id);
+                                const isCheckedOut = attended && (attended.checkOutTime || attended.checkouttime);
                                 return (
                                     <tr key={staff.id} className="border-b border-white/10 hover:bg-white/[0.02] transition-colors group">
                                         <td className="py-6 px-10 text-white/20 font-serif italic text-sm">#{String(staff.id).padStart(4, '0')}</td>
@@ -168,8 +169,8 @@ export default function AdminAttendance() {
                                         <td className="py-6 px-10 text-white/60 font-medium">{staff.phone}</td>
                                         <td className="py-6 px-10">
                                             {attended ? (
-                                                <span className="inline-flex items-center gap-2 text-xs font-bold text-emerald-400 bg-emerald-400/10 px-4 py-1.5 rounded-full border border-emerald-400/20">
-                                                    Present
+                                                <span className={`inline-flex items-center gap-2 text-xs font-bold ${isCheckedOut ? 'text-white/40' : 'text-emerald-400'} ${isCheckedOut ? 'bg-white/5' : 'bg-emerald-400/10'} px-4 py-1.5 rounded-full border ${isCheckedOut ? 'border-white/10' : 'border-emerald-400/20'}`}>
+                                                    {isCheckedOut ? 'Completed' : 'Present'}
                                                 </span>
                                             ) : (
                                                 <span className="text-xs font-bold text-white/10 uppercase tracking-widest">Off Duty</span>
@@ -177,7 +178,7 @@ export default function AdminAttendance() {
                                         </td>
                                         <td className="py-6 px-10 text-right">
                                             <div className="flex items-center justify-end gap-4">
-                                                {!attended && (
+                                                 {!attended && (
                                                     <button 
                                                         onClick={() => handleMarkAttendance(staff)}
                                                         className="px-6 py-2.5 rounded-xl bg-secondary text-accent border border-white/10 hover:bg-white hover:text-black transition-all text-xs font-bold uppercase tracking-wider flex items-center gap-2"
@@ -185,7 +186,7 @@ export default function AdminAttendance() {
                                                         <Clock size={16} /> Check-in
                                                     </button>
                                                 )}
-                                                {attended && !attended.checkOutTime && (
+                                                {attended && !isCheckedOut && (
                                                     <button 
                                                         onClick={() => handleCheckOut(staff)}
                                                         className="px-6 py-2.5 rounded-xl bg-red-900/20 text-red-400 border border-red-900/30 hover:bg-red-900/40 transition-all text-xs font-bold uppercase tracking-wider flex items-center gap-2"
@@ -193,9 +194,9 @@ export default function AdminAttendance() {
                                                         <Clock size={16} /> Check-out
                                                     </button>
                                                 )}
-                                                {attended && attended.checkOutTime && (
+                                                {isCheckedOut && (
                                                     <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest bg-white/5 px-4 py-2 rounded-lg border border-white/5">
-                                                        Completed
+                                                        Logged {new Date(attended.checkOutTime || attended.checkouttime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                                     </span>
                                                 )}
                                                 <button onClick={() => handleDeleteStaff(staff.id)} className="p-3 text-white/10 hover:text-red-500 transition-colors">
