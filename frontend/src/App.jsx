@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import CustomerMenu from './pages/CustomerMenu';
 import AdminDashboard from './pages/AdminDashboard';
 import KitchenDisplay from './pages/KitchenDisplay';
-import WaitersPortal from './pages/WaitersPortal';
+import WaitersPortal from './pages/WaitersPortalV2';
 import BillingPortal from './pages/BillingPortal';
 import ErrorBoundary from './components/ErrorBoundary';
 import { SoundProvider } from './context/SoundContext';
