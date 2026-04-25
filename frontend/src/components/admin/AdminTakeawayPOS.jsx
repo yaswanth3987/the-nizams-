@@ -71,11 +71,20 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
     const submitOrder = async () => {
         if (cart.length === 0) return;
         setIsSubmitting(true);
-        const orderData = {
+        const method = initialOrder ? 'PUT' : 'POST';
+        const url = initialOrder 
+            ? `${API_URL}/orders/${initialOrder.id}/items` 
+            : `${API_URL}/orders`;
+            
+        const orderData = initialOrder ? {
+            items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
+            finalTotal,
+            type: initialOrder._source || 'new'
+        } : {
             tableId: 'TAKEAWAY',
             orderType: 'takeaway',
             customerName,
-            phone: '', // No phone required
+            phone: '', 
             items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
             finalTotal,
             subtotal,
@@ -84,8 +93,8 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
         };
 
         try {
-            const res = await fetch(`${API_URL}/orders`, {
-                method: 'POST',
+            const res = await fetch(url, {
+                method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(orderData)
             });

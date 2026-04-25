@@ -468,6 +468,10 @@ export default function AdminDashboard() {
                         orders={newOrders}
                         updateStatus={(id, status) => updateStatus(id, status, true)}
                         cancelOrder={cancelOrder}
+                        onEdit={(order) => {
+                            setEditingTakeaway(order);
+                            setActiveView('pos');
+                        }}
                     />
                 )}
                 

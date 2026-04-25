@@ -1,7 +1,7 @@
 import React from 'react';
-import { Check, X, Clock, Receipt, UtensilsCrossed, Utensils as UtensilsIcon } from 'lucide-react';
+import { Check, X, Clock, Receipt, UtensilsCrossed, Utensils as UtensilsIcon, Edit3 } from 'lucide-react';
 
-export default function AdminNewOrders({ orders, updateStatus, cancelOrder }) {
+export default function AdminNewOrders({ orders, updateStatus, cancelOrder, onEdit }) {
     // Filter only standard dine-in 'new' or 'pending' orders
     const activeOrders = (orders || []).filter(o => (o.status === 'new' || o.status === 'pending') && o.orderType !== 'takeaway');
     
@@ -52,6 +52,12 @@ export default function AdminNewOrders({ orders, updateStatus, cancelOrder }) {
                             </div>
 
                             <div className="flex gap-4">
+                                <button
+                                    onClick={() => onEdit?.(order)}
+                                    className="px-6 bg-white/5 text-white/60 border border-white/10 rounded-xl hover:bg-accent hover:text-black hover:border-accent transition-all flex items-center justify-center"
+                                >
+                                    <Edit3 size={20} />
+                                </button>
                                 <button
                                     onClick={() => updateStatus(order.id, 'accepted')}
                                     className="flex-1 bg-emerald-500 text-black font-bold text-xs py-4 rounded-xl uppercase tracking-widest hover:bg-white transition-all shadow-lg"

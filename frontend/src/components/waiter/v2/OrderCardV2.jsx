@@ -67,19 +67,35 @@ const OrderCardV2 = ({
                 {/* Actions */}
                 <div className="grid grid-cols-2 gap-3 mt-auto pt-4 border-t border-white/5">
                     {isNew ? (
-                        <button 
-                            onClick={() => onStatusUpdate(order.id, 'confirmed', order._source)}
-                            className="col-span-2 bg-[#FFD700] text-[#0a261f] py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#FFD700]/10"
-                        >
-                            <CheckCircle size={14} strokeWidth={3} /> Accept Order
-                        </button>
+                        <>
+                            <button 
+                                onClick={() => onEdit(order)}
+                                className="bg-white/10 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2 border border-white/10"
+                            >
+                                <Edit3 size={14} /> Edit
+                            </button>
+                            <button 
+                                onClick={() => onStatusUpdate(order.id, 'confirmed', order._source)}
+                                className="bg-[#FFD700] text-[#0a261f] py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#FFD700]/10"
+                            >
+                                <CheckCircle size={14} strokeWidth={3} /> Accept
+                            </button>
+                        </>
                     ) : isReady ? (
-                        <button 
-                            onClick={() => onStatusUpdate(order.id, 'served', order._source)}
-                            className="col-span-2 bg-emerald-500 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10"
-                        >
-                            <CheckCircle size={14} strokeWidth={3} /> Mark Served
-                        </button>
+                        <>
+                            <button 
+                                onClick={() => onEdit(order)}
+                                className="bg-white/10 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2 border border-white/10"
+                            >
+                                <Edit3 size={14} /> Edit
+                            </button>
+                            <button 
+                                onClick={() => onStatusUpdate(order.id, 'served', order._source)}
+                                className="bg-emerald-500 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10"
+                            >
+                                <CheckCircle size={14} strokeWidth={3} /> Serve
+                            </button>
+                        </>
                     ) : (
                         <>
                             <button 
