@@ -13,6 +13,7 @@ const SidebarV2 = ({
     onNewTable 
 }) => {
     const navItems = [
+        { id: 'alerts', label: 'Urgent Alerts', icon: Bell, count: badgeCounts.alerts },
         { id: 'all-in-one', label: 'Quick Access', icon: LayoutGrid, count: 0 },
         { id: 'tables', label: 'Floor Map', icon: LayoutGrid, count: badgeCounts.tables },
         { id: 'new_orders', label: 'New Requests', icon: FileText, count: badgeCounts.new_orders },
@@ -20,7 +21,6 @@ const SidebarV2 = ({
         { id: 'orders', label: 'Ready to Serve', icon: ListOrdered, count: badgeCounts.ready },
         { id: 'confirmed', label: 'In Progress', icon: CheckCircle, count: badgeCounts.confirmed },
         { id: 'billing', label: 'Settlement', icon: CreditCard, count: badgeCounts.billing },
-        { id: 'alerts', label: 'Urgent Alerts', icon: Bell, count: badgeCounts.alerts },
         { id: 'completed', label: 'History', icon: CheckSquare, count: badgeCounts.completed },
         { id: 'scheduler', label: 'Scheduler', icon: Clock, count: 0 }
     ];
