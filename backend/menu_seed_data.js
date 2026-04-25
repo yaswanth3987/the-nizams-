@@ -102,7 +102,7 @@ const menuData = [
     { name: 'FRUIT PUNCH', price: 7.99, category: 'Mock Tails', description: 'Refreshing fruit punch' },
     { name: 'SOFT DRINKS', price: 1.49, category: 'Drinks', description: 'Coke, Diet Coke, Pepsi, Diet Pepsi, 7Up, Mirinda, Tango' },
     { name: 'THUMS UP / JEERA SODA / RED BULL', price: 2.49, category: 'Drinks', description: 'Indian sodas & energy drinks' },
-    { name: 'WATER BOTTLE', price: 0.00, category: 'Drinks', description: 'Mineral water' }
+    { name: 'WATER BOTTLE', price: 1.50, category: 'Drinks', description: 'Mineral water' }
 ];
 
 module.exports = { menuData };
