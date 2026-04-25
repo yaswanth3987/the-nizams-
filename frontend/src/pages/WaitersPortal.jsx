@@ -881,9 +881,18 @@ export default function WaitersPortal() {
                                     setView('dashboard');
                                 }
                             }}
-                            className="flex-1 bg-[#FFD700] text-[#0F3A2F] py-6 rounded-[2rem] font-black uppercase text-sm tracking-[0.2em] active:scale-95 transition-all flex items-center justify-center gap-3 shadow-2xl shadow-[#FFD700]/20"
+                            className="flex-[2] bg-[#FFD700] text-[#0F3A2F] py-6 rounded-[2rem] font-black uppercase text-sm tracking-[0.2em] active:scale-95 transition-all flex items-center justify-center gap-3 shadow-2xl shadow-[#FFD700]/20"
                         >
                             <CreditCard size={24} /> Settle & Bill Table
+                        </button>
+                        <button 
+                            onClick={() => {
+                                clearTable(selectedTable);
+                                setView('dashboard');
+                            }}
+                            className="flex-1 bg-red-600/10 border border-red-500/20 text-red-500 py-6 rounded-[2rem] font-black uppercase text-[10px] tracking-widest active:bg-red-600 active:text-white transition-all flex items-center justify-center gap-2"
+                        >
+                            <Trash2 size={18} /> Reset Table
                         </button>
                         <button 
                             onClick={() => setView('dashboard')}
