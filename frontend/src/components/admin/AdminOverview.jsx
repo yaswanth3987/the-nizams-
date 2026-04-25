@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { TrendingUp, Package, FileText, Filter } from 'lucide-react';
+import { TrendingUp, Package, FileText, Filter, Printer } from 'lucide-react';
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
 
 export default function AdminOverview({ itemAnalytics = [], salesList = [] }) {
     // --- Date Filtering State ---
@@ -19,6 +21,26 @@ export default function AdminOverview({ itemAnalytics = [], salesList = [] }) {
         else if (mode === 'month') setStartDate(new Date(now - 30 * 86400000).toISOString().split('T')[0]);
         else if (mode === 'all') {
             setStartDate('2020-01-01');
+        }
+    };
+
+    const handleDownloadInventory = async () => {
+        try {
+            const response = await fetch(`${API_URL}/download-inventory`);
+            if (!response.ok) throw new Error('Download failed');
+            
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Inventory_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (err) {
+            console.error("Export Error:", err);
+            alert("Failed to export inventory. Please check server connection.");
         }
     };
 
@@ -105,6 +127,21 @@ export default function AdminOverview({ itemAnalytics = [], salesList = [] }) {
                         </div>
                     </div>
                 )}
+
+                <div className="flex-1 flex justify-end gap-4">
+                    <button 
+                        onClick={() => window.print()}
+                        className="h-12 px-6 rounded-xl bg-white/5 border border-white/10 text-white/60 font-bold text-xs flex items-center gap-2 hover:bg-white/10 transition-all"
+                    >
+                        <Printer size={16} /> Z-Report
+                    </button>
+                    <button 
+                        onClick={handleDownloadInventory}
+                        className="h-12 px-6 rounded-xl bg-accent text-black font-bold text-xs flex items-center gap-2 hover:bg-white shadow-xl transition-all"
+                    >
+                        <Package size={16} /> Export Inventory XLS
+                    </button>
+                </div>
             </div>
 
             {/* Metric Cards */}
