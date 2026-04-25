@@ -1,4 +1,5 @@
 export const categoriesData = [
+    { id: 100, name: "Chef's Specials", sub: 'Signature dishes from our master chef' },
     { id: 12, name: 'Nizami Mandi', sub: 'Aromatic rice with tender meat' },
     { id: 2, name: 'Non Veg Starters', sub: "Appetizers from the Nizam's table" },
     { id: 13, name: 'Mandi Platters', sub: 'Grand feast platters for sharing' },
@@ -22,6 +23,10 @@ export const categoriesData = [
 ];
 
 export const menuData = [
+    // Chef's Specials
+    { id: 'cs1', name: 'NIZAMI LAMB CURRY (REGULAR)', price: 12.99, category: "Chef's Specials", spice: 2, veg: false, isPopular: true, isRecommended: true, isNew: true, image: '/nizami lamb special curry regular.jpg' },
+    { id: 'cs2', name: 'NIZAMI LAMB CURRY (LARGE)', price: 18.99, category: "Chef's Specials", spice: 2, veg: false, isPopular: true, isRecommended: true, isNew: true, image: '/nizami lamb curry large.jpg' },
+
     // Non Veg Starters
     { id: 'nvs1', name: 'CHICKEN 65', price: 9.99, category: 'Non Veg Starters', spice: 2, veg: false, isPopular: true, image: '/chicken-65.webp' },
     { id: 'nvs2', name: 'CHILLI CHICKEN', price: 9.99, category: 'Non Veg Starters', spice: 3, veg: false, image: '/chilli-chicken.webp' },
@@ -159,6 +164,8 @@ export const menuData = [
 
     // Drinks
     { id: 'dr1', name: 'SOFT DRINKS', price: 1.49, desc: 'Coke, Diet Coke, Pepsi, Diet Pepsi, 7Up, Mirinda, Tango', category: 'Drinks', spice: 0, veg: true },
-    { id: 'dr2', name: 'THUMS UP / JEERA SODA / RED BULL', price: 2.49, category: 'Drinks', spice: 0, veg: true },
-    { id: 'dr3', name: 'WATER BOTTLE', price: 1.50, category: 'Drinks', spice: 0, veg: true }
+    { id: 'dr2', name: 'THUMS UP', price: 2.49, category: 'Drinks', spice: 0, veg: true, image: '/thums up.jpg' },
+    { id: 'dr4', name: 'JEERA SODA', price: 2.49, category: 'Drinks', spice: 0, veg: true, image: '/jeera soda.jpg' },
+    { id: 'dr5', name: 'RED BULL', price: 2.49, category: 'Drinks', spice: 0, veg: true, image: '/red bull.jpg' },
+    { id: 'dr3', name: 'WATER BOTTLE', price: 1.00, desc: 'Mineral water', category: 'Drinks', spice: 0, veg: true }
 ];

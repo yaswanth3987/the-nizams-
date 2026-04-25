@@ -1,4 +1,6 @@
 const menuData = [
+    { name: 'NIZAMI LAMB CURRY (REGULAR)', price: 12.99, category: "Chef's Specials", description: 'Slow cooked tender lamb in our signature Nizami spice blend.', isPopular: true, isRecommended: true, isNew: true, image: '/nizami lamb special curry regular.jpg' },
+    { name: 'NIZAMI LAMB CURRY (LARGE)', price: 18.99, category: "Chef's Specials", description: 'Signature lamb curry - Family Size', isPopular: true, isRecommended: true, isNew: true, image: '/nizami lamb curry large.jpg' },
     { name: 'CHICKEN 65', price: 9.99, category: 'Non Veg Starters', description: 'Spice Level: 2', isPopular: true, isBestSeller: true, image: '/chicken-65.webp' },
     { name: 'CHILLI CHICKEN', price: 9.99, category: 'Non Veg Starters', description: 'Spice Level: 3', image: '/chilli-chicken.webp' },
     { name: 'CHICKEN MAJESTIC', price: 11.99, category: 'Non Veg Starters', description: 'Spice Level: 2', image: '/majestic-chicken.webp' },
@@ -101,8 +103,10 @@ const menuData = [
     { name: 'PINA COLADA', price: 7.99, category: 'Mock Tails', description: 'Refreshing pina colada' },
     { name: 'FRUIT PUNCH', price: 7.99, category: 'Mock Tails', description: 'Refreshing fruit punch' },
     { name: 'SOFT DRINKS', price: 1.49, category: 'Drinks', description: 'Coke, Diet Coke, Pepsi, Diet Pepsi, 7Up, Mirinda, Tango', image: '/soft drinks.png' },
-    { name: 'THUMS UP / JEERA SODA / RED BULL', price: 2.49, category: 'Drinks', description: 'Indian sodas & energy drinks' },
-    { name: 'WATER BOTTLE', price: 1.50, category: 'Drinks', description: 'Mineral water' }
+    { name: 'THUMS UP', price: 2.49, category: 'Drinks', description: 'Classic Indian cola', image: '/thums up.jpg' },
+    { name: 'JEERA SODA', price: 2.49, category: 'Drinks', description: 'Cumin flavored soda', image: '/jeera soda.jpg' },
+    { name: 'RED BULL', price: 2.49, category: 'Drinks', description: 'Energy drink', image: '/red bull.jpg' },
+    { name: 'WATER BOTTLE', price: 1.00, category: 'Drinks', description: 'Mineral water' }
 ];
 
 module.exports = { menuData };

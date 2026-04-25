@@ -546,18 +546,23 @@ const getMenuItems = async () => {
 };
 
 const addMenuItem = async (item) => {
-    const { name, price, category, image, description, platterItems } = item;
+    const { name, price, category, image, description, platterItems, isPopular, isRecommended, isBestSeller, isNew } = item;
     const pi = platterItems ? JSON.stringify(platterItems) : null;
+    const pop = isPopular ? (isPg ? true : 1) : (isPg ? false : 0);
+    const rec = isRecommended ? (isPg ? true : 1) : (isPg ? false : 0);
+    const best = isBestSeller ? (isPg ? true : 1) : (isPg ? false : 0);
+    const n = isNew ? (isPg ? true : 1) : (isPg ? false : 0);
+
     if (isPg) {
         const res = await runQuery(
-            `INSERT INTO menu_items (name, price, category, image, description, "platterItems") VALUES (?, ?, ?, ?, ?, ?) RETURNING *`, 
-            [name, price, category, image, description, pi]
+            `INSERT INTO menu_items (name, price, category, image, description, "platterItems", "isPopular", "isRecommended", "isBestSeller", "isNew") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`, 
+            [name, price, category, image, description, pi, pop, rec, best, n]
         );
         return res.rows[0];
     } else {
         const res = await runQuery(
-            `INSERT INTO menu_items (name, price, category, image, description, platterItems) VALUES (?, ?, ?, ?, ?, ?)`, 
-            [name, price, category, image, description, pi]
+            `INSERT INTO menu_items (name, price, category, image, description, platterItems, isPopular, isRecommended, isBestSeller, isNew) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+            [name, price, category, image, description, pi, pop, rec, best, n]
         );
         const selectRes = await runQuery(`SELECT * FROM menu_items WHERE id = ?`, [res.lastID]);
         return selectRes.rows[0];
@@ -565,18 +570,23 @@ const addMenuItem = async (item) => {
 };
 
 const updateMenuItem = async (id, item) => {
-    const { name, price, category, image, description, isAvailable, platterItems } = item;
+    const { name, price, category, image, description, isAvailable, platterItems, isPopular, isRecommended, isBestSeller, isNew } = item;
     const pi = platterItems ? JSON.stringify(platterItems) : null;
+    const pop = isPopular ? (isPg ? true : 1) : (isPg ? false : 0);
+    const rec = isRecommended ? (isPg ? true : 1) : (isPg ? false : 0);
+    const best = isBestSeller ? (isPg ? true : 1) : (isPg ? false : 0);
+    const n = isNew ? (isPg ? true : 1) : (isPg ? false : 0);
+
     if (isPg) {
         const res = await runQuery(
-            `UPDATE menu_items SET name = ?, price = ?, category = ?, image = ?, description = ?, "isAvailable" = ?, "platterItems" = ? WHERE id = ? RETURNING *`, 
-            [name, price, category, image, description, isAvailable, pi, id]
+            `UPDATE menu_items SET name = ?, price = ?, category = ?, image = ?, description = ?, "isAvailable" = ?, "platterItems" = ?, "isPopular" = ?, "isRecommended" = ?, "isBestSeller" = ?, "isNew" = ? WHERE id = ? RETURNING *`, 
+            [name, price, category, image, description, isAvailable, pi, pop, rec, best, n, id]
         );
         return res.rows[0];
     } else {
         await runQuery(
-            `UPDATE menu_items SET name = ?, price = ?, category = ?, image = ?, description = ?, isAvailable = ?, platterItems = ? WHERE id = ?`, 
-            [name, price, category, image, description, isAvailable, pi, id]
+            `UPDATE menu_items SET name = ?, price = ?, category = ?, image = ?, description = ?, isAvailable = ?, platterItems = ?, isPopular = ?, isRecommended = ?, isBestSeller = ?, isNew = ? WHERE id = ?`, 
+            [name, price, category, image, description, isAvailable, pi, pop, rec, best, n, id]
         );
         const selectRes = await runQuery(`SELECT * FROM menu_items WHERE id = ?`, [id]);
         return selectRes.rows[0];
@@ -603,8 +613,15 @@ const seedMenu = async (menuData) => {
         if (!existingItem) {
             await addMenuItem(item);
             addedCount++;
-        } else if (existingItem.price !== item.price || (item.image && existingItem.image !== item.image)) {
-            await updateMenuItem(existingItem.id, { ...existingItem, price: item.price, image: item.image });
+        } else if (
+            existingItem.price !== item.price || 
+            (item.image && existingItem.image !== item.image) ||
+            (item.isPopular !== undefined && !!existingItem.isPopular !== !!item.isPopular) ||
+            (item.isRecommended !== undefined && !!existingItem.isRecommended !== !!item.isRecommended) ||
+            (item.isBestSeller !== undefined && !!existingItem.isBestSeller !== !!item.isBestSeller) ||
+            (item.isNew !== undefined && !!existingItem.isNew !== !!item.isNew)
+        ) {
+            await updateMenuItem(existingItem.id, { ...existingItem, ...item });
             updatedCount++;
         }
     }

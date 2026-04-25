@@ -60,7 +60,7 @@ export default function CustomerMenu() {
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [orderStatus, setOrderStatus] = useState(null);
     const [view, setView] = useState('menu'); // 'menu' | 'search' | 'orders'
-    const [expandedCategory, setExpandedCategory] = useState('Nizami Mandi');
+    const [expandedCategory, setExpandedCategory] = useState("Chef's Specials");
     const [myOrders, setMyOrders] = useState([]);
     const [activeEffect, setActiveEffect] = useState(null); // { id, effect }
     const [cartPulse, setCartPulse] = useState(false);
