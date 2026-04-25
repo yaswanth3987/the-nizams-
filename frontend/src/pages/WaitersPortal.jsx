@@ -19,6 +19,7 @@ import AdminUnavailabilityScheduler from '../components/admin/AdminUnavailabilit
 import AdminBilledOrders from '../components/admin/AdminBilledOrders';
 import AdminAttendance from '../components/admin/AdminAttendance';
 import Receipt from '../components/Receipt';
+import Sidebar from '../components/waiter/Sidebar';
 
 const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
 
@@ -51,6 +52,19 @@ export default function WaitersPortal() {
     useEffect(() => {
         document.title = "Waiter - The Great Nizam";
     }, []);
+
+    const badgeCounts = useMemo(() => {
+        return {
+            tables: [...new Set([...(assistanceRequests || []).map(r => (r?.tableId || '').toString().toUpperCase()), ...(activeOrders || []).filter(o => o?.status === 'ready').map(o => (o?.tableId || '').toString().toUpperCase())])].filter(Boolean).length,
+            takeaway: (activeOrders || []).filter(o => o?.orderType === 'takeaway' && (o?.status === 'new' || o?.status === 'pending')).length,
+            new_orders: (activeOrders || []).filter(o => o?._source === 'new' && (o?.status === 'new' || o?.status === 'pending')).length,
+            ready: (activeOrders || []).filter(o => o?.status === 'ready').length,
+            confirmed: (activeOrders || []).filter(o => ['confirmed', 'active', 'ready', 'served'].includes(o?.status) && o?.orderType !== 'takeaway').length,
+            billing: (activeOrders || []).filter(o => ['billed', 'billing_pending'].includes(o?.status)).length,
+            alerts: (assistanceRequests || []).filter(r => r?.status === 'pending').length,
+            completed: (activeOrders || []).filter(o => o?.status === 'completed' && o?.orderType !== 'takeaway').length
+        };
+    }, [activeOrders, assistanceRequests]);
 
     const fetchData = useCallback(async () => {
         try {
@@ -113,6 +127,11 @@ export default function WaitersPortal() {
                 }
             }
         };
+        const handleDelete = (data) => {
+            const deleteId = typeof data === 'object' ? data.id : data;
+            setActiveOrders(prev => prev.filter(o => parseInt(o.id) !== parseInt(deleteId)));
+        };
+
         socket.on('tableStatusUpdated', refresh);
         socket.on('orderCreated', refresh);
         socket.on('orderUpdated', refresh);
@@ -120,6 +139,8 @@ export default function WaitersPortal() {
         socket.on('tableReset', refresh);
         socket.on('assistanceRequested', refresh);
         socket.on('assistanceUpdated', refresh);
+        socket.on('orderDeleted', handleDelete);
+        socket.on('sessionDeleted', handleDelete);
 
         return () => {
             socket.off('tableStatusUpdated', refresh);
@@ -129,8 +150,10 @@ export default function WaitersPortal() {
             socket.off('tableReset', refresh);
             socket.off('assistanceRequested', refresh);
             socket.off('assistanceUpdated', refresh);
+            socket.off('orderDeleted', handleDelete);
+            socket.off('sessionDeleted', handleDelete);
         };
-    }, [fetchData]);
+    }, [fetchData, showToast, playSound]);
 
     const handleUpdateOrderStatus = async (orderId, newStatus, source = 'session') => {
         // Optimistic UI update
@@ -179,16 +202,22 @@ export default function WaitersPortal() {
     };
 
     const deleteOrder = async (id, isRawOrder = false) => {
+        // Optimistic delete
+        setActiveOrders(prev => prev.filter(o => parseInt(o.id) !== parseInt(id)));
+
         try {
-            if (isRawOrder) {
-                await fetch(`${API_URL}/new-orders/${id}`, { method: 'DELETE' });
-            } else {
-                const r1 = await fetch(`${API_URL}/sessions/${id}`, { method: 'DELETE' });
-                if (!r1.ok) await fetch(`${API_URL}/orders/${id}`, { method: 'DELETE' });
+            const endpoint = isRawOrder ? 'new-orders' : 'sessions';
+            const res = await fetch(`${API_URL}/${endpoint}/${id}`, { method: 'DELETE' });
+            
+            // If it's a session but delete failed, try as a regular order (fallback)
+            if (!isRawOrder && !res.ok) {
+                await fetch(`${API_URL}/orders/${id}`, { method: 'DELETE' });
             }
-            fetchData();
+            
+            // We don't call fetchData here because the socket event 'orderDeleted' will trigger a clean state on all clients
         } catch (err) {
             console.error('Delete failed:', err);
+            fetchData(); // Restore state on error
         }
     };
 
@@ -241,65 +270,7 @@ export default function WaitersPortal() {
     };
 
     // UI Components
-    const Sidebar = () => (
-        <aside className="w-64 bg-[#0a261f] border-r border-white/5 flex flex-col p-6 hidden md:flex shrink-0 z-50">
-            <div className="flex items-center gap-3 mb-12">
-                <img src="/logo-icon.png" className="w-12 h-12 object-contain" alt="Logo" />
-                <div>
-                    <h2 className="text-white font-serif font-black text-xl leading-none italic tracking-tight">The Nizam</h2>
-                    <span className="text-[#86a69d] text-[10px] font-black uppercase tracking-widest opacity-60">Waiter</span>
-                </div>
-            </div>
-
-            <nav className="flex-1 px-4 space-y-2 overflow-y-auto py-4">
-                {[
-                    { id: 'all-in-one', label: 'Quick Access', icon: LayoutGrid, count: 0 },
-                    { id: 'tables', label: 'Tables', icon: LayoutGrid, count: [...new Set([...(assistanceRequests || []).map(r => (r?.tableId || '').toString().toUpperCase()), ...(activeOrders || []).filter(o => o?.status === 'ready').map(o => (o?.tableId || '').toString().toUpperCase())])].filter(Boolean).length },
-                    { id: 'takeaway', label: 'Takeaway', icon: ShoppingBag, count: (activeOrders || []).filter(o => o?.orderType === 'takeaway' && (o?.status === 'new' || o?.status === 'pending')).length },
-                    { id: 'new_orders', label: 'New Orders', icon: FileText, count: (activeOrders || []).filter(o => o?._source === 'new' && (o?.status === 'new' || o?.status === 'pending')).length },
-                    { id: 'orders', label: 'Ready Orders', icon: ListOrdered, count: (activeOrders || []).filter(o => o?.status === 'ready').length },
-                    { id: 'confirmed', label: 'Confirmed', icon: CheckCircle, count: (activeOrders || []).filter(o => ['confirmed', 'active', 'ready', 'served'].includes(o?.status) && o?.orderType !== 'takeaway').length },
-                    { id: 'billing', label: 'Billing', icon: CreditCard, count: (activeOrders || []).filter(o => ['billed', 'billing_pending'].includes(o?.status)).length },
-                    { id: 'attendance', label: 'Attendance', icon: UserPlus, count: 0 },
-                    { id: 'alerts', label: 'Alerts', icon: Bell, count: (assistanceRequests || []).filter(r => r?.status === 'pending').length },
-                    { id: 'completed', label: 'Completed', icon: CheckSquare, count: (activeOrders || []).filter(o => o?.status === 'completed' && o?.orderType !== 'takeaway').length },
-                    { id: 'scheduler', label: 'Scheduler', icon: Clock, count: 0 }
-                ].map(item => (
-                    <button 
-                        key={item.id}
-                        onClick={() => { setActiveTab(item.id); setView('dashboard'); if("vibrate" in navigator) navigator.vibrate(20); }}
-                        className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 group ${activeTab === item.id ? 'bg-[#FFD700]/10 text-[#FFD700]' : 'text-[#86a69d] active:bg-white/5'}`}
-                    >
-                        <item.icon size={20} strokeWidth={activeTab === item.id ? 2.5 : 2} />
-                        <span className="font-bold text-sm tracking-tight">{item.label}</span>
-                        {item.count > 0 && <span className="ml-auto bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full animate-pulse">{item.count}</span>}
-                    </button>
-                ))}
-            </nav>
-
-            <div className="mt-auto space-y-4">
-                <button 
-                    onClick={() => {
-                        setSelectedTable(null);
-                        setCart([]);
-                        setView('order_entry');
-                    }} 
-                    className="w-full bg-[#FFD700]/10 border border-[#FFD700]/20 text-[#FFD700] py-4 rounded-2xl font-black uppercase text-xs tracking-widest active:bg-[#FFD700]/20 transition-all active:scale-95 flex items-center justify-center gap-2"
-                >
-                    <Plus size={18} strokeWidth={3} /> New Table
-                </button>
-                <div className="flex items-center gap-3 p-4 bg-black/20 rounded-2xl">
-                    <div className="w-10 h-10 bg-[#FFD700]/20 rounded-full flex items-center justify-center text-[#FFD700]">
-                        <User size={20} />
-                    </div>
-                    <div>
-                        <p className="text-white text-xs font-black">Staff #402</p>
-                        <p className="text-[#86a69d] text-[10px] font-bold">Shift: Dinner</p>
-                    </div>
-                </div>
-            </div>
-        </aside>
-    );
+    // Sidebar moved to src/components/waiter/Sidebar.jsx
 
     const StatCard = ({ icon: Icon, label, value, sub }) => (
         <div className="bg-black/20 p-5 rounded-3xl flex items-center gap-4 border border-white/5 flex-1">
@@ -1083,7 +1054,14 @@ export default function WaitersPortal() {
 
     return (
         <div className="fixed inset-0 bg-[#0F3A2F] text-white font-sans selection:bg-[#FFD700] selection:text-[#0F3A2F] flex overflow-hidden">
-            {Sidebar()}
+            <Sidebar 
+                activeTab={activeTab} 
+                setActiveTab={setActiveTab} 
+                setView={setView}
+                badgeCounts={badgeCounts}
+                setSelectedTable={setSelectedTable}
+                setCart={setCart}
+            />
             <main className="flex-1 flex flex-col overflow-hidden relative min-h-0 min-w-0">
                 {view === 'dashboard' && (activeTab === 'tables' ? renderTableMap() : Dashboard())}
                 {view === 'table_details' && renderTableDetails()}
