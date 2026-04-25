@@ -1,7 +1,7 @@
 export const categoriesData = [
     { id: 12, name: 'Nizami Mandi', sub: 'Aromatic rice with tender meat' },
-    { id: 13, name: 'Mandi Platters', sub: 'Grand feast platters for sharing' },
     { id: 2, name: 'Non Veg Starters', sub: "Appetizers from the Nizam's table" },
+    { id: 13, name: 'Mandi Platters', sub: 'Grand feast platters for sharing' },
     { id: 1, name: 'Biryani Thaali', sub: 'Complete meal platters for family & friends' },
     { id: 3, name: 'Sea Food', sub: 'Fresh catches from the ocean' },
     { id: 4, name: 'Mix Grill', sub: 'Ultimate grilled platter' },
