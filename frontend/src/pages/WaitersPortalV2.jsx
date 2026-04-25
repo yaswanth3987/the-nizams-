@@ -8,6 +8,9 @@ import TableDetailsV2 from '../components/waiter/v2/TableDetailsV2';
 import OrderEntryV2 from '../components/waiter/v2/OrderEntryV2';
 import ConfirmDeleteModalV2 from '../components/waiter/v2/ConfirmDeleteModalV2';
 import AdminBilledOrders from '../components/admin/AdminBilledOrders';
+import AdminActiveRequests from '../components/admin/AdminActiveRequests';
+import AdminTakeawayManager from '../components/admin/AdminTakeawayManager';
+import AdminTakeawayPOS from '../components/admin/AdminTakeawayPOS';
 import { AlertTriangle, Loader2, Bell } from 'lucide-react';
 import { socket } from '../utils/socket';
 
@@ -18,7 +21,7 @@ const WaitersPortalV2 = () => {
     const { 
         tables, activeOrders, assistanceRequests, menu,
         isLoading, error, badgeCounts,
-        deleteOrder, updateOrderStatus, clearAssistance, refreshData
+        deleteOrder, updateOrderStatus, updateAssistance, deleteAssistance, clearAssistance, refreshData
     } = useWaiterData();
 
     const { playSound } = useSoundSystem(assistanceRequests.some(r => r.status === 'pending'));
@@ -161,21 +164,62 @@ const WaitersPortalV2 = () => {
 
             <main className="flex-1 flex flex-col min-w-0 h-full relative">
                 {view === 'dashboard' && (
-                    activeTab === 'tables' 
-                        ? <FloorMapV2 tables={tables} activeOrders={activeOrders} assistanceRequests={assistanceRequests} onTableSelect={handleTableSelect} />
-                        : activeTab === 'billing'
-                            ? <AdminBilledOrders 
-                                orders={activeOrders} 
+                    activeTab === 'tables' ? (
+                        <FloorMapV2 tables={tables} activeOrders={activeOrders} assistanceRequests={assistanceRequests} onTableSelect={handleTableSelect} />
+                    ) : activeTab === 'assistance' ? (
+                        <div className="p-8 h-full overflow-y-auto">
+                            <AdminActiveRequests 
+                                assistanceRequests={assistanceRequests}
+                                updateAssistance={updateAssistance}
+                                deleteAssistance={deleteAssistance}
+                            />
+                        </div>
+                    ) : activeTab === 'takeaway' ? (
+                        <div className="p-8 h-full overflow-y-auto w-full">
+                            <AdminTakeawayManager 
+                                sessions={activeOrders.filter(o => o._source !== 'new')}
+                                newOrders={activeOrders.filter(o => o._source === 'new')}
                                 updateStatus={(id, status) => updateOrderStatus(id, status, 'session')}
-                                printReceipt={() => showToast('Receipt printing...', 'info')}
-                              />
-                            : <OrdersBoardV2 
-                                activeOrders={activeOrders} activeTab={activeTab} 
-                                onStatusUpdate={updateOrderStatus} 
-                                onDelete={(o) => setDeleteModal({ isOpen: true, order: o })}
-                                onEdit={(o) => { setEditingOrder({ id: o.id, type: o._source }); setCart(o.items || []); setView('order_entry'); }}
-                                onViewDetails={(o) => { setSelectedTable(o.tableId); setView('table_details'); }}
-                              />
+                                deleteOrder={deleteOrder}
+                                onViewChange={(newView) => {
+                                    if (newView === 'pos') {
+                                        setEditingOrder(null);
+                                        setView('takeaway_pos');
+                                    }
+                                }}
+                                onEdit={(order) => {
+                                    setEditingOrder(order);
+                                    setView('takeaway_pos');
+                                }}
+                            />
+                        </div>
+                    ) : activeTab === 'billing' ? (
+                        <AdminBilledOrders 
+                            orders={activeOrders} 
+                            updateStatus={(id, status) => updateOrderStatus(id, status, 'session')}
+                            printReceipt={() => showToast('Receipt printing...', 'info')}
+                        />
+                    ) : (
+                        <OrdersBoardV2 
+                            activeOrders={activeOrders} activeTab={activeTab} 
+                            onStatusUpdate={updateOrderStatus} 
+                            onDelete={(o) => setDeleteModal({ isOpen: true, order: o })}
+                            onEdit={(o) => { setEditingOrder({ id: o.id, type: o._source }); setCart(o.items || []); setView('order_entry'); }}
+                            onViewDetails={(o) => { setSelectedTable(o.tableId); setView('table_details'); }}
+                        />
+                    )
+                )}
+
+                {view === 'takeaway_pos' && (
+                    <div className="p-8 h-full overflow-y-auto w-full">
+                        <AdminTakeawayPOS 
+                            initialOrder={editingOrder}
+                            onComplete={() => {
+                                setEditingOrder(null);
+                                setView('dashboard');
+                            }}
+                        />
+                    </div>
                 )}
 
                 {view === 'table_details' && (

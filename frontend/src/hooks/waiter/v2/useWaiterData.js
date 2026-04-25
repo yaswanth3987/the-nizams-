@@ -120,6 +120,23 @@ export const useWaiterData = () => {
         }
     };
 
+    const updateAssistance = async (id, status) => {
+        try {
+            await fetch(`${API_URL}/assistance/${id}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+        } catch (err) { console.error(err); fetchData(); }
+    };
+
+    const deleteAssistance = async (id) => {
+        setAssistanceRequests(prev => prev.filter(r => r.id.toString() !== id.toString()));
+        try {
+            await fetch(`${API_URL}/assistance/${id}`, { method: 'DELETE' });
+        } catch (err) { console.error(err); fetchData(); }
+    };
+
     const clearAssistance = async (id) => {
         setAssistanceRequests(prev => prev.filter(r => r.id.toString() !== id.toString()));
         try {
@@ -152,6 +169,8 @@ export const useWaiterData = () => {
         badgeCounts,
         deleteOrder,
         updateOrderStatus,
+        updateAssistance,
+        deleteAssistance,
         clearAssistance,
         refreshData: fetchData
     };
