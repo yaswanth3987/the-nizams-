@@ -49,17 +49,17 @@ const SidebarV2 = ({
             </div>
 
             {/* Pinned Alerts Section - PRIORITY 2 */}
-            {urgentAlerts.length > 0 && (
-                <div className="px-4 mb-4 space-y-2">
-                    <div className="px-4 mb-2 flex items-center justify-between">
-                        <span className="text-white/40 text-[9px] font-black uppercase tracking-[0.2em]">Urgent Alerts</span>
-                        <span className="flex h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
-                    </div>
-                    <div className="max-h-[160px] overflow-y-auto no-scrollbar space-y-2">
-                        {urgentAlerts.slice(0, 3).map((alert, idx) => (
+            <div className="px-4 mb-4 space-y-2 shrink-0">
+                <div className="px-4 mb-2 flex items-center justify-between border-b border-white/5 pb-2">
+                    <span className="text-white/40 text-[9px] font-black uppercase tracking-[0.2em]">Urgent Alerts</span>
+                    {urgentAlerts.length > 0 && <span className="flex h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>}
+                </div>
+                <div className="max-h-[220px] overflow-y-auto no-scrollbar space-y-2">
+                    {urgentAlerts.length > 0 ? (
+                        urgentAlerts.map((alert, idx) => (
                             <div 
                                 key={alert.id || idx}
-                                className={`p-3 rounded-2xl border flex items-center gap-3 transition-all ${
+                                className={`p-3 rounded-2xl border flex items-center gap-3 transition-all animate-in slide-in-from-top-4 duration-300 ${
                                     alert.type === 'assistance' 
                                         ? 'bg-red-500/10 border-red-500/30 text-red-500' 
                                         : 'bg-[#FFD700]/10 border-[#FFD700]/30 text-[#FFD700]'
@@ -87,13 +87,17 @@ const SidebarV2 = ({
                                     </button>
                                 )}
                             </div>
-                        ))}
-                    </div>
+                        ))
+                    ) : (
+                        <div className="p-4 rounded-2xl border border-dashed border-white/5 flex flex-col items-center justify-center opacity-20">
+                            <span className="text-[8px] font-black uppercase tracking-widest text-white/50">No Pending Alerts</span>
+                        </div>
+                    )}
                 </div>
-            )}
+            </div>
 
-            <div className="px-6 py-4 border-t border-white/5">
-                <span className="text-white/30 text-[9px] font-black uppercase tracking-[0.3em]">Navigation</span>
+            <div className="px-6 py-3 border-t border-white/5 shrink-0">
+                <span className="text-white/30 text-[9px] font-black uppercase tracking-[0.3em]">Navigation Menu</span>
             </div>
 
             {/* Navigation - Stable Scroll Area */}
