@@ -10,6 +10,9 @@ export default function AdminMenuManagement() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeCategory, setActiveCategory] = useState('All');
+    const [categoriesMetadata, setCategoriesMetadata] = useState([]);
+    const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
+    const [newCategoryData, setNewCategoryData] = useState({ name: '', subtitle: '' });
     
     // Availability Modal State
     const [availabilityModal, setAvailabilityModal] = useState(null); 
@@ -42,6 +45,16 @@ export default function AdminMenuManagement() {
         return `${mins}m`;
     };
 
+    const fetchCategories = useCallback(async () => {
+        try {
+            const res = await fetch(`${API_URL}/categories`);
+            const data = await res.json();
+            setCategoriesMetadata(data);
+        } catch (err) {
+            console.error('Failed to fetch categories:', err);
+        }
+    }, []);
+
     const fetchMenu = useCallback(async () => {
         try {
             const res = await fetch(`${API_URL}/menu`);
@@ -53,7 +66,8 @@ export default function AdminMenuManagement() {
     }, []);
 
     useEffect(() => {
-        setTimeout(() => fetchMenu(), 0);
+        fetchMenu();
+        fetchCategories();
         
         const timer = setInterval(() => setNow(new Date()), 10000); // Update every 10s for timers
 
@@ -75,14 +89,28 @@ export default function AdminMenuManagement() {
     const handleAdd = async (e) => {
         e.preventDefault();
         try {
+            // Handle new category first if needed
+            let categoryToUse = isAddingNewCategory ? newCategoryData.name : newItem.category;
+            
+            if (isAddingNewCategory && newCategoryData.name) {
+                await fetch(`${API_URL}/categories/metadata`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newCategoryData)
+                });
+                await fetchCategories();
+            }
+
             const res = await fetch(`${API_URL}/menu`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newItem)
+                body: JSON.stringify({ ...newItem, category: categoryToUse })
             });
             if (res.ok) {
                 fetchMenu();
                 setIsAddModalOpen(false);
+                setIsAddingNewCategory(false);
+                setNewCategoryData({ name: '', subtitle: '' });
                 setNewItem({ 
                     name: '', price: '', category: 'Main Course', description: '',
                     isPopular: false, isRecommended: false, isBestSeller: false, isNew: false
@@ -154,7 +182,10 @@ export default function AdminMenuManagement() {
     };
 
 
-    const categories = ['All', ...new Set(menuItems.map(item => item.category))];
+    const availableCategories = ['All', ...new Set([
+        ...categoriesMetadata.map(c => c.name),
+        ...menuItems.map(item => item.category)
+    ])];
     
     const filteredMenu = menuItems.filter(item => {
         const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -203,7 +234,7 @@ export default function AdminMenuManagement() {
                 <div className="lg:col-span-7">
                     <label className="block text-xs font-bold text-white/40 uppercase mb-3 ml-1 tracking-widest">Filter by Category</label>
                     <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar">
-                        {categories.map(cat => (
+                        {availableCategories.map(cat => (
                             <button
                                 key={cat}
                                 onClick={() => setActiveCategory(cat)}
@@ -482,20 +513,50 @@ export default function AdminMenuManagement() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                 <div>
                                     <label className="block text-[10px] font-black text-white/20 uppercase tracking-[0.5em] mb-4">CLASSIFICATION</label>
-                                    <select 
-                                        value={editingItem ? editingItem.category : newItem.category}
-                                        onChange={e => editingItem ? setEditingItem({...editingItem, category: e.target.value}) : setNewItem({...newItem, category: e.target.value})}
-                                        className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-xl text-white font-serif italic focus:outline-none focus:border-nizam-gold/50 transition-all shadow-inner appearance-none"
-                                    >
-                                        <option>Biryani Thaali</option>
-                                        <option>Non Veg Starters</option>
-                                        <option>Sea Food</option>
-                                        <option>Veg Starters</option>
-                                        <option>Main Course</option>
-                                        <option>Mandi</option>
-                                        <option>Desserts</option>
-                                        <option>Drinks</option>
-                                    </select>
+                                    <div className="flex flex-col gap-4">
+                                        <div className="flex items-end gap-4">
+                                            <div className="flex-1">
+                                                <select 
+                                                    disabled={isAddingNewCategory}
+                                                    value={editingItem ? editingItem.category : newItem.category}
+                                                    onChange={e => editingItem ? setEditingItem({...editingItem, category: e.target.value}) : setNewItem({...newItem, category: e.target.value})}
+                                                    className={`w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-xl text-white font-serif italic focus:outline-none focus:border-nizam-gold/50 transition-all shadow-inner appearance-none ${isAddingNewCategory ? 'opacity-20' : ''}`}
+                                                >
+                                                    {availableCategories.filter(c => c !== 'All').map(cat => (
+                                                        <option key={cat}>{cat}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            {!editingItem && (
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => setIsAddingNewCategory(!isAddingNewCategory)}
+                                                    className={`h-[76px] px-6 rounded-2xl border font-black text-[10px] uppercase tracking-widest transition-all ${isAddingNewCategory ? 'bg-accent text-black border-accent' : 'bg-white/5 border-white/10 text-white/40 hover:text-white'}`}
+                                                >
+                                                    {isAddingNewCategory ? 'Use List' : 'New Cat'}
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {isAddingNewCategory && (
+                                            <div className="space-y-4 animate-in slide-in-from-top-4 duration-500">
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="New Category Name..."
+                                                    value={newCategoryData.name}
+                                                    onChange={e => setNewCategoryData({...newCategoryData, name: e.target.value})}
+                                                    className="w-full bg-black/40 border border-accent/30 rounded-2xl p-4 text-white font-serif italic focus:outline-none focus:border-accent"
+                                                />
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="Category Subtitle (e.g. Aromatic Rice...)"
+                                                    value={newCategoryData.subtitle}
+                                                    onChange={e => setNewCategoryData({...newCategoryData, subtitle: e.target.value})}
+                                                    className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-sm text-white/60 font-serif italic focus:outline-none focus:border-accent"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="space-y-4">
                                     <label className="block text-[10px] font-black text-white/20 uppercase tracking-[0.5em] mb-4">FLAGS</label>
