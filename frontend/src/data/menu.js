@@ -20,12 +20,18 @@ export const categoriesData = [
     { id: 18, name: 'Milk Shakes', sub: 'Creamy indulgent shakes' },
     { id: 19, name: 'Mock Tails', sub: 'Refreshing non-alcoholic cocktails' },
     { id: 20, name: "Extra's", sub: 'Accompaniments and sides' },
+    { id: 21, name: 'Soups', sub: 'Warm and comforting starters' },
 ];
 
 export const menuData = [
     // Chef's Specials
     { id: 'cs1', name: 'NIZAMI LAMB CURRY (REGULAR)', price: 12.99, category: "Chef's Specials", spice: 2, veg: false, isPopular: true, isRecommended: true, isNew: true, image: '/nizami lamb special curry regular.jpg' },
     { id: 'cs2', name: 'NIZAMI LAMB CURRY (LARGE)', price: 18.99, category: "Chef's Specials", spice: 2, veg: false, isPopular: true, isRecommended: true, isNew: true, image: '/nizami lamb curry large.jpg' },
+
+    // Soups
+    { id: 'sp1', name: 'CHICKEN CORN SOUP', price: 5.99, category: 'Soups', spice: 0, veg: false },
+    { id: 'sp2', name: 'CHICKEN HOT & SOUR SOUP', price: 5.99, category: 'Soups', spice: 2, veg: false },
+    { id: 'sp3', name: 'SWEETCORN VEGETABLE SOUP', price: 5.99, category: 'Soups', spice: 0, veg: true },
 
     // Non Veg Starters
     { id: 'nvs1', name: 'CHICKEN 65', price: 9.99, category: 'Non Veg Starters', spice: 2, veg: false, isPopular: true, image: '/chicken-65.webp' },
