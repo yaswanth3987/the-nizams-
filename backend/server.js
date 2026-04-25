@@ -528,8 +528,8 @@ app.get('/api/employees', async (req, res) => {
 
 app.post('/api/employees', async (req, res) => {
     try {
-        const { name, phone, shiftTimings, designation } = req.body;
-        const emp = await createEmployee(name, phone, shiftTimings, designation);
+        const { name, phone, shiftTimings, designation, pin } = req.body;
+        const emp = await createEmployee(name, phone, shiftTimings, designation, pin);
         res.status(201).json(emp);
     } catch (err) { 
         console.error('API Error /api/employees (POST):', err);
@@ -539,8 +539,8 @@ app.post('/api/employees', async (req, res) => {
 
 app.put('/api/employees/:id', async (req, res) => {
     try {
-        const { name, phone, shiftTimings, designation } = req.body;
-        const emp = await updateEmployee(req.params.id, name, phone, shiftTimings, designation);
+        const { name, phone, shiftTimings, designation, pin } = req.body;
+        const emp = await updateEmployee(req.params.id, name, phone, shiftTimings, designation, pin);
         res.json(emp);
     } catch (err) { 
         console.error('API Error /api/employees/:id (PUT):', err);
@@ -572,10 +572,10 @@ app.get('/api/attendance/today', async (req, res) => {
 
 app.post('/api/attendance', async (req, res) => {
     try {
-        const { employeeId } = req.body;
+        const { employeeId, pin } = req.body;
         if (!employeeId) return res.status(400).json({ error: 'employeeId required' });
         
-        const log = await markAttendance(employeeId);
+        const log = await markAttendance(employeeId, pin);
         res.status(201).json(log);
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -584,13 +584,13 @@ app.post('/api/attendance', async (req, res) => {
 
 app.put('/api/attendance/checkout', async (req, res) => {
     try {
-        const { employeeId } = req.body;
+        const { employeeId, pin } = req.body;
         if (!employeeId) return res.status(400).json({ error: 'employeeId required' });
         
-        const log = await checkoutAttendance(employeeId);
+        const log = await checkoutAttendance(employeeId, pin);
         res.json(log);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(400).json({ error: err.message });
     }
 });
 

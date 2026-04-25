@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Clock, X, UserPlus, Trash2, CheckCircle, AlertTriangle, User } from 'lucide-react';
+import { Search, Clock, X, UserPlus, Trash2, CheckCircle, AlertTriangle, User, Edit2 } from 'lucide-react';
 
 const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
 
@@ -8,8 +8,9 @@ export default function AdminAttendance() {
     const [attendanceToday, setAttendanceToday] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
-    const [newStaff, setNewStaff] = useState({ name: '', phone: '', shiftTimings: '', designation: 'waiter' });
+    const [newStaff, setNewStaff] = useState({ name: '', phone: '', shiftTimings: '', designation: 'waiter', pin: '' });
     const [searchQuery, setSearchQuery] = useState('');
+    const [editingStaff, setEditingStaff] = useState(null);
 
     useEffect(() => {
         fetchData();
@@ -45,6 +46,21 @@ export default function AdminAttendance() {
         } catch (err) { console.error(err); }
     };
 
+    const updateEmployeeAPI = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetch(`${API_URL}/employees/${editingStaff.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(editingStaff)
+            });
+            if (res.ok) {
+                setEditingStaff(null);
+                fetchData();
+            }
+        } catch (err) { console.error(err); }
+    };
+
     const handleDeleteStaff = async (id) => {
         if (!confirm("Remove this staff member permanently?")) return;
         try {
@@ -54,12 +70,14 @@ export default function AdminAttendance() {
     };
 
     const handleMarkAttendance = async (staff) => {
-        if (!confirm(`Mark ${staff.name} as present for today?`)) return;
+        const pin = prompt(`Enter Security PIN for ${staff.name}:`);
+        if (pin === null) return; // Cancelled
+        
         try {
             const res = await fetch(`${API_URL}/attendance`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ employeeId: staff.id })
+                body: JSON.stringify({ employeeId: staff.id, pin })
             });
             if (res.ok) {
                 fetchData();
@@ -71,12 +89,14 @@ export default function AdminAttendance() {
     };
 
     const handleCheckOut = async (staff) => {
-        if (!confirm(`Check-out ${staff.name} for today?`)) return;
+        const pin = prompt(`Enter Security PIN for ${staff.name} to Check-out:`);
+        if (pin === null) return;
+
         try {
             const res = await fetch(`${API_URL}/attendance/checkout`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ employeeId: staff.id })
+                body: JSON.stringify({ employeeId: staff.id, pin })
             });
             if (res.ok) {
                 fetchData();
@@ -112,7 +132,7 @@ export default function AdminAttendance() {
                     </p>
                 </div>
                 <button 
-                    onClick={() => { setShowAddModal(true); setNewStaff({name:'', phone:'', shiftTimings:'', designation: 'waiter'}); }}
+                    onClick={() => { setShowAddModal(true); setNewStaff({name:'', phone:'', shiftTimings:'', designation: 'waiter', pin: ''}); }}
                     className="h-14 px-8 rounded-xl bg-accent text-black font-bold text-sm flex items-center gap-3 transition-all hover:bg-white shadow-xl"
                 >
                     <UserPlus size={20} /> 
@@ -199,6 +219,9 @@ export default function AdminAttendance() {
                                                         Logged {new Date(attended.checkOutTime || attended.checkouttime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                                     </span>
                                                 )}
+                                                 <button onClick={() => setEditingStaff(staff)} className="p-3 text-white/10 hover:text-nizam-gold transition-colors">
+                                                    <Edit2 size={16} />
+                                                </button>
                                                 <button onClick={() => handleDeleteStaff(staff.id)} className="p-3 text-white/10 hover:text-red-500 transition-colors">
                                                     <Trash2 size={16} />
                                                 </button>
@@ -254,8 +277,62 @@ export default function AdminAttendance() {
                                 <label className="block text-[10px] font-black text-white/20 tracking-[0.5em] uppercase mb-4 ml-4">Shift Timings</label>
                                 <input required type="text" value={newStaff.shiftTimings} onChange={e => setNewStaff({...newStaff, shiftTimings: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-xl text-white font-serif italic focus:outline-none focus:border-nizam-gold/50 transition-all font-medium" placeholder="09:00 - 17:00" />
                             </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-white/20 tracking-[0.5em] uppercase mb-4 ml-4">Security PIN (Numeric)</label>
+                                <input required type="password" maxLength={6} value={newStaff.pin} onChange={e => setNewStaff({...newStaff, pin: e.target.value.replace(/\D/g,'')})} className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-xl text-white font-serif italic focus:outline-none focus:border-nizam-gold/50 transition-all font-medium" placeholder="4-6 Digit PIN" />
+                            </div>
                             <button type="submit" className="w-full h-24 bg-gradient-to-r from-[#2c5b4d] to-[#1a3d34] text-white py-4 rounded-[2rem] font-black uppercase tracking-[0.4em] text-[11px] shadow-2xl hover:brightness-125 transition-all mt-4 flex justify-center items-center gap-4">
                                 <User size={20}/> Complete Enrollment
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Modal */}
+            {editingStaff && (
+                <div className="fixed inset-0 bg-[#0c0d0c]/98 backdrop-blur-2xl z-[100] flex items-center justify-center p-8 animate-in fade-in duration-500">
+                    <div className="bg-[#111311] border border-white/5 rounded-[3rem] w-full max-w-lg overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.8)]">
+                        <div className="p-12 border-b border-white/5 text-center relative bg-black/40">
+                            <h3 className="text-5xl font-serif text-white font-bold tracking-tight mb-2 italic">Update Profile</h3>
+                            <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] italic">Personnel Record Adjustment</p>
+                            <button onClick={() => setEditingStaff(null)} className="absolute right-10 top-12 w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white/20 hover:text-white transition-all"><X size={20} /></button>
+                        </div>
+
+                        <form onSubmit={updateEmployeeAPI} className="p-12 space-y-10">
+                            <div>
+                                <label className="block text-[10px] font-black text-white/20 tracking-[0.5em] uppercase mb-4 ml-4">Full Designation</label>
+                                <input required type="text" value={editingStaff.name} onChange={e => setEditingStaff({...editingStaff, name: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-xl text-white font-serif italic focus:outline-none focus:border-nizam-gold/50 transition-all font-medium" placeholder="Staff Name..." />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-white/20 tracking-[0.5em] uppercase mb-4 ml-4">UK Communication Line</label>
+                                <input required type="tel" value={editingStaff.phone} onChange={e => setEditingStaff({...editingStaff, phone: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-xl text-white font-serif italic focus:outline-none focus:border-nizam-gold/50 transition-all font-medium" placeholder="+44 ..." />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-white/20 tracking-[0.5em] uppercase mb-4 ml-4">Personnel Designation</label>
+                                <select 
+                                    value={editingStaff.designation} 
+                                    onChange={e => setEditingStaff({...editingStaff, designation: e.target.value})} 
+                                    className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-xl text-white font-serif italic focus:outline-none focus:border-nizam-gold/50 transition-all font-medium appearance-none"
+                                >
+                                    <option value="waiter">Waiter</option>
+                                    <option value="chef">Chef</option>
+                                    <option value="manager">Manager</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="super admin">Super Admin</option>
+                                    <option value="cleaner">Cleaner</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-white/20 tracking-[0.5em] uppercase mb-4 ml-4">Shift Timings</label>
+                                <input required type="text" value={editingStaff.shiftTimings} onChange={e => setEditingStaff({...editingStaff, shiftTimings: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-xl text-white font-serif italic focus:outline-none focus:border-nizam-gold/50 transition-all font-medium" placeholder="09:00 - 17:00" />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-white/20 tracking-[0.5em] uppercase mb-4 ml-4">Security PIN (Leave blank to keep current)</label>
+                                <input type="password" maxLength={6} value={editingStaff.pin || ''} onChange={e => setEditingStaff({...editingStaff, pin: e.target.value.replace(/\D/g,'')})} className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-xl text-white font-serif italic focus:outline-none focus:border-nizam-gold/50 transition-all font-medium" placeholder="New PIN..." />
+                            </div>
+                            <button type="submit" className="w-full h-24 bg-gradient-to-r from-nizam-gold to-[#a68c64] text-black py-4 rounded-[2rem] font-black uppercase tracking-[0.4em] text-[11px] shadow-2xl hover:brightness-125 transition-all mt-4 flex justify-center items-center gap-4">
+                                <CheckCircle size={20}/> Save Changes
                             </button>
                         </form>
                     </div>

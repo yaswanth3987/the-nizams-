@@ -77,6 +77,7 @@ if (isPg) {
             await pgPool.query(`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS "checkOutTime" TIMESTAMP;`).catch(() => {});
             await pgPool.query(`CREATE TABLE IF NOT EXISTS unavailability_schedules (id SERIAL PRIMARY KEY, "itemIds" TEXT, category TEXT, type TEXT NOT NULL, "startDate" DATE, "startTime" TEXT NOT NULL, "endTime" TEXT NOT NULL, "daysOfWeek" TEXT, "isEnabled" BOOLEAN DEFAULT true, label TEXT, "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
             await pgPool.query(`ALTER TABLE employees ADD COLUMN "shiftTimings" TEXT;`).catch(() => {});
+            await pgPool.query(`ALTER TABLE employees ADD COLUMN IF NOT EXISTS pin TEXT;`).catch(() => {});
             await pgPool.query(`ALTER TABLE employees ADD COLUMN "designation" TEXT;`).catch(() => {});
             // Add badge columns to menu_items if they don't exist
             await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "isPopular" BOOLEAN DEFAULT false;`).catch(() => {});
@@ -142,6 +143,7 @@ if (isPg) {
             db.run(`CREATE TABLE IF NOT EXISTS unavailability_schedules (id INTEGER PRIMARY KEY AUTOINCREMENT, itemIds TEXT, category TEXT, type TEXT NOT NULL, startDate DATE, startTime TEXT NOT NULL, endTime TEXT NOT NULL, daysOfWeek TEXT, isEnabled BOOLEAN DEFAULT 1, label TEXT, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
             db.run(`ALTER TABLE employees ADD COLUMN shiftTimings TEXT`, (err) => {});
             db.run(`ALTER TABLE employees ADD COLUMN designation TEXT`, (err) => {});
+            db.run(`ALTER TABLE employees ADD COLUMN pin TEXT`, (err) => {});
             // Add badge columns to menu_items if they don't exist
             db.run(`ALTER TABLE menu_items ADD COLUMN isPopular BOOLEAN DEFAULT 0`, (err) => {});
             db.run(`ALTER TABLE menu_items ADD COLUMN isRecommended BOOLEAN DEFAULT 0`, (err) => {});
@@ -454,20 +456,20 @@ const getEmployees = async () => {
     return res.rows;
 };
 
-const createEmployee = async (name, phone, shiftTimings = null, designation = null) => {
+const createEmployee = async (name, phone, shiftTimings = null, designation = null, pin = null) => {
     if (isPg) {
-        const res = await runQuery(`INSERT INTO employees (name, phone, "shiftTimings", "designation") VALUES (?, ?, ?, ?) RETURNING *`, [name, phone, shiftTimings, designation]);
+        const res = await runQuery(`INSERT INTO employees (name, phone, "shiftTimings", "designation", pin) VALUES (?, ?, ?, ?, ?) RETURNING *`, [name, phone, shiftTimings, designation, pin]);
         return res.rows[0];
     } else {
-        const res = await runQuery(`INSERT INTO employees (name, phone, shiftTimings, designation) VALUES (?, ?, ?, ?)`, [name, phone, shiftTimings, designation]);
+        const res = await runQuery(`INSERT INTO employees (name, phone, shiftTimings, designation, pin) VALUES (?, ?, ?, ?, ?)`, [name, phone, shiftTimings, designation, pin]);
         const selectRes = await runQuery(`SELECT * FROM employees WHERE id = ?`, [res.lastID]);
         return selectRes.rows[0];
     }
 };
 
-const updateEmployee = async (id, name, phone, shiftTimings = null, designation = null) => {
-    await runQuery(`UPDATE employees SET name = ?, phone = ?, "shiftTimings" = ?, "designation" = ? WHERE id = ?`, [name, phone, shiftTimings, designation, id]).catch(async () => {
-        await runQuery(`UPDATE employees SET name = ?, phone = ?, shiftTimings = ?, designation = ? WHERE id = ?`, [name, phone, shiftTimings, designation, id]);
+const updateEmployee = async (id, name, phone, shiftTimings = null, designation = null, pin = null) => {
+    await runQuery(`UPDATE employees SET name = ?, phone = ?, "shiftTimings" = ?, "designation" = ?, pin = ? WHERE id = ?`, [name, phone, shiftTimings, designation, pin, id]).catch(async () => {
+        await runQuery(`UPDATE employees SET name = ?, phone = ?, shiftTimings = ?, designation = ?, pin = ? WHERE id = ?`, [name, phone, shiftTimings, designation, pin, id]);
     });
     const res = await runQuery(`SELECT * FROM employees WHERE id = ?`, [id]);
     return res.rows[0];
@@ -481,7 +483,13 @@ const deleteEmployee = async (id) => {
     return { id };
 };
 
-const markAttendance = async (employeeId) => {
+const markAttendance = async (employeeId, pin) => {
+    // Verify PIN first
+    const empRes = await runQuery(`SELECT pin FROM employees WHERE id = ?`, [employeeId]);
+    const employee = empRes.rows[0];
+    if (!employee) throw new Error('Employee not found');
+    if (employee.pin && employee.pin !== pin) throw new Error('Invalid Security PIN');
+
     const today = new Date().toISOString().split('T')[0];
     const empCol = isPg ? '"employeeId"' : 'employeeId';
     
@@ -936,7 +944,13 @@ const processSchedulesTask = async () => {
     return changeCount;
 };
 
-const checkoutAttendance = async (employeeId) => {
+const checkoutAttendance = async (employeeId, pin) => {
+    // Verify PIN
+    const empRes = await runQuery(`SELECT pin FROM employees WHERE id = ?`, [employeeId]);
+    const employee = empRes.rows[0];
+    if (!employee) throw new Error('Employee not found');
+    if (employee.pin && employee.pin !== pin) throw new Error('Invalid Security PIN');
+
     const today = new Date().toISOString().split('T')[0];
     if (isPg) {
         return runQuery(`UPDATE attendance SET "checkOutTime" = CURRENT_TIMESTAMP WHERE "employeeId" = $1 AND date = $2 RETURNING *`, [employeeId, today]);
