@@ -253,12 +253,16 @@ export default function AdminDashboard() {
 
     const deleteOrder = async (id, isRawOrder = false) => {
         try {
-            const endpoint = isRawOrder ? `${API_URL}/new-orders/${id}` : `${API_URL}/orders/${id}`;
-            const res = await fetch(endpoint, { method: 'DELETE' });
-            if (!res.ok) {
-                // If direct delete fails, try the session delete endpoint as fallback
-                const fallback = isRawOrder ? null : `${API_URL}/sessions/${id}`;
-                if (fallback) await fetch(fallback, { method: 'DELETE' });
+            if (isRawOrder) {
+                // Raw orders (new/pending) — delete from orders table
+                await fetch(`${API_URL}/new-orders/${id}`, { method: 'DELETE' });
+            } else {
+                // Active sessions (confirmed/ready/etc) — delete from sessions table
+                const r1 = await fetch(`${API_URL}/sessions/${id}`, { method: 'DELETE' });
+                if (!r1.ok) {
+                    // Fallback: try orders table
+                    await fetch(`${API_URL}/orders/${id}`, { method: 'DELETE' });
+                }
             }
             
             await fetchSessions();

@@ -170,13 +170,12 @@ export default function WaitersPortal() {
     };
 
     const deleteOrder = async (id, isRawOrder = false) => {
-        if (!confirm('Permanently DELETE this order? This cannot be undone.')) return;
         try {
-            const endpoint = isRawOrder ? `${API_URL}/new-orders/${id}` : `${API_URL}/orders/${id}`;
-            const res = await fetch(endpoint, { method: 'DELETE' });
-            if (!res.ok) {
-                const fallback = isRawOrder ? null : `${API_URL}/sessions/${id}`;
-                if (fallback) await fetch(fallback, { method: 'DELETE' });
+            if (isRawOrder) {
+                await fetch(`${API_URL}/new-orders/${id}`, { method: 'DELETE' });
+            } else {
+                const r1 = await fetch(`${API_URL}/sessions/${id}`, { method: 'DELETE' });
+                if (!r1.ok) await fetch(`${API_URL}/orders/${id}`, { method: 'DELETE' });
             }
             fetchData();
         } catch (err) {
