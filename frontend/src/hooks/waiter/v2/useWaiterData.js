@@ -88,12 +88,16 @@ export const useWaiterData = () => {
     }, [fetchData]);
 
     const deleteOrder = async (id, isRawOrder = false) => {
-        setActiveOrders(prev => prev.filter(o => parseInt(o.id) !== parseInt(id)));
+        const orderId = parseInt(id);
+        setActiveOrders(prev => prev.filter(o => parseInt(o.id) !== orderId));
+        
         try {
             const endpoint = isRawOrder ? 'new-orders' : 'sessions';
-            const res = await fetch(`${API_URL}/${endpoint}/${id}`, { method: 'DELETE' });
+            const res = await fetch(`${API_URL}/${endpoint}/${orderId}`, { method: 'DELETE' });
+            
+            // If it's a session order that failed to delete on the session endpoint, try the generic orders endpoint
             if (!isRawOrder && !res.ok) {
-                await fetch(`${API_URL}/orders/${id}`, { method: 'DELETE' });
+                await fetch(`${API_URL}/orders/${orderId}`, { method: 'DELETE' });
             }
         } catch (err) {
             console.error('Delete failed:', err);
@@ -129,7 +133,7 @@ export const useWaiterData = () => {
 
     const badgeCounts = useMemo(() => ({
         tables: [...new Set([...(assistanceRequests || []).map(r => (r?.tableId || '').toString().toUpperCase()), ...(activeOrders || []).filter(o => o?.status === 'ready').map(o => (o?.tableId || '').toString().toUpperCase())])].filter(Boolean).length,
-        takeaway: activeOrders.filter(o => o.orderType === 'takeaway' && (o.status === 'new' || o.status === 'pending')).length,
+        takeaway: activeOrders.filter(o => o.orderType === 'takeaway' && o.status !== 'completed').length,
         new_orders: activeOrders.filter(o => o._source === 'new' && (o.status === 'new' || o.status === 'pending')).length,
         ready: activeOrders.filter(o => o.status === 'ready').length,
         confirmed: activeOrders.filter(o => ['confirmed', 'active', 'ready', 'served'].includes(o.status) && o.orderType !== 'takeaway').length,

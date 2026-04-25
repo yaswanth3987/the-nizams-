@@ -44,10 +44,10 @@ const WaitersPortalV2 = () => {
         const handleNotification = (data) => {
             if (data?.type === 'bill') {
                 playSound('bill');
-                showToast(`Table ${data.tableId} requested the bill!`, 'urgent');
-            } else if (data?.type === 'assistance') {
+                showToast(`Table ${data.tableId || data.id} requested the bill!`, 'urgent');
+            } else if (data?.type === 'assistance' || data?.type === 'staff') {
                 playSound('newOrder');
-                showToast(`Table ${data.tableId} requires assistance!`, 'urgent');
+                showToast(`Table ${data.tableId || data.id} requires assistance!`, 'urgent');
             } else if (data?.status === 'ready') {
                 playSound('ready');
             }
@@ -154,6 +154,7 @@ const WaitersPortalV2 = () => {
             <SidebarV2 
                 activeTab={activeTab} setActiveTab={setActiveTab} setView={setView}
                 badgeCounts={badgeCounts}
+                assistanceRequests={assistanceRequests}
                 onNewTable={() => { setSelectedTable(null); setCart([]); setEditingOrder(null); setView('order_entry'); }}
             />
 

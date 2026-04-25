@@ -10,9 +10,11 @@ const SidebarV2 = ({
     setActiveTab, 
     setView, 
     badgeCounts, 
+    assistanceRequests, // Added assistanceRequests prop
     onNewTable 
 }) => {
-    const navItems = [
+    // 1. Memoize nav items to prevent scroll jumping on re-renders
+    const navItems = React.useMemo(() => [
         { id: 'all-in-one', label: 'Quick Access', icon: LayoutGrid, count: 0 },
         { id: 'tables', label: 'Floor Map', icon: LayoutGrid, count: badgeCounts.tables },
         { id: 'new_orders', label: 'New Requests', icon: FileText, count: badgeCounts.new_orders },
@@ -20,10 +22,12 @@ const SidebarV2 = ({
         { id: 'orders', label: 'Ready to Serve', icon: ListOrdered, count: badgeCounts.ready },
         { id: 'confirmed', label: 'In Progress', icon: CheckCircle, count: badgeCounts.confirmed },
         { id: 'billing', label: 'Settlement', icon: CreditCard, count: badgeCounts.billing },
-        { id: 'alerts', label: 'Urgent Alerts', icon: Bell, count: badgeCounts.alerts },
         { id: 'completed', label: 'History', icon: CheckSquare, count: badgeCounts.completed },
         { id: 'scheduler', label: 'Scheduler', icon: Clock, count: 0 }
-    ];
+    ], [badgeCounts]);
+
+    // 2. Filter pending alerts
+    const pendingAlerts = (assistanceRequests || []).filter(r => r.status === 'pending');
 
     return (
         <aside className="w-72 bg-[#0a261f] border-r border-white/5 flex flex-col hidden md:flex shrink-0 z-50 h-full overflow-hidden">
@@ -39,6 +43,31 @@ const SidebarV2 = ({
                     </div>
                 </div>
             </div>
+
+            {/* Pinned Urgent Alerts - Top Priority */}
+            {pendingAlerts.length > 0 && (
+                <div className="px-4 mb-6">
+                    <div className="bg-red-500/10 border border-red-500/20 rounded-3xl p-4">
+                        <div className="flex items-center gap-3 mb-3 text-red-500">
+                            <Bell size={16} strokeWidth={3} className="animate-bell-ring" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Urgent Alerts</span>
+                            <span className="ml-auto bg-red-500 text-white text-[9px] px-2 py-0.5 rounded-full">{pendingAlerts.length}</span>
+                        </div>
+                        <div className="space-y-2 max-h-32 overflow-y-auto no-scrollbar">
+                            {pendingAlerts.slice(0, 3).map(alert => (
+                                <button 
+                                    key={alert.id}
+                                    onClick={() => { setActiveTab('tables'); setView('dashboard'); }}
+                                    className="w-full bg-white/5 hover:bg-white/10 p-3 rounded-2xl text-left transition-all border border-white/5"
+                                >
+                                    <p className="text-white text-[10px] font-bold uppercase truncate">Table {alert.tableId}</p>
+                                    <p className="text-[#86a69d] text-[8px] font-medium uppercase tracking-widest mt-1">Needs Assistance</p>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Navigation - Stable Scroll Area */}
             <nav className="flex-1 px-4 space-y-1 overflow-y-auto overscroll-contain no-scrollbar">
