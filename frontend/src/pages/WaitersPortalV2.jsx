@@ -7,6 +7,7 @@ import FloorMapV2 from '../components/waiter/v2/FloorMapV2';
 import TableDetailsV2 from '../components/waiter/v2/TableDetailsV2';
 import OrderEntryV2 from '../components/waiter/v2/OrderEntryV2';
 import ConfirmDeleteModalV2 from '../components/waiter/v2/ConfirmDeleteModalV2';
+import AdminBilledOrders from '../components/admin/AdminBilledOrders';
 import { AlertTriangle, Loader2, Bell } from 'lucide-react';
 import { socket } from '../utils/socket';
 
@@ -162,13 +163,19 @@ const WaitersPortalV2 = () => {
                 {view === 'dashboard' && (
                     activeTab === 'tables' 
                         ? <FloorMapV2 tables={tables} activeOrders={activeOrders} assistanceRequests={assistanceRequests} onTableSelect={handleTableSelect} />
-                        : <OrdersBoardV2 
-                            activeOrders={activeOrders} activeTab={activeTab} 
-                            onStatusUpdate={updateOrderStatus} 
-                            onDelete={(o) => setDeleteModal({ isOpen: true, order: o })}
-                            onEdit={(o) => { setEditingOrder({ id: o.id, type: o._source }); setCart(o.items || []); setView('order_entry'); }}
-                            onViewDetails={(o) => { setSelectedTable(o.tableId); setView('table_details'); }}
-                          />
+                        : activeTab === 'billing'
+                            ? <AdminBilledOrders 
+                                orders={activeOrders} 
+                                updateStatus={(id, status) => updateOrderStatus(id, status, 'session')}
+                                printReceipt={() => showToast('Receipt printing...', 'info')}
+                              />
+                            : <OrdersBoardV2 
+                                activeOrders={activeOrders} activeTab={activeTab} 
+                                onStatusUpdate={updateOrderStatus} 
+                                onDelete={(o) => setDeleteModal({ isOpen: true, order: o })}
+                                onEdit={(o) => { setEditingOrder({ id: o.id, type: o._source }); setCart(o.items || []); setView('order_entry'); }}
+                                onViewDetails={(o) => { setSelectedTable(o.tableId); setView('table_details'); }}
+                              />
                 )}
 
                 {view === 'table_details' && (

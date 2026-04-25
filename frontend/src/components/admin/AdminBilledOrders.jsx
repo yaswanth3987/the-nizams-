@@ -130,8 +130,8 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
                 </p>
             </div>
 
-            <div className="flex-1 px-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <div className="flex-1 px-10 overflow-y-auto no-scrollbar">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 pb-12">
                     {displaySessions.map((session) => (
                         <div key={session.tableId} className="bg-white/5 border border-white/10 rounded-3xl p-8 flex flex-col shadow-2xl relative h-[480px]">
                             <div className="flex justify-between items-start mb-8">
