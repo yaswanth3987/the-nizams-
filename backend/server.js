@@ -462,7 +462,9 @@ app.get('/api/analytics/items', async (req, res) => {
 app.delete('/api/analytics/reset', async (req, res) => {
     try {
         await runQuery('DELETE FROM item_sales');
-        res.json({ success: true, message: 'Inventory reset successfully.' });
+        await runQuery('DELETE FROM daily_sales');
+        await runQuery('DELETE FROM inventory');
+        res.json({ success: true, message: 'Inventory and Sales data reset successfully.' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
