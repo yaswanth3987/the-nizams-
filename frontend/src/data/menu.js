@@ -1,6 +1,8 @@
 export const categoriesData = [
-    { id: 1, name: 'Biryani Thaali', sub: 'Complete meal platters for family & friends' },
+    { id: 12, name: 'Nizami Mandi', sub: 'Aromatic rice with tender meat' },
+    { id: 13, name: 'Mandi Platters', sub: 'Grand feast platters for sharing' },
     { id: 2, name: 'Non Veg Starters', sub: "Appetizers from the Nizam's table" },
+    { id: 1, name: 'Biryani Thaali', sub: 'Complete meal platters for family & friends' },
     { id: 3, name: 'Sea Food', sub: 'Fresh catches from the ocean' },
     { id: 4, name: 'Mix Grill', sub: 'Ultimate grilled platter' },
     { id: 5, name: 'Veg Starters', sub: 'Vegetarian appetizers' },
@@ -10,8 +12,6 @@ export const categoriesData = [
     { id: 9, name: 'Mutton Main Course', sub: 'Traditional mutton specialties' },
     { id: 10, name: 'Rice', sub: 'Fragrant basmati rice' },
     { id: 11, name: 'Biryani', sub: 'Aromatic slow-cooked biryanis' },
-    { id: 12, name: 'Nizami Mandi', sub: 'Aromatic rice with tender meat' },
-    { id: 13, name: 'Mandi Platters', sub: 'Grand feast platters for sharing' },
     { id: 14, name: 'Breads (Naan & Roti)', sub: 'Freshly baked in our tandoor' },
     { id: 15, name: 'Desserts', sub: 'Sweet traditional delicacies' },
     { id: 16, name: 'Drinks', sub: 'Refreshing beverages' },
