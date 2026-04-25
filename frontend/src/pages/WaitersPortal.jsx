@@ -768,7 +768,13 @@ export default function WaitersPortal() {
     const renderTableDetails = () => {
         const tableOrders = (activeOrders || []).filter(o => o.tableId === selectedTable && o.status !== 'completed' && o.status !== 'rejected');
         const tableAssistance = (assistanceRequests || []).find(r => r.tableId === selectedTable);
-        const totalBill = (tableOrders || []).reduce((sum, order) => sum + (order.finalTotal || 0), 0);
+        const subtotal = (tableOrders || []).reduce((sum, order) => sum + (order.subtotal || order.finalTotal || 0), 0);
+        
+        // Use the service charge from the first order or default to 10%
+        const firstOrder = tableOrders[0] || {};
+        const [serviceChargeEnabled, setServiceChargeEnabled] = useState(true);
+        const serviceCharge = serviceChargeEnabled ? (parseFloat(firstOrder.serviceCharge) || (subtotal * 0.1)) : 0;
+        const totalBill = subtotal + serviceCharge;
 
         return (
             <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#0a261f]/30">
@@ -862,23 +868,56 @@ export default function WaitersPortal() {
                 </div>
 
                 <footer className="p-8 border-t border-white/5 flex flex-col gap-6 bg-black/40">
-                    <div className="flex justify-between items-end px-4">
+                    <div className="flex flex-col gap-2 px-4 mb-2">
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-[#86a69d] uppercase font-black tracking-widest text-[9px]">Items Subtotal</span>
+                            <span className="text-white font-bold font-serif">£{subtotal.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                            <div className="flex items-center gap-3">
+                                <span className="text-[#86a69d] uppercase font-black tracking-widest text-[9px]">Service Charge</span>
+                                <button 
+                                    onClick={() => setServiceChargeEnabled(!serviceChargeEnabled)}
+                                    className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tighter transition-all ${serviceChargeEnabled ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}`}
+                                >
+                                    {serviceChargeEnabled ? 'Remove' : 'Apply'}
+                                </button>
+                            </div>
+                            <span className={`font-bold font-serif ${serviceChargeEnabled ? 'text-white' : 'text-white/10 line-through'}`}>
+                                £{((firstOrder.serviceCharge) || (subtotal * 0.1)).toFixed(2)}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="flex justify-between items-end px-4 border-t border-white/5 pt-4">
                         <div>
-                            <p className="text-[#86a69d] text-[10px] font-black uppercase tracking-[0.3em] mb-1">Total Table Balance</p>
+                            <p className="text-[#FFD700] text-[10px] font-black uppercase tracking-[0.3em] mb-1">Grand Total</p>
                             <p className="text-white/40 text-xs font-bold">{tableOrders.length} active orders</p>
                         </div>
                         <div className="text-right">
-                            <span className="text-5xl font-serif font-black text-[#FFD700]">£{(totalBill || 0).toFixed(2)}</span>
+                            <span className="text-5xl font-serif font-black text-[#FFD700]">£{totalBill.toFixed(2)}</span>
                         </div>
                     </div>
                     <div className="flex gap-4">
                         <button 
-                            onClick={() => {
+                            onClick={async () => {
                                 if (tableOrders.length === 0) return alert("No active orders to settle.");
-                                if (confirm(`Request final bill for Table ${selectedTable}? Total: £${(totalBill || 0).toFixed(2)}`)) {
-                                    tableOrders.forEach(o => handleUpdateOrderStatus(o.id, 'billing_pending', o._source));
-                                    alert("Bill request sent to counter.");
-                                    setView('dashboard');
+                                if (confirm(`Request final bill for Table ${selectedTable}? Total: £${totalBill.toFixed(2)}`)) {
+                                    // Update service charge preference in DB
+                                    try {
+                                        for (const o of tableOrders) {
+                                            await fetch(`${API_URL}/orders/${o.id}/service-charge`, {
+                                                method: 'PUT',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ enabled: serviceChargeEnabled })
+                                            });
+                                        }
+                                        tableOrders.forEach(o => handleUpdateOrderStatus(o.id, 'billing_pending', o._source));
+                                        alert("Bill request sent to counter.");
+                                        setView('dashboard');
+                                    } catch (err) {
+                                        console.error(err);
+                                        alert("Failed to update bill preference.");
+                                    }
                                 }
                             }}
                             className="flex-[2] bg-[#FFD700] text-[#0F3A2F] py-6 rounded-[2rem] font-black uppercase text-sm tracking-[0.2em] active:scale-95 transition-all flex items-center justify-center gap-3 shadow-2xl shadow-[#FFD700]/20"

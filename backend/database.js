@@ -685,6 +685,27 @@ const updateSessionStatus = async (id, status, additionalUpdates = {}) => {
     return { ...row, items: typeof row.items === 'string' ? JSON.parse(row.items) : row.items };
 };
 
+const updateSessionServiceCharge = async (id, enabled) => {
+    const sessionRes = await runQuery(`SELECT * FROM table_sessions WHERE id = ?`, [id]);
+    const session = sessionRes.rows[0];
+    if (!session) throw new Error('Session not found');
+
+    const subtotal = Number(session.subtotal || 0);
+    const serviceChargeValue = enabled ? (subtotal * 0.1) : 0;
+    const finalTotal = subtotal + serviceChargeValue;
+
+    const fields = [
+        isPg ? '"serviceCharge" = ?' : 'serviceCharge = ?',
+        isPg ? '"finalTotal" = ?' : 'finalTotal = ?'
+    ];
+    const values = [serviceChargeValue, finalTotal, id];
+
+    await runQuery(`UPDATE table_sessions SET ${fields.join(', ')} WHERE id = ?`, values);
+    const res = await runQuery(`SELECT * FROM table_sessions WHERE id = ?`, [id]);
+    const row = res.rows[0];
+    return { ...row, items: typeof row.items === 'string' ? JSON.parse(row.items) : row.items };
+};
+
 const finalizePayment = async (id, paymentData) => {
     // paymentData: { cash: number, card: number, custom: number, total: number, status: string }
     const cash = Number(paymentData.cash || 0);

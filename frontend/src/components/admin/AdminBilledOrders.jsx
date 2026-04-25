@@ -39,10 +39,11 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
         isOpen: false,
         session: null,
         status: 'idle',
-        step: 'method',
+        step: 'method', // 'method' | 'cash_entry' | 'card_entry' | 'split_entry'
         cardAmount: '',
         cashAmount: '',
-        cashReceived: ''
+        cashReceived: '',
+        serviceChargeEnabled: true
     });
 
     const handleOpenPayment = (session) => {
@@ -53,23 +54,59 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
             step: 'method',
             cardAmount: '',
             cashAmount: '',
-            cashReceived: ''
+            cashReceived: '',
+            serviceChargeEnabled: true
         });
     };
 
-    const handleProcessPayment = () => {
+    const handleProcessPayment = async (mode) => {
         setPaymentModal(p => ({ ...p, status: 'processing' }));
+        
+        const total = paymentModal.serviceChargeEnabled 
+            ? paymentModal.session.finalTotal 
+            : paymentModal.session.subtotal;
 
-        // Simulate hardware / network delay
-        setTimeout(() => {
-            // Update ALL session shards for this table to completed
-            paymentModal.session.ids.forEach(id => updateStatus(id, 'completed'));
+        let paymentData = {
+            total: total,
+            status: 'completed'
+        };
+
+        if (mode === 'cash') {
+            paymentData.cash = total;
+        } else if (mode === 'card') {
+            paymentData.card = total;
+        } else if (mode === 'split') {
+            paymentData.card = parseFloat(paymentModal.cardAmount) || 0;
+            paymentData.cash = parseFloat(paymentModal.cashAmount) || 0;
+            // Ensure split totals match the bill
+            if (Math.abs((paymentData.card + paymentData.cash) - total) > 0.01) {
+                alert(`Split total (£${(paymentData.card + paymentData.cash).toFixed(2)}) must match the bill total (£${total.toFixed(2)})`);
+                setPaymentModal(p => ({ ...p, status: 'idle' }));
+                return;
+            }
+        }
+
+        try {
+            // Process each session ID in the group
+            for (const id of paymentModal.session.ids) {
+                await fetch(`${import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api'}/orders/${id}/finalize`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(paymentData)
+                });
+            }
+            
             setPaymentModal(p => ({ ...p, status: 'success' }));
-
             setTimeout(() => {
-                setPaymentModal({ isOpen: false, session: null, status: 'idle', step: 'method', cardAmount: '', cashAmount: '', cashReceived: '' });
+                setPaymentModal({ isOpen: false, session: null, status: 'idle', step: 'method', cardAmount: '', cashAmount: '', cashReceived: '', serviceChargeEnabled: true });
+                // Notify parent to refresh
+                if (updateStatus) updateStatus(paymentModal.session.ids[0], 'completed'); 
             }, 2000);
-        }, 1500);
+        } catch (err) {
+            console.error(err);
+            alert("Payment failed. Please try again.");
+            setPaymentModal(p => ({ ...p, status: 'idle' }));
+        }
     };
 
     if (activeBilledSessions.length === 0) {
@@ -147,10 +184,12 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
 
             {/* POS Checkout Terminal Modal */}
             {paymentModal.isOpen && paymentModal.session && (() => {
-                const total = parseFloat(paymentModal.session.finalTotal) || 0;
-                const totalInPounds = total;
+                const subtotal = parseFloat(paymentModal.session.subtotal) || 0;
+                const serviceCharge = paymentModal.serviceChargeEnabled ? (parseFloat(paymentModal.session.serviceCharge) || 0) : 0;
+                const total = subtotal + serviceCharge;
+                
                 const cashRecvd = parseFloat(paymentModal.cashReceived) || 0;
-                const changeDue = Math.max(0, cashRecvd - totalInPounds);
+                const changeDue = Math.max(0, cashRecvd - total);
 
                 return (
                     <div className="fixed inset-0 bg-black/95 backdrop-blur-xl z-[100] flex items-center justify-center p-12">
@@ -160,28 +199,23 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
                             <div className="w-1/2 p-16 border-r border-white/5 bg-black/40 overflow-y-auto">
                                 <h3 className="text-5xl font-serif text-white font-bold mb-16 tracking-tight italic opacity-80">Audit Summary</h3>
                                 
-                                <div className="space-y-12">
+                                <div className="space-y-8">
                                     <div className="flex justify-between items-start">
                                         <div className="flex items-center gap-4 mb-4">
                                             <span className="bg-nizam-gold text-black px-4 py-2 rounded-xl text-2xl font-black uppercase tracking-tighter">
                                                 {paymentModal.session.tableId === 'TAKEAWAY' ? `ID #${paymentModal.session.id}` : `TABLE ${paymentModal.session.tableId}`}
                                             </span>
-                                            {paymentModal.session.phone && (
-                                                <span className="text-white/40 text-lg font-bold">
-                                                    {paymentModal.session.phone}
-                                                </span>
-                                            )}
                                         </div>
-                                        <h4 className="text-7xl font-serif font-bold text-white tracking-tighter italic">
-                                            {paymentModal.session.customerName || (paymentModal.session.tableId === 'TAKEAWAY' ? 'Takeaway Guest' : 'Dine-in Guest')}
+                                        <h4 className="text-6xl font-serif font-bold text-white tracking-tighter italic">
+                                            {paymentModal.session.customerName || 'Guest'}
                                         </h4>
                                     </div>
 
-                                    <div className="pt-12 border-t border-white/5">
-                                        <p className="text-[10px] font-black text-white/20 tracking-[0.4em] uppercase mb-8">ITEMIZED CONSUMPTION</p>
-                                        <div className="space-y-6">
+                                    <div className="pt-8 border-t border-white/5">
+                                        <p className="text-[10px] font-black text-white/20 tracking-[0.4em] uppercase mb-6">ITEMIZED CONSUMPTION</p>
+                                        <div className="space-y-4 max-h-[200px] overflow-y-auto pr-4">
                                             {(paymentModal.session.items || []).map((item, idx) => (
-                                                <div key={idx} className="flex justify-between items-center text-xl">
+                                                <div key={idx} className="flex justify-between items-center text-lg">
                                                     <span className="text-white/60 font-serif italic">{item.name}</span>
                                                     <span className="text-white font-bold">x{item.qty}</span>
                                                 </div>
@@ -189,12 +223,31 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
                                         </div>
                                     </div>
 
-                                    <div className="pt-12 border-t border-white/5 mt-auto">
-                                        <div className="flex justify-between items-end bg-black/20 p-10 rounded-[2rem] border border-nizam-gold/20 shadow-2xl">
+                                    <div className="pt-8 border-t border-white/5 space-y-4">
+                                        <div className="flex justify-between items-center text-xl">
+                                            <span className="text-white/40 uppercase text-xs font-black tracking-widest">Ordered Items Total</span>
+                                            <span className="text-white font-bold font-serif">£{subtotal.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-xl">
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-white/40 uppercase text-xs font-black tracking-widest">Service Charge</span>
+                                                <button 
+                                                    onClick={() => setPaymentModal(p => ({ ...p, serviceChargeEnabled: !p.serviceChargeEnabled }))}
+                                                    className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter transition-all ${paymentModal.serviceChargeEnabled ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}`}
+                                                >
+                                                    {paymentModal.serviceChargeEnabled ? 'Remove' : 'Apply'}
+                                                </button>
+                                            </div>
+                                            <span className={`font-bold font-serif ${paymentModal.serviceChargeEnabled ? 'text-white' : 'text-white/10 line-through'}`}>
+                                                £{(parseFloat(paymentModal.session.serviceCharge) || 0).toFixed(2)}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="flex justify-between items-end bg-black/20 p-8 rounded-[2rem] border border-nizam-gold/20 shadow-2xl mt-8">
                                             <div>
                                                 <p className="text-[10px] font-black text-nizam-gold/60 tracking-[0.4em] uppercase mb-2">SETTLEMENT AMOUNT</p>
-                                                <span className="text-2xl font-serif font-bold text-nizam-gold mr-3">£</span>
-                                                <span className="text-7xl font-serif font-bold text-nizam-gold tracking-tight">{Number(totalInPounds).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                <span className="text-xl font-serif font-bold text-nizam-gold mr-3">£</span>
+                                                <span className="text-6xl font-serif font-bold text-nizam-gold tracking-tight">{Number(total).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -204,7 +257,7 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
                             {/* RIGHT: Transaction Controls */}
                             <div className="w-1/2 p-16 relative flex flex-col justify-center items-center bg-[#111311]">
                                 {paymentModal.status === 'idle' && (
-                                    <button onClick={() => setPaymentModal({ isOpen: false })} className="absolute right-12 top-12 text-white/10 hover:text-white transition-colors">
+                                    <button onClick={() => setPaymentModal({ ...paymentModal, isOpen: false })} className="absolute right-12 top-12 text-white/10 hover:text-white transition-colors">
                                         <X size={48} strokeWidth={1.5} />
                                     </button>
                                 )}
@@ -224,69 +277,94 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
                                         <p className="text-white/20 text-[10px] font-black tracking-[0.4em] uppercase">CONNECTING TO SECURE LEDGER</p>
                                     </div>
                                 ) : (
-                                    <div className="w-full max-w-md space-y-12">
-                                        <div className="text-center mb-16">
-                                            <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full border border-white/10 bg-white/5 text-[9px] font-black uppercase tracking-[0.4em] text-white/40 mb-10">
+                                    <div className="w-full max-w-md space-y-6">
+                                        <div className="text-center mb-8">
+                                            <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full border border-white/10 bg-white/5 text-[9px] font-black uppercase tracking-[0.4em] text-white/40 mb-6">
                                                 <CreditCard size={14} /> SECURE TRANSACTION PORT
                                             </div>
-                                            <h2 className="text-5xl font-serif text-white font-bold tracking-tight mb-4">Complete Payment</h2>
-                                            <p className="text-white/20 text-xs font-bold leading-relaxed">Select tender method to resolve the outstanding balance for this table session.</p>
+                                            <h2 className="text-4xl font-serif text-white font-bold tracking-tight mb-2">Checkout Method</h2>
                                         </div>
 
-                                        <div className="space-y-6">
+                                        <div className="space-y-4">
+                                            {/* Cash Option */}
                                             <button 
                                                 onClick={() => setPaymentModal(p => ({ ...p, step: 'cash_entry' }))}
-                                                className={`w-full p-8 rounded-[2rem] border transition-all flex items-center justify-between group ${paymentModal.step === 'cash_entry' ? 'bg-nizam-gold text-black border-transparent' : 'bg-white/5 border-white/5 hover:border-white/10'}`}
+                                                className={`w-full p-6 rounded-2xl border transition-all flex items-center justify-between group ${paymentModal.step === 'cash_entry' ? 'bg-nizam-gold text-black border-transparent' : 'bg-white/5 border-white/5 hover:border-white/10'}`}
                                             >
-                                                <div className="flex items-center gap-6">
-                                                    <Banknote className={paymentModal.step === 'cash_entry' ? 'text-black/40' : 'text-nizam-gold'} size={32} />
-                                                    <div className="text-left font-black tracking-tight uppercase text-xl">Physcial Tender</div>
+                                                <div className="flex items-center gap-4">
+                                                    <Banknote className={paymentModal.step === 'cash_entry' ? 'text-black/40' : 'text-nizam-gold'} size={24} />
+                                                    <div className="text-left font-black tracking-tight uppercase text-lg">Physical Cash</div>
                                                 </div>
-                                                <ArrowLeft size={24} className={paymentModal.step === 'cash_entry' ? 'rotate-180 transition-transform' : 'opacity-10'} />
+                                                <ArrowLeft size={20} className={paymentModal.step === 'cash_entry' ? 'rotate-180' : 'opacity-10'} />
                                             </button>
 
                                             {paymentModal.step === 'cash_entry' && (
-                                                <div className="animate-in slide-in-from-top-4 duration-500 py-6">
-                                                    <div className="bg-black/40 rounded-[2rem] p-10 border border-white/5 shadow-inner mb-8">
-                                                        <p className="text-[10px] font-black text-white/20 tracking-[0.4em] uppercase mb-6">PHYSICAL AMOUNT RECEIVED</p>
+                                                <div className="animate-in slide-in-from-top-4 duration-500 space-y-4">
+                                                    <div className="bg-black/40 rounded-2xl p-6 border border-white/5 shadow-inner">
+                                                        <p className="text-[9px] font-black text-white/20 tracking-[0.4em] uppercase mb-4">AMOUNT RECEIVED</p>
                                                         <div className="flex items-center">
-                                                            <span className="text-3xl font-serif font-bold text-nizam-gold mr-4">£</span>
+                                                            <span className="text-2xl font-serif font-bold text-nizam-gold mr-4">£</span>
                                                             <input 
                                                                 type="number"
                                                                 autoFocus
                                                                 value={paymentModal.cashReceived}
                                                                 onChange={e => setPaymentModal(p => ({ ...p, cashReceived: e.target.value }))}
-                                                                className="bg-transparent text-6xl font-serif font-bold text-white outline-none w-full placeholder:text-white/5"
+                                                                className="bg-transparent text-4xl font-serif font-bold text-white outline-none w-full placeholder:text-white/5"
                                                                 placeholder="0"
                                                             />
                                                         </div>
                                                     </div>
-
-                                                    <div className="flex justify-between items-center px-10 mb-12">
-                                                        <span className="text-[10px] font-black text-white/20 tracking-[0.4em] uppercase">CHANGE TO BE RETURNED</span>
-                                                        <span className="text-4xl font-serif font-bold text-nizam-gold">£{Number(changeDue).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                    <div className="flex justify-between items-center px-6">
+                                                        <span className="text-[9px] font-black text-white/20 tracking-[0.4em] uppercase">CHANGE DUE</span>
+                                                        <span className="text-2xl font-serif font-bold text-nizam-gold">£{changeDue.toFixed(2)}</span>
                                                     </div>
-
-                                                    <button 
-                                                        onClick={() => handleProcessPayment('cash')}
-                                                        disabled={!paymentModal.cashReceived || changeDue < 0}
-                                                        className="w-full py-6 rounded-2xl bg-gradient-to-r from-[#2c5b4d] to-[#1a3d34] text-white font-black text-sm tracking-[0.2em] uppercase shadow-2xl hover:brightness-125 disabled:opacity-30 disabled:hover:brightness-100 transition-all font-bold"
-                                                    >
-                                                        AUTHORIZE SETTLEMENT
-                                                    </button>
+                                                    <button onClick={() => handleProcessPayment('cash')} disabled={!paymentModal.cashReceived || changeDue < 0} className="w-full py-4 rounded-xl bg-nizam-gold text-black font-black text-xs tracking-widest uppercase disabled:opacity-30">Confirm Cash Settlement</button>
                                                 </div>
                                             )}
 
+                                            {/* Card Option */}
                                             <button 
                                                 onClick={() => handleProcessPayment('card')}
-                                                className="w-full p-8 rounded-[2rem] border bg-white/5 border-white/5 hover:border-white/10 transition-all flex items-center justify-between group"
+                                                className="w-full p-6 rounded-2xl border bg-white/5 border-white/5 hover:border-white/10 transition-all flex items-center justify-between group"
                                             >
-                                                <div className="flex items-center gap-6">
-                                                    <CreditCard className="text-nizam-gold" size={32} />
-                                                    <div className="text-left font-black tracking-tight uppercase text-xl text-white">Digital Processor</div>
+                                                <div className="flex items-center gap-4">
+                                                    <CreditCard className="text-nizam-gold" size={24} />
+                                                    <div className="text-left font-black tracking-tight uppercase text-lg text-white">Card Payment</div>
                                                 </div>
-                                                <ArrowLeft size={24} className="opacity-10" />
                                             </button>
+
+                                            {/* Split Option */}
+                                            <button 
+                                                onClick={() => setPaymentModal(p => ({ ...p, step: 'split_entry', cardAmount: (total/2).toFixed(2), cashAmount: (total/2).toFixed(2) }))}
+                                                className={`w-full p-6 rounded-2xl border transition-all flex items-center justify-between group ${paymentModal.step === 'split_entry' ? 'bg-accent text-black border-transparent' : 'bg-white/5 border-white/5 hover:border-white/10'}`}
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <Wallet className={paymentModal.step === 'split_entry' ? 'text-black/40' : 'text-nizam-gold'} size={24} />
+                                                    <div className="text-left font-black tracking-tight uppercase text-lg">Split (Card + Cash)</div>
+                                                </div>
+                                            </button>
+
+                                            {paymentModal.step === 'split_entry' && (
+                                                <div className="animate-in slide-in-from-top-4 duration-500 space-y-4">
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div className="bg-black/40 rounded-2xl p-4 border border-white/5">
+                                                            <p className="text-[8px] font-black text-white/20 tracking-[0.3em] uppercase mb-2">CARD PORTION</p>
+                                                            <div className="flex items-center">
+                                                                <span className="text-lg font-serif font-bold text-nizam-gold mr-2">£</span>
+                                                                <input type="number" value={paymentModal.cardAmount} onChange={e => setPaymentModal(p => ({ ...p, cardAmount: e.target.value }))} className="bg-transparent text-xl font-serif font-bold text-white outline-none w-full" />
+                                                            </div>
+                                                        </div>
+                                                        <div className="bg-black/40 rounded-2xl p-4 border border-white/5">
+                                                            <p className="text-[8px] font-black text-white/20 tracking-[0.3em] uppercase mb-2">CASH PORTION</p>
+                                                            <div className="flex items-center">
+                                                                <span className="text-lg font-serif font-bold text-nizam-gold mr-2">£</span>
+                                                                <input type="number" value={paymentModal.cashAmount} onChange={e => setPaymentModal(p => ({ ...p, cashAmount: e.target.value }))} className="bg-transparent text-xl font-serif font-bold text-white outline-none w-full" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <button onClick={() => handleProcessPayment('split')} className="w-full py-4 rounded-xl bg-accent text-black font-black text-xs tracking-widest uppercase">Process Split Payment</button>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 )}

@@ -9,12 +9,12 @@ const {
     getAnalyticsDaily, getItemAnalytics, getAssistanceRequests, createAssistanceRequest, 
     updateAssistanceStatus, deleteAssistanceRequest, getEmployees, createEmployee, 
     updateEmployee, deleteEmployee, markAttendance, getAttendanceToday, checkoutAttendance,
-    getMenuItems, addMenuItem, updateMenuItem, deleteMenuItem, seedMenu,
+    getMenuItems, addMenuItem, updateMenuItem, deleteMenuItem, seedMenu, finalizePayment,
     updateMenuItemStatus, checkMenuAvailabilityReset, getSessionsByStatus, updateSessionStatus, updateCategoryItemStatus,
     getTableStatuses, updateTableStatus, allocateSession, getActiveSession, clearSession,
     getSessionsByTable, getOrdersByTable, updatePrepTime, updateOrderItems, resetAllSalesAndSessions,
     getUnavailabilitySchedules, createUnavailabilitySchedule, updateUnavailabilitySchedule, deleteUnavailabilitySchedule, processSchedulesTask,
-    finalizePayment, getInventory
+    getInventory, updateSessionServiceCharge
 } = require('./database');
 
 const app = express();
@@ -352,6 +352,14 @@ app.put('/api/table-status/:tableId', async (req, res) => {
 });
 
 // Analytics APIs
+app.put('/api/orders/:id/service-charge', async (req, res) => {
+    try {
+        const order = await updateSessionServiceCharge(req.params.id, req.body.enabled);
+        io.emit('sessionUpdated', order);
+        res.json(order);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.get('/api/inventory', async (req, res) => {
     try {
         const inventory = await getInventory();
