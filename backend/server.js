@@ -1,11 +1,11 @@
-﻿const express = require('express');
+const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const path = require('path');
 const { Server } = require('socket.io');
 const ExcelJS = require('exceljs');
 const { 
-    getOrdersByStatus, createOrder, addOrderToSession, updateOrderStatus, deleteOrder, deleteNewOrder, clearTableOrders, 
+    getOrdersByStatus, createOrder, addOrderToSession, updateOrderStatus, deleteOrder, deleteNewOrder, clearTableOrders,
     getAnalyticsDaily, getItemAnalytics, getAssistanceRequests, createAssistanceRequest, 
     updateAssistanceStatus, deleteAssistanceRequest, getEmployees, createEmployee, 
     updateEmployee, deleteEmployee, markAttendance, getAttendanceToday, checkoutAttendance,
@@ -14,7 +14,7 @@ const {
     getTableStatuses, updateTableStatus, allocateSession, getActiveSession, clearSession,
     getSessionsByTable, getOrdersByTable, updatePrepTime, updateOrderItems, resetAllSalesAndSessions,
     getUnavailabilitySchedules, createUnavailabilitySchedule, updateUnavailabilitySchedule, deleteUnavailabilitySchedule, processSchedulesTask,
-    getInventory, updateSessionServiceCharge
+    getInventory, updateSessionServiceCharge, deleteSession, deleteItemSale
 } = require('./database');
 
 const app = express();
@@ -470,6 +470,15 @@ app.delete('/api/analytics/reset', async (req, res) => {
     }
 });
 
+app.delete('/api/item-sales/:id', async (req, res) => {
+    try {
+        await deleteItemSale(req.params.id);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.delete('/api/factory-reset', async (req, res) => {
     try {
         await resetAllSalesAndSessions();
@@ -650,7 +659,7 @@ app.post('/api/attendance/verify', async (req, res) => {
 app.post('/api/attendance/biometric', async (req, res) => {
     const { employeeId, biometricType } = req.body;
     if (!employeeId) return res.status(400).json({ error: 'employeeId required' });
-    console.log(`\n=== Ã°Å¸Â§Â¬ BIOMETRIC MATCH: ${biometricType} for Emp #${employeeId} ===\n`);
+    console.log(`\n=== 🧪 BIOMETRIC MATCH: ${biometricType} for Emp #${employeeId} ===\n`);
     
     try {
         const { markAttendance } = require('./database');

@@ -20,7 +20,7 @@ async function setup() {
     try {
         console.log('â³ Connecting to Supabase...');
         await client.connect();
-        console.log('âœ… Connected!');
+        console.log('✅ Connected!');
 
         console.log('â³ Creating tables...');
         // Create Schemas
@@ -38,7 +38,7 @@ async function setup() {
         await client.query(`CREATE TABLE IF NOT EXISTS attendance (id SERIAL PRIMARY KEY, "employeeId" INTEGER NOT NULL, date DATE NOT NULL, "checkInTime" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, verified BOOLEAN DEFAULT false, UNIQUE(date, "employeeId"));`);
         await client.query(`CREATE TABLE IF NOT EXISTS unavailability_schedules (id SERIAL PRIMARY KEY, "itemIds" TEXT, category TEXT, type TEXT NOT NULL, "startDate" DATE, "startTime" TEXT NOT NULL, "endTime" TEXT NOT NULL, "daysOfWeek" TEXT, "isEnabled" BOOLEAN DEFAULT true, label TEXT, "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
         
-        console.log('âœ… Tables created/verified.');
+        console.log('✅ Tables created/verified.');
 
         console.log(`â³ Seeding menu with ${menuData.length} items...`);
         for (const item of menuData) {
@@ -62,7 +62,7 @@ async function setup() {
                 );
             }
         }
-        console.log('âœ… Menu seeding complete!');
+        console.log('✅ Menu seeding complete!');
         console.log('\nðŸš€ ALL DONE! Your Supabase database is ready.');
         
     } catch (err) {

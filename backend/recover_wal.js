@@ -11,7 +11,7 @@ db.serialize(() => {
             if (err) {
                 console.error("âŒ Inventory table error:", err.message);
             } else if (rows && rows.length > 0) {
-                console.log(`âœ… SUCCESS! Found ${rows.length} inventory items.`);
+                console.log(`✅ SUCCESS! Found ${rows.length} inventory items.`);
                 console.log(JSON.stringify(rows, null, 2));
             } else {
                 console.log("âŒ Inventory table is still empty.");

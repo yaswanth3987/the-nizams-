@@ -1,5 +1,5 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
-import { TrendingUp, Package, PoundSterling, FileText, Printer, Calendar as CalendarIcon, Filter, Layers, Lock, User } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { TrendingUp, Package, PoundSterling, FileText, Printer, Calendar as CalendarIcon, Filter, Layers, Lock, User, Star, Trash2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
 
 const API_URL = import.meta.env.DEV 
@@ -51,6 +51,37 @@ export default function InventoryDashboard() {
             console.error("Failed to load inventory data:", err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDeleteOrder = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this historical record? This cannot be undone.")) return;
+        try {
+            const res = await fetch(`${API_URL}/sessions/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                setSalesList(prev => prev.filter(o => o.id !== id));
+            } else {
+                alert("Failed to delete record.");
+            }
+        } catch (err) {
+            console.error("Delete error:", err);
+            alert("Error deleting record.");
+        }
+    };
+
+    const handleDeleteItemSale = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this specific item sale record?")) return;
+        try {
+            const res = await fetch(`${API_URL}/item-sales/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                // We'll just refresh everything to be safe since aggregates might change
+                fetchDashboardData();
+            } else {
+                alert("Failed to delete record.");
+            }
+        } catch (err) {
+            console.error("Delete error:", err);
+            alert("Error deleting record.");
         }
     };
 
@@ -348,6 +379,7 @@ export default function InventoryDashboard() {
                                     <th className="px-6 py-4 tracking-[0.2em]">Srv. Chg</th>
                                     <th className="px-6 py-4 tracking-[0.2em]">Total</th>
                                     <th className="px-6 py-4 tracking-[0.2em] text-right">Time</th>
+                                    <th className="px-6 py-4 tracking-[0.2em] text-right">Action</th>
                                 </tr>
                             </thead>
                             <tbody className="text-sm">
@@ -363,6 +395,15 @@ export default function InventoryDashboard() {
                                         <td className="px-6 py-4 font-bold text-accent glow-gold">£{order.finalTotal.toFixed(2)}</td>
                                         <td className="px-6 py-4 text-right text-white/40 text-[10px] font-black uppercase tracking-widest text-nowrap">
                                             {new Date(order.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <button 
+                                                onClick={() => handleDeleteOrder(order.id)}
+                                                className="text-red-500/40 hover:text-red-500 transition-colors p-2"
+                                                title="Delete Record"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
@@ -418,17 +459,26 @@ export default function InventoryDashboard() {
                                         <th className="px-6 py-3 tracking-widest">Item Name</th>
                                         <th className="px-6 py-3 tracking-widest text-center">Qty</th>
                                         <th className="px-6 py-3 tracking-widest text-right">Rev</th>
+                                        <th className="px-6 py-3 tracking-widest text-right">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody className="text-sm">
                                     {computedItemAnalytics.map((item, idx) => (
                                         <tr key={item.id} className="border-b border-white/5 hover:bg-white/[0.02]">
                                             <td className="px-6 py-3 text-white/80 font-serif italic whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]" title={item.itemName}>
-                                                {idx < 3 && <span className="text-accent mr-2 text-xs glow-gold">â˜…</span>}
+                                                {idx < 3 && <Star size={12} className="fill-accent text-accent inline-block mr-2 glow-gold" />}
                                                 {item.itemName}
                                             </td>
                                             <td className="px-6 py-3 text-center font-bold text-white/40">{item.quantitySold}</td>
                                             <td className="px-6 py-3 text-right font-bold text-accent glow-gold">£{item.totalRevenue.toFixed(2)}</td>
+                                            <td className="px-6 py-3 text-right">
+                                                <button 
+                                                    onClick={() => handleDeleteItemSale(item.id)}
+                                                    className="text-red-500/20 hover:text-red-500 transition-colors p-1"
+                                                >
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))}
                                     {computedItemAnalytics.length === 0 && (

@@ -15,7 +15,7 @@ const checkDb = (filename) => {
             if (inv) {
                 db.all(`SELECT * FROM ${inv}`, (err, rows) => {
                     if (!err && rows && rows.length > 0) {
-                        console.log(`âœ… FOUND DATA in ${filename} (${inv} table): ${rows.length} rows`);
+                        console.log(`✅ FOUND DATA in ${filename} (${inv} table): ${rows.length} rows`);
                         console.log(JSON.stringify(rows.slice(0, 5), null, 2)); // Show first 5
                     } else {
                         console.log(`Empty or missing data in ${filename}`);

@@ -7,7 +7,7 @@ console.log('\x1b[36m%s\x1b[0m', '--- THE GREAT NIZAM: SYSTEM DIAGNOSTICS ---');
 
 function checkTable(index) {
     if (index >= tables.length) {
-        console.log('\n\x1b[32m%s\x1b[0m', 'âœ… Diagnostics Complete. All systems operational.');
+        console.log('\n\x1b[32m%s\x1b[0m', '✅ Diagnostics Complete. All systems operational.');
         db.close();
         return;
     }

@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Search, ArrowLeft, Utensils, Plus, Minus, Trash2, Send } from 'lucide-react';
 
 const OrderEntryV2 = ({ 
@@ -54,6 +54,12 @@ const OrderEntryV2 = ({
     };
 
     const deleteFromCart = (id) => {
+        if (editingOrder && cart.length === 1) {
+            if (window.confirm("This is the last item in the order.\nDeleting it will cancel the entire order.\nContinue?")) {
+                onSubmit([], orderType, customerName, phone);
+            }
+            return;
+        }
         setCart(prev => prev.filter(i => i.id !== id));
     };
 
@@ -210,7 +216,7 @@ const OrderEntryV2 = ({
                     </div>
                     <button 
                         onClick={() => onSubmit(cart, orderType, customerName, phone)} 
-                        disabled={cart.length === 0} 
+                        disabled={cart.length === 0 && !editingOrder} 
                         className="w-full bg-[#FFD700] text-[#0a261f] py-6 rounded-[2.5rem] font-black uppercase tracking-[0.2em] text-sm active:scale-95 shadow-2xl shadow-[#FFD700]/20 disabled:opacity-20 transition-all flex items-center justify-center gap-4"
                     >
                         <Send size={20} strokeWidth={3} />

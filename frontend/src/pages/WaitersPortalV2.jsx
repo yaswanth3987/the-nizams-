@@ -1,4 +1,4 @@
-﻿import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useWaiterData } from '../hooks/waiter/v2/useWaiterData';
 import { useSoundSystem } from '../hooks/useSoundSystem';
 import SidebarV2 from '../components/waiter/v2/SidebarV2';
@@ -102,7 +102,22 @@ const WaitersPortalV2 = () => {
     }, [selectedTable, showToast]);
 
     const handleOrderSubmit = useCallback(async (cartItems, orderType = 'dine-in', customerName = '', phone = '') => {
-        if (!cartItems || cartItems.length === 0) return;
+        if (!cartItems || cartItems.length === 0) {
+            if (editingOrder) {
+                // Decoupled logic: handle as deletion
+                try {
+                    await deleteOrder(editingOrder.id, editingOrder.type === 'new');
+                    setCart([]);
+                    setEditingOrder(null);
+                    setView('dashboard');
+                    showToast('Order cancelled and removed', 'success');
+                } catch (err) {
+                    console.error("Failed to delete order:", err);
+                    showToast('Failed to cancel order', 'error');
+                }
+            }
+            return;
+        }
         const subtotal = cartItems.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.qty || 0)), 0);
         
         try {

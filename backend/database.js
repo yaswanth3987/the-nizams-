@@ -1,4 +1,4 @@
-﻿process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const { Pool } = require('pg');
 const path = require('path');
 const isPg = !!process.env.DATABASE_URL;
@@ -26,7 +26,7 @@ if (isPg) {
     
     // Immediate verification query (Requirement 6)
     pgPool.query('SELECT 1').then(() => {
-        console.log('âœ… DATABASE CONNECTED: PostgreSQL cloud connection verified.');
+        console.log('✅ DATABASE CONNECTED: PostgreSQL cloud connection verified.');
     }).catch(err => {
         if (err.code === '28P01') console.error('âŒ DATABASE AUTHENTICATION FAILED: Check your password in DATABASE_URL.');
         else if (err.code === 'ETIMEDOUT' || err.code === 'ENETUNREACH') console.error('âŒ DATABASE CONNECTION TIMEOUT/UNREACHABLE: Check network/port/IPv4.');
@@ -452,6 +452,11 @@ const updateAssistanceStatus = async (id, status) => {
 
 const deleteAssistanceRequest = async (id) => {
     await runQuery(`DELETE FROM assistance_requests WHERE id = ?`, [id]);
+    return { id };
+};
+
+const deleteItemSale = async (id) => {
+    await runQuery(`DELETE FROM item_sales WHERE id = ?`, [id]);
     return { id };
 };
 
@@ -993,7 +998,7 @@ const getInventory = async () => {
 
 module.exports = {
     db, pgPool, runQuery, isPg, getOrdersByStatus, createOrder, addOrderToSession, updateOrderStatus,
-    deleteOrder, deleteNewOrder, deleteSession, clearTableOrders, getAnalyticsDaily, getItemAnalytics, resetAllSalesAndSessions,
+    deleteOrder, deleteNewOrder, deleteSession, deleteItemSale, clearTableOrders, getAnalyticsDaily, getItemAnalytics, resetAllSalesAndSessions,
     getAssistanceRequests, createAssistanceRequest, updateAssistanceStatus, deleteAssistanceRequest,
     getEmployees, createEmployee, updateEmployee, deleteEmployee, markAttendance, getAttendanceToday,
     getMenuItems, addMenuItem, updateMenuItem, deleteMenuItem, seedMenu,

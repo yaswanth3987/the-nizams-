@@ -25,7 +25,7 @@ pool.query('SELECT NOW() as time, version() as version', (err, res) => {
         else console.error("âŒ Connection Failed:", err.message);
         process.exit(1);
     } else {
-        console.log("âœ… SUCCESS!");
+        console.log("✅ SUCCESS!");
         console.log("Server Time:", res.rows[0].time);
         console.log("Postgres Version:", res.rows[0].version);
         console.log("\nYour connection is stable and authenticated.");
