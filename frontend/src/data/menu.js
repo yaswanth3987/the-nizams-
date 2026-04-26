@@ -180,5 +180,5 @@ export const menuData = [
     { id: 'dr2', name: 'THUMS UP', price: 2.49, category: 'Drinks', spice: 0, veg: true, image: '/thums up.jpg' },
     { id: 'dr4', name: 'JEERA SODA', price: 2.49, category: 'Drinks', spice: 0, veg: true, image: '/jeera soda.jpg' },
     { id: 'dr5', name: 'RED BULL', price: 2.49, category: 'Drinks', spice: 0, veg: true, image: '/red bull.jpg' },
-    { id: 'dr3', name: 'WATER BOTTLE', price: 1.00, desc: 'Mineral water', category: 'Drinks', spice: 0, veg: true }
+    { id: 'dr3', name: 'WATER BOTTLE', price: 1.50, desc: 'Mineral water', category: 'Drinks', spice: 0, veg: true }
 ];

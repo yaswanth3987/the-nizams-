@@ -1,6 +1,6 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Plus, Minus, ShoppingBag, X } from 'lucide-react';
+import { ChevronLeft, Plus, Minus, ShoppingBag, X, Droplets } from 'lucide-react';
 import { categoriesData, menuData } from '../data/menu.js';
 import { socket } from '../utils/socket';
 
@@ -247,7 +247,7 @@ export default function TakeawayMenu() {
                             <div className="flex items-center justify-between mt-2 mb-2 bg-blue-50/50 p-4 rounded-xl border border-blue-100 shadow-sm animate-fade-in">
                                 <div className="flex flex-col">
                                     <h4 className="font-bold text-[#0B3A2E] text-sm flex items-center gap-2">
-                                        <span className="text-lg">ðŸ’§</span> Add Bottle
+                                        <span className="text-lg"><Droplets size={16} /></span> Add Bottle
                                     </h4>
                                     <p className="text-[10px] text-[#6D5D4B] font-bold opacity-60 uppercase tracking-widest pl-7 mt-0.5">Chilled Natural Water</p>
                                 </div>

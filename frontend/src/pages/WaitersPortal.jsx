@@ -980,7 +980,7 @@ export default function WaitersPortal() {
                     <header className="px-4 md:px-8 py-6 border-b border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
                         <div className="flex items-center gap-4 w-full sm:w-auto">
                             <button onClick={() => setView('table_details')} className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white"><ArrowLeft size={20} /></button>
-                            <h1 className="text-xl font-black text-white truncate">Menu â€¢ {selectedTable || 'Select Table'}</h1>
+                            <h1 className="text-xl font-black text-white truncate">Menu • {selectedTable || 'Select Table'}</h1>
                         </div>
                         <div className="relative w-full sm:w-72">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />

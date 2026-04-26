@@ -1,6 +1,6 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { socket } from '../utils/socket';
-import { ChefHat, Bell, Search, User, Menu, FileText, BarChart2, Settings, UtensilsCrossed, CheckCircle2 } from 'lucide-react';
+import { ChefHat, Bell, Search, User, Menu, FileText, BarChart2, Settings, UtensilsCrossed, CheckCircle2, Leaf, Flame } from 'lucide-react';
 
 const API_URL = import.meta.env.DEV 
     ? `http://${window.location.hostname}:3001/api` 
@@ -94,12 +94,12 @@ export default function KitchenDisplay() {
     const renderSpiceLeaf = (itemName) => {
         if (!itemName) return null;
         const lower = itemName.toLowerCase();
-        if (lower.includes('mild')) return <span className="text-emerald-500 font-bold ml-2">ðŸŒ±</span>;
-        if (lower.includes('spicy')) return <span className="text-red-500 font-bold ml-2">ðŸŒ¶ï¸</span>;
+        if (lower.includes('mild')) return <span className="text-emerald-500 font-bold ml-2"><Leaf size={16} /></span>;
+        if (lower.includes('spicy')) return <span className="text-red-500 font-bold ml-2"><Flame size={16} /></span>;
         // Check for specific note attachments simulating mockup icons
         if (lower.includes('naan')) return null;
-        if (lower.includes('masala') || lower.includes('josh')) return <span className="text-red-500 font-bold drop-shadow-md text-lg inline-block ml-2 group-hover:scale-125 transition-transform">ðŸ”¥</span>;
-        if (lower.includes('tikka') || lower.includes('tukda')) return <span className="text-emerald-500 font-bold drop-shadow-md text-lg inline-block ml-2 group-hover:scale-125 transition-transform">ðŸŒ±</span>;
+        if (lower.includes('masala') || lower.includes('josh')) return <span className="text-red-500 font-bold drop-shadow-md text-lg inline-block ml-2 group-hover:scale-125 transition-transform"><Flame size={20} /></span>;
+        if (lower.includes('tikka') || lower.includes('tukda')) return <span className="text-emerald-500 font-bold drop-shadow-md text-lg inline-block ml-2 group-hover:scale-125 transition-transform"><Leaf size={16} /></span>;
         return null;
     };
 
@@ -329,7 +329,7 @@ export default function KitchenDisplay() {
                         <span>KITCHEN DELAY: 0 MIN</span>
                     </div>
                     <div>
-                        <span className="text-[#d4af37]/60">THE GREAT NIZAM â€¢ EST. 1954</span>
+                        <span className="text-[#d4af37]/60">THE GREAT NIZAM • EST. 1954</span>
                         <span className="ml-8">{new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second:'2-digit' })}</span>
                     </div>
                 </footer>

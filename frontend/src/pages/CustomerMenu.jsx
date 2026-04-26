@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback, useContext, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useContext, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
     ChevronLeft, 
@@ -29,7 +29,8 @@ import {
     Sparkles,
     Users,
     Info,
-    PoundSterling
+    PoundSterling,
+    Droplets
 } from 'lucide-react';
 import { categoriesData, menuData } from '../data/menu.js';
 import { socket } from '../utils/socket';
@@ -385,8 +386,8 @@ export default function CustomerMenu() {
             }));
 
             const rawStatusLabel = (s) => {
-                if (s === 'accepted') return 'Accepted âœ“';
-                if (s === 'rejected') return 'Rejected âœ—';
+                if (s === 'accepted') return 'Accepted ✓';
+                if (s === 'rejected') return 'Rejected ✗';
                 return 'Pending';
             };
 
@@ -970,7 +971,7 @@ export default function CustomerMenu() {
                                 </div>
                             </div>
                             <div className="bg-[#C29958] text-[#0B3A2E] px-5 py-2.5 rounded-[18px] font-black uppercase tracking-[0.1em] text-[10px] group-hover:bg-white transition-all shadow-lg">
-                                View Cart â†’
+                                View Cart →
                             </div>
                         </button>
                     </div>
@@ -1058,7 +1059,7 @@ export default function CustomerMenu() {
                              <div className="flex items-center justify-between mb-4 bg-blue-50/50 p-4 rounded-2xl border border-blue-100 shadow-sm animate-fade-in">
                                  <div className="flex flex-col">
                                      <h4 className="font-bold text-[#0B3A2E] text-sm flex items-center gap-2">
-                                         <span className="text-xl">ðŸ’§</span> Add Bottle
+                                         <span className="text-xl"><Droplets size={16} /></span> Add Bottle
                                      </h4>
                                      <p className="text-[10px] text-[#6D5D4B] font-bold opacity-60 uppercase tracking-widest pl-7 mt-0.5">Chilled Natural Water</p>
                                  </div>
@@ -1147,7 +1148,7 @@ export default function CustomerMenu() {
                             ) : (
                                 <>
                                     <span>CONFIRM ORDER</span>
-                                    <span className="text-xl group-hover:scale-125 transition-transform duration-500">âœ¨</span>
+                                    <span className="text-xl group-hover:scale-125 transition-transform duration-500"><Sparkles size={20} /></span>
                                 </>
                             )}
                         </button>
@@ -1174,16 +1175,16 @@ export default function CustomerMenu() {
                              <span className="text-[#C29958] text-[10px] font-black uppercase tracking-widest">IN PROGRESS</span>
                         </div>
                     </div>
-                    {(myOrders || []).filter(o => ['Pending', 'Order Received', 'Cooking Started', 'Ready to Serve', 'Served', 'Accepted âœ“', 'Rejected âœ—'].includes(o.status)).length === 0 ? (
+                    {(myOrders || []).filter(o => ['Pending', 'Order Received', 'Cooking Started', 'Ready to Serve', 'Served', 'Accepted ✓', 'Rejected ✗'].includes(o.status)).length === 0 ? (
                         <div className="bg-white/40 rounded-[40px] p-20 text-center border-2 border-dashed border-[#0B3A2E]/5 flex flex-col items-center">
                             <Clock className="w-12 h-12 text-[#0B3A2E]/10 mb-5" strokeWidth={1.5} />
                             <p className="text-[#6D5D4B] text-xs font-black uppercase tracking-widest opacity-40">No active delights</p>
                             <button onClick={() => setView('menu')} className="mt-8 bg-[#0B3A2E]/5 text-[#0B3A2E] px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#0B3A2E]/10 transition-all">Start Ordering</button>
                         </div>
                     ) : (
-                        (myOrders || []).filter(o => ['Pending', 'Order Received', 'Cooking Started', 'Ready to Serve', 'Served', 'Accepted âœ“', 'Rejected âœ—'].includes(o.status)).map(order => {
+                        (myOrders || []).filter(o => ['Pending', 'Order Received', 'Cooking Started', 'Ready to Serve', 'Served', 'Accepted ✓', 'Rejected ✗'].includes(o.status)).map(order => {
                             const steps = [
-                                { label: 'PREPARING', trigger: ['Pending', 'Order Received', 'Cooking Started', 'Ready to Serve', 'Served', 'Accepted âœ“'] },
+                                { label: 'PREPARING', trigger: ['Pending', 'Order Received', 'Cooking Started', 'Ready to Serve', 'Served', 'Accepted ✓'] },
                                 { label: 'READY', trigger: ['Ready to Serve', 'Served'] },
                                 { label: 'SERVED', trigger: ['Served'] },
                             ];
@@ -1194,7 +1195,7 @@ export default function CustomerMenu() {
                                     break;
                                 }
                             }
-                            const isRejected = order.status === 'Rejected âœ—';
+                            const isRejected = order.status === 'Rejected ✗';
 
                             return (
                                 <div key={order.id} className="bg-white rounded-[45px] p-8 shadow-[0_25px_60px_rgba(0,0,0,0.06)] relative overflow-hidden mb-8 border border-white transition-all hover:shadow-[0_40px_80px_rgba(0,0,0,0.12)]">
@@ -1284,7 +1285,7 @@ export default function CustomerMenu() {
                                         <CheckCircle size={10} strokeWidth={3} /> CONFIRMED
                                     </div>
                                     <h4 className="text-[#0B3A2E] font-black text-base leading-tight mb-1 truncate">{(order.items && order.items[0]?.name) || 'Royal Feast'}{(order.items && order.items.length > 1) ? ` & ${order.items.length - 1} more` : ''}</h4>
-                                    <p className="text-[#6D5D4B] text-[10px] font-black opacity-40 uppercase tracking-widest">{new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long' })} â€¢ {(order.items && order.items.length) || 0} Items</p>
+                                    <p className="text-[#6D5D4B] text-[10px] font-black opacity-40 uppercase tracking-widest">{new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long' })} • {(order.items && order.items.length) || 0} Items</p>
                                 </div>
                                 <div className="text-[#0B3A2E] font-black text-lg tabular-nums bg-[#F5E6CC]/20 px-4 py-2 rounded-2xl">
                                     £{(order.total || 0).toFixed(2)}
@@ -1505,7 +1506,7 @@ export default function CustomerMenu() {
                     </button>
                     {assistanceStatus === 'success' && (
                         <div className="absolute bottom-full right-0 mb-4 bg-white text-[#0B3A2E] p-4 px-6 rounded-[25px] text-[10px] font-black uppercase tracking-widest shadow-2xl border border-black/5 whitespace-nowrap animate-slide-in">
-                             âœ¨ Staff notified!
+                             ✨ Staff notified!
                         </div>
                     )}
                 </div>

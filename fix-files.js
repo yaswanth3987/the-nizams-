@@ -6,7 +6,7 @@ function walk(dir, callback) {
     fs.readdirSync(dir).forEach(f => {
         let dirPath = path.join(dir, f);
         let isDirectory = fs.statSync(dirPath).isDirectory();
-        if (isDirectory && f !== 'node_modules' && f !== '.git') {
+        if (isDirectory && f !== 'node_modules' && f !== '.git' && f !== 'dist') {
             walk(dirPath, callback);
         } else if (!isDirectory) {
             callback(path.join(dir, f));
@@ -14,9 +14,9 @@ function walk(dir, callback) {
     });
 }
 
-console.log('🚀 Starting Automation: Fixing Encoding and Syntax...');
+console.log('🚀 Starting Automation: Fixing Encoding and Pound Signs...');
 
-// 1. Fix Encodings in frontend/src and backend
+// 1. Fix Encodings and replace mangled characters
 const targets = [
     path.join(__dirname, 'frontend', 'src'),
     path.join(__dirname, 'backend')
@@ -26,22 +26,59 @@ targets.forEach(target => {
     if (!fs.existsSync(target)) return;
     console.log(`\n📂 Processing: ${target}`);
     walk(target, (filePath) => {
-        if (filePath.endsWith('.js') || filePath.endsWith('.jsx') || filePath.endsWith('.css') || filePath.endsWith('.json')) {
+        if (filePath.endsWith('.js') || filePath.endsWith('.jsx') || filePath.endsWith('.css') || filePath.endsWith('.html') || filePath.endsWith('.json')) {
             try {
-                const content = fs.readFileSync(filePath);
-                // Check if it looks like UTF-16 (simplified check)
-                if (content[0] === 0xff && content[1] === 0xfe) {
-                    console.log(`  ✨ Converting UTF-16LE to UTF-8: ${path.relative(__dirname, filePath)}`);
-                    const utf8Content = content.toString('utf16le');
-                    fs.writeFileSync(filePath, utf8Content, 'utf8');
-                } else if (content[0] === 0xfe && content[1] === 0xff) {
-                    console.log(`  ✨ Converting UTF-16BE to UTF-8: ${path.relative(__dirname, filePath)}`);
-                    const utf8Content = content.toString('utf16be');
-                    fs.writeFileSync(filePath, utf8Content, 'utf8');
-                } else {
-                    // Force re-save as UTF-8 anyway to clean up any weirdness
-                    const utf8Content = content.toString('utf8');
-                    fs.writeFileSync(filePath, utf8Content, 'utf8');
+                let content = fs.readFileSync(filePath, 'utf8');
+                
+                let changed = false;
+
+                // Undo the previous mistake of literal \u00A3 strings
+                if (content.includes('\\u00A3')) {
+                    console.log(`  🔧 Reverting literal \\u00A3 in: ${path.relative(__dirname, filePath)}`);
+                    content = content.replace(/\\u00A3/g, '£');
+                    changed = true;
+                }
+
+                // Fix mangled pound signs (Â£ -> £)
+                if (content.includes('Â£')) {
+                    console.log(`  🔧 Fixing mangled pound sign (Â£) in: ${path.relative(__dirname, filePath)}`);
+                    content = content.replace(/Â£/g, '£');
+                    changed = true;
+                }
+
+                // Fix mangled emojis and symbols
+                const emojiMap = {
+                    'ðŸ’§': '💧',
+                    'ðŸŒ±': '🌱',
+                    'ðŸŒ¶ï¸ ': '🌶️',
+                    'ðŸ”¥': '🔥',
+                    'âœ¨': '✨',
+                    'âœ“': '✓',
+                    'âœ—': '✗',
+                    'â†’': '→',
+                    'â€¢': '•',
+                    'âš ï¸ ': '⚠️',
+                    'â—¦': '◦',
+                    'â€”': '—'
+                };
+
+                for (const [mangled, correct] of Object.entries(emojiMap)) {
+                    if (content.includes(mangled)) {
+                        console.log(`  🔧 Fixing mangled emoji (${mangled} -> ${correct}) in: ${path.relative(__dirname, filePath)}`);
+                        content = content.replace(new RegExp(mangled, 'g'), correct);
+                        changed = true;
+                    }
+                }
+
+                // Fix placeholder corruption
+                if (content.includes('Ã¯Â¿Â½')) {
+                    console.log(`  🔧 Fixing placeholder corruption in: ${path.relative(__dirname, filePath)}`);
+                    content = content.replace(/Ã¯Â¿Â½/g, '-');
+                    changed = true;
+                }
+
+                if (changed || true) { // Always write to ensure UTF-8
+                    fs.writeFileSync(filePath, content, 'utf8');
                 }
             } catch (err) {
                 console.error(`  ❌ Failed to process ${filePath}:`, err.message);
@@ -59,15 +96,9 @@ if (fs.existsSync(serverPath)) {
         console.log('  ✅ No syntax errors found.');
     } catch (err) {
         console.error('  ❌ Syntax error found in backend/server.js!');
-        // Attempt to fix common broken comments if found
-        let content = fs.readFileSync(serverPath, 'utf8');
-        if (content.includes('/ /')) {
-            console.log('  🔧 Attempting to fix broken comments (/ /)...');
-            content = content.replace(/\/ \//g, '//');
-            fs.writeFileSync(serverPath, content, 'utf8');
-            console.log('  ✅ Fixed broken comments.');
-        }
     }
 }
 
-console.log('\n✅ Automation Complete! Files are ready for deployment.');
+console.log('\n✅ Automation Complete! All files normalized to UTF-8.');
+
+
