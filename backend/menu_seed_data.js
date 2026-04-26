@@ -116,7 +116,7 @@ const menuData = [
     { name: 'THUMS UP', price: 2.49, category: 'Drinks', description: 'Classic Indian cola', image: '/thums up.jpg' },
     { name: 'JEERA SODA', price: 2.49, category: 'Drinks', description: 'Cumin flavored soda', image: '/jeera soda.jpg' },
     { name: 'RED BULL', price: 2.49, category: 'Drinks', description: 'Energy drink', image: '/red bull.jpg' },
-    { name: 'WATER BOTTLE', price: 1.00, category: 'Drinks', description: 'Mineral water', image: '/water bottle.jpg' }
+    { name: 'WATER BOTTLE', price: 1.50, category: 'Drinks', description: 'Mineral water', image: '/water bottle.jpg' }
 ];
 
 module.exports = { menuData };
