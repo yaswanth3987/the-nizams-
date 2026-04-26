@@ -474,7 +474,7 @@ export default function WaitersPortal() {
 
                                             <div className="flex justify-between items-center mb-3 px-1 border-t border-white/5 pt-3">
                                                 <div className="text-[9px] font-black text-[#86a69d] tracking-widest uppercase">Total Due</div>
-                                                <div className="text-xl font-serif font-black text-[#FFD700]">Â£{Number(order.finalTotal || 0).toFixed(2)}</div>
+                                                <div className="text-xl font-serif font-black text-[#FFD700]">£{Number(order.finalTotal || 0).toFixed(2)}</div>
                                             </div>
 
                                             <div className="mt-auto flex gap-2">
@@ -508,7 +508,7 @@ export default function WaitersPortal() {
                                                     <>
                                                         <button 
                                                             onClick={() => {
-                                                                if (confirm(`Request final bill for Table ${order.tableId}? Total: Â£${Number(order.finalTotal || 0).toFixed(2)}`)) {
+                                                                if (confirm(`Request final bill for Table ${order.tableId}? Total: £${Number(order.finalTotal || 0).toFixed(2)}`)) {
                                                                     handleUpdateOrderStatus(order.id, 'billing_pending', order._source);
                                                                 }
                                                             }}
@@ -717,7 +717,7 @@ export default function WaitersPortal() {
                                         >
                                             <span className="text-4xl font-serif font-black">{t}</span>
                                             {tableTotal > 0 ? (
-                                                <span className="text-xs font-black text-white/90 mt-1 bg-black/20 px-2 py-0.5 rounded-lg">Â£{(tableTotal || 0).toFixed(2)}</span>
+                                                <span className="text-xs font-black text-white/90 mt-1 bg-black/20 px-2 py-0.5 rounded-lg">£{(tableTotal || 0).toFixed(2)}</span>
                                             ) : (
                                                 <span className="text-xs font-black uppercase opacity-60 mt-1">{tables[t] || 'Free'}</span>
                                             )}
@@ -838,7 +838,7 @@ export default function WaitersPortal() {
                     <div className="flex flex-col gap-2 px-4 mb-2">
                         <div className="flex justify-between items-center text-sm">
                             <span className="text-[#86a69d] uppercase font-black tracking-widest text-[9px]">Items Subtotal</span>
-                            <span className="text-white font-bold font-serif">Â£{subtotal.toFixed(2)}</span>
+                            <span className="text-white font-bold font-serif">£{subtotal.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between items-center text-sm">
                             <div className="flex items-center gap-3">
@@ -851,7 +851,7 @@ export default function WaitersPortal() {
                                 </button>
                             </div>
                             <span className={`font-bold font-serif ${serviceChargeEnabled ? 'text-white' : 'text-white/10 line-through'}`}>
-                                Â£{((firstOrder.serviceCharge) || (subtotal * 0.1)).toFixed(2)}
+                                £{((firstOrder.serviceCharge) || (subtotal * 0.1)).toFixed(2)}
                             </span>
                         </div>
                     </div>
@@ -861,14 +861,14 @@ export default function WaitersPortal() {
                             <p className="text-white/40 text-xs font-bold">{tableOrders.length} active orders</p>
                         </div>
                         <div className="text-right">
-                            <span className="text-5xl font-serif font-black text-[#FFD700]">Â£{totalBill.toFixed(2)}</span>
+                            <span className="text-5xl font-serif font-black text-[#FFD700]">£{totalBill.toFixed(2)}</span>
                         </div>
                     </div>
                     <div className="flex gap-4">
                         <button 
                             onClick={async () => {
                                 if (tableOrders.length === 0) return alert("No active orders to settle.");
-                                if (confirm(`Request final bill for Table ${selectedTable}? Total: Â£${totalBill.toFixed(2)}`)) {
+                                if (confirm(`Request final bill for Table ${selectedTable}? Total: £${totalBill.toFixed(2)}`)) {
                                     // Update service charge preference in DB
                                     try {
                                         for (const o of tableOrders) {
@@ -999,7 +999,7 @@ export default function WaitersPortal() {
                                 <button key={item.id} onClick={() => addToCart(item)} className="bg-white/5 border border-white/5 rounded-[32px] p-6 text-left hover:bg-[#FFD700]/5 transition-all group active:scale-95">
                                     <h3 className="text-white font-bold mb-1 group-hover:text-[#FFD700] transition-colors">{item.name}</h3>
                                     <p className="text-[#86a69d] text-[10px] font-black uppercase tracking-widest mb-4">{item.category}</p>
-                                    <div className="text-[#FFD700] font-black text-lg">Â£{(item.price || 0).toFixed(2)}</div>
+                                    <div className="text-[#FFD700] font-black text-lg">£{(item.price || 0).toFixed(2)}</div>
                                 </button>
                             ))}
                         </div>
@@ -1023,7 +1023,7 @@ export default function WaitersPortal() {
                                 <div key={item.id} className="bg-white/5 rounded-3xl p-4 flex items-center justify-between">
                                     <div className="min-w-0 mr-4">
                                         <div className="text-white font-bold text-sm truncate">{item.name}</div>
-                                        <div className="text-[#FFD700] font-black text-xs mt-1">Â£{((item.price || 0) * (item.qty || 0)).toFixed(2)}</div>
+                                        <div className="text-[#FFD700] font-black text-xs mt-1">£{((item.price || 0) * (item.qty || 0)).toFixed(2)}</div>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <div className="flex items-center gap-3 bg-black/40 rounded-xl p-1 shrink-0">

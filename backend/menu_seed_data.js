@@ -1,4 +1,4 @@
-﻿const menuData = [
+const menuData = [
     { name: 'NIZAMI LAMB CURRY (REGULAR)', price: 12.99, category: "Chef's Specials", description: 'Slow cooked tender lamb in our signature Nizami spice blend.', isPopular: true, isRecommended: true, isNew: true, image: '/nazami lamb curry.jpeg' },
     { name: 'NIZAMI LAMB CURRY (LARGE)', price: 18.99, category: "Chef's Specials", description: 'Signature lamb curry - Family Size', isPopular: true, isRecommended: true, isNew: true, image: '/nizami lamb curry large.jpg' },
     { name: 'CHICKEN CORN SOUP', price: 5.99, category: 'Soups', description: 'Classic chicken and sweetcorn soup' },
@@ -79,8 +79,10 @@
     { name: 'LAMB CHOPS (2 PCS)', price: 7.99, category: "Extra's", description: 'Extra lamb chops' },
     { name: 'MANDI SAUCE', price: 1.99, category: "Extra's", description: 'Authentic mandi sauce' },
     { name: 'MAYONNAISE', price: 2.49, category: "Extra's", description: 'Creamy mayonnaise' },
-    { name: 'PLAIN NAAN / PLAIN ROTI', price: 1.99, category: 'Breads (Naan & Roti)', description: 'Freshly baked' },
-    { name: 'BUTTER NAAN / BUTTER ROTI', price: 2.49, category: 'Breads (Naan & Roti)', description: 'Freshly baked with butter', image: '/butter-naan.webp' },
+    { name: 'PLAIN NAAN', price: 1.99, category: 'Breads (Naan & Roti)', description: 'Freshly baked' },
+    { name: 'PLAIN ROTI', price: 1.99, category: 'Breads (Naan & Roti)', description: 'Freshly baked' },
+    { name: 'BUTTER NAAN', price: 2.49, category: 'Breads (Naan & Roti)', description: 'Freshly baked with butter', image: '/butter-naan.webp' },
+    { name: 'BUTTER ROTI', price: 2.49, category: 'Breads (Naan & Roti)', description: 'Freshly baked with butter' },
     { name: 'GARLIC NAAN', price: 2.99, category: 'Breads (Naan & Roti)', description: 'Freshly baked with garlic', image: '/Garlic naan.png' },
     { name: 'CHEESE NAAN', price: 2.99, category: 'Breads (Naan & Roti)', description: 'Freshly baked with cheese', image: '/cheese-naan.webp' },
     { name: 'CHILLI CHEESE NAAN', price: 2.99, category: 'Breads (Naan & Roti)', description: 'Freshly baked with chilli & cheese', image: '/chilli cheese naan.jpg' },

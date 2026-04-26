@@ -275,7 +275,7 @@ export default function InventoryDashboard() {
                     </div>
                     <div>
                         <p className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] mb-1">Filtered Revenue</p>
-                        <h3 className="text-3xl font-serif italic text-white font-bold tracking-tighter">Â£{displayRevenue.toFixed(2)}</h3>
+                        <h3 className="text-3xl font-serif italic text-white font-bold tracking-tighter">£{displayRevenue.toFixed(2)}</h3>
                     </div>
                 </div>
                 <div className="bg-[#111311] p-6 rounded-2xl border border-white/10 flex items-center gap-5 hover:border-accent/40 transition-colors">
@@ -284,7 +284,7 @@ export default function InventoryDashboard() {
                     </div>
                     <div>
                         <p className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] mb-1">Service Charge</p>
-                        <h3 className="text-3xl font-serif italic text-white font-bold tracking-tighter">Â£{displayServiceCharge.toFixed(2)}</h3>
+                        <h3 className="text-3xl font-serif italic text-white font-bold tracking-tighter">£{displayServiceCharge.toFixed(2)}</h3>
                     </div>
                 </div>
                 <div className="bg-[#111311] p-6 rounded-2xl border border-white/10 flex items-center gap-5 hover:border-accent/40 transition-colors">
@@ -313,7 +313,7 @@ export default function InventoryDashboard() {
                             <BarChart data={generatedChartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff" strokeOpacity={0.05} />
                                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#ffffff', opacity: 0.4 }} dy={10} />
-                                <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#ffffff', opacity: 0.4 }} tickFormatter={v => `Â£${v}`} />
+                                <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#ffffff', opacity: 0.4 }} tickFormatter={v => `£${v}`} />
                                 <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#ffffff', opacity: 0.4 }} />
                                 <Tooltip 
                                     cursor={{fill: '#ffffff', opacity: 0.05}} 
@@ -321,7 +321,7 @@ export default function InventoryDashboard() {
                                     itemStyle={{ color: '#FFD700' }}
                                 />
                                 <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px' }} />
-                                <Bar yAxisId="left" dataKey="revenue" name="Revenue (Â£)" fill="#0F3A2F" stroke="#10B981" strokeWidth={1} radius={[4, 4, 0, 0]} barSize={40} />
+                                <Bar yAxisId="left" dataKey="revenue" name="Revenue (£)" fill="#0F3A2F" stroke="#10B981" strokeWidth={1} radius={[4, 4, 0, 0]} barSize={40} />
                                 <Line yAxisId="right" type="monotone" dataKey="orders" name="Orders Count" stroke="#FFD700" strokeWidth={3} dot={{ r: 4, fill: '#0c0d0c', stroke: '#FFD700' }} activeDot={{ r: 6, fill: '#FFD700' }} />
                             </BarChart>
                         </ResponsiveContainer>
@@ -358,9 +358,9 @@ export default function InventoryDashboard() {
                                         <td className="px-6 py-4 text-white/40 text-[11px] uppercase tracking-wide">
                                             {order.items.map(i => `${i.qty}x ${i.name}`).join(', ')}
                                         </td>
-                                        <td className="px-6 py-4 text-white/60">Â£{order.subtotal.toFixed(2)}</td>
-                                        <td className="px-6 py-4 text-white/40">Â£{order.serviceCharge.toFixed(2)}</td>
-                                        <td className="px-6 py-4 font-bold text-accent glow-gold">Â£{order.finalTotal.toFixed(2)}</td>
+                                        <td className="px-6 py-4 text-white/60">£{order.subtotal.toFixed(2)}</td>
+                                        <td className="px-6 py-4 text-white/40">£{order.serviceCharge.toFixed(2)}</td>
+                                        <td className="px-6 py-4 font-bold text-accent glow-gold">£{order.finalTotal.toFixed(2)}</td>
                                         <td className="px-6 py-4 text-right text-white/40 text-[10px] font-black uppercase tracking-widest text-nowrap">
                                             {new Date(order.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                         </td>
@@ -428,7 +428,7 @@ export default function InventoryDashboard() {
                                                 {item.itemName}
                                             </td>
                                             <td className="px-6 py-3 text-center font-bold text-white/40">{item.quantitySold}</td>
-                                            <td className="px-6 py-3 text-right font-bold text-accent glow-gold">Â£{item.totalRevenue.toFixed(2)}</td>
+                                            <td className="px-6 py-3 text-right font-bold text-accent glow-gold">£{item.totalRevenue.toFixed(2)}</td>
                                         </tr>
                                     ))}
                                     {computedItemAnalytics.length === 0 && (
@@ -460,9 +460,9 @@ export default function InventoryDashboard() {
                     </div>
                     <div>
                         <p className="font-bold text-lg mb-2">Financials</p>
-                        <p className="flex justify-between w-48"><span>Gross Revenue:</span> <span>Â£{displayRevenue.toFixed(2)}</span></p>
-                        <p className="flex justify-between w-48 text-gray-600"><span>Subtotal:</span> <span>Â£{displaySubtotal.toFixed(2)}</span></p>
-                        <p className="flex justify-between w-48 text-gray-600"><span>Service Charge:</span> <span>Â£{displayServiceCharge.toFixed(2)}</span></p>
+                        <p className="flex justify-between w-48"><span>Gross Revenue:</span> <span>£{displayRevenue.toFixed(2)}</span></p>
+                        <p className="flex justify-between w-48 text-gray-600"><span>Subtotal:</span> <span>£{displaySubtotal.toFixed(2)}</span></p>
+                        <p className="flex justify-between w-48 text-gray-600"><span>Service Charge:</span> <span>£{displayServiceCharge.toFixed(2)}</span></p>
                     </div>
                 </div>
 
@@ -481,7 +481,7 @@ export default function InventoryDashboard() {
                                 <tr key={item.id} className="border-b border-gray-200">
                                     <td className="py-1">{item.itemName}</td>
                                     <td className="py-1">{item.quantitySold}</td>
-                                    <td className="py-1">Â£{item.totalRevenue.toFixed(2)}</td>
+                                    <td className="py-1">£{item.totalRevenue.toFixed(2)}</td>
                                 </tr>
                             ))}
                         </tbody>

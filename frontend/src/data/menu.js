@@ -1,4 +1,4 @@
-﻿export const categoriesData = [
+export const categoriesData = [
     { id: 100, name: "Chef's Specials", sub: 'Signature dishes from our master chef' },
     { id: 12, name: 'Nizami Mandi', sub: 'Aromatic rice with tender meat' },
     { id: 2, name: 'Non Veg Starters', sub: "Appetizers from the Nizam's table" },
@@ -133,8 +133,10 @@ export const menuData = [
     { id: 'ex10', name: 'MAYONNAISE', price: 2.49, category: "Extra's", spice: 0, veg: true },
 
     // Breads (Naan & Roti)
-    { id: 'br1', name: 'PLAIN NAAN / PLAIN ROTI', price: 1.99, category: 'Breads (Naan & Roti)', spice: 0, veg: true },
-    { id: 'br2', name: 'BUTTER NAAN / BUTTER ROTI', price: 2.49, category: 'Breads (Naan & Roti)', spice: 0, veg: true, image: '/butter-naan.webp' },
+    { id: 'br1', name: 'PLAIN NAAN', price: 1.99, category: 'Breads (Naan & Roti)', spice: 0, veg: true },
+    { id: 'br1-roti', name: 'PLAIN ROTI', price: 1.99, category: 'Breads (Naan & Roti)', spice: 0, veg: true },
+    { id: 'br2', name: 'BUTTER NAAN', price: 2.49, category: 'Breads (Naan & Roti)', spice: 0, veg: true, image: '/butter-naan.webp' },
+    { id: 'br2-roti', name: 'BUTTER ROTI', price: 2.49, category: 'Breads (Naan & Roti)', spice: 0, veg: true },
     { id: 'br3', name: 'GARLIC NAAN', price: 2.99, category: 'Breads (Naan & Roti)', spice: 0, veg: true },
     { id: 'br4', name: 'CHEESE NAAN', price: 2.99, category: 'Breads (Naan & Roti)', spice: 0, veg: true, image: '/cheese-naan.webp' },
     { id: 'br5', name: 'CHILLI CHEESE NAAN', price: 2.99, category: 'Breads (Naan & Roti)', spice: 1, veg: true },

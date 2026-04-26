@@ -110,7 +110,7 @@ const TableDetailsV2 = ({
                                                 <span className="w-10 h-10 bg-[#FFD700] text-[#0a261f] rounded-xl flex items-center justify-center font-black">x{item.qty}</span>
                                                 <span className="text-white font-serif font-black italic">{item.name}</span>
                                             </div>
-                                            <span className="text-white/40 text-xs tabular-nums">Â£{(item.price * item.qty).toFixed(2)}</span>
+                                            <span className="text-white/40 text-xs tabular-nums">£{(item.price * item.qty).toFixed(2)}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -126,7 +126,7 @@ const TableDetailsV2 = ({
                     <div className="space-y-3">
                         <div className="flex justify-between items-center">
                             <span className="text-[#86a69d] uppercase font-black tracking-widest text-[10px]">Subtotal</span>
-                            <span className="text-white font-serif font-black text-xl italic">Â£{subtotal.toFixed(2)}</span>
+                            <span className="text-white font-serif font-black text-xl italic">£{subtotal.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-4">
@@ -139,13 +139,13 @@ const TableDetailsV2 = ({
                                 </button>
                             </div>
                             <span className={`font-serif font-black text-xl italic transition-all ${serviceChargeEnabled ? 'text-[#FFD700]' : 'text-white/10 line-through'}`}>
-                                Â£{serviceCharge.toFixed(2)}
+                                £{serviceCharge.toFixed(2)}
                             </span>
                         </div>
                     </div>
                     <div className="text-right flex flex-col justify-end">
                         <p className="text-[#FFD700] text-[10px] font-black uppercase tracking-[0.4em] mb-2">Final Settlement Due</p>
-                        <span className="text-7xl font-serif font-black text-[#FFD700] italic leading-none">Â£{totalBill.toFixed(2)}</span>
+                        <span className="text-7xl font-serif font-black text-[#FFD700] italic leading-none">£{totalBill.toFixed(2)}</span>
                     </div>
                 </div>
 

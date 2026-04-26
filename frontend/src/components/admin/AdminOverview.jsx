@@ -154,15 +154,15 @@ export default function AdminOverview({ itemAnalytics = [], salesList = [], onDe
                 />
                 <MetricCard 
                     title="TOTAL REVENUE" 
-                    currency="Â£"
+                    currency="£"
                     value={Number(totalRevenue).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    subvalue={`Ticket: Â£${Number(avgTicket).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                    subvalue={`Ticket: £${Number(avgTicket).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                     subIcon={<TrendingUp className="w-4 h-4 text-accent" />}
                     golden
                 />
                 <MetricCard 
                     title="Service Fee" 
-                    currency="Â£"
+                    currency="£"
                     value={Number(serviceChargeCollected).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     subvalue="Net S.C."
                     subIcon={<FileText className="w-4 h-4 text-emerald-400" />}
@@ -229,7 +229,7 @@ export default function AdminOverview({ itemAnalytics = [], salesList = [], onDe
                                         {new Date(row.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                     </div>
                                     <div className="text-white/60 font-bold text-xs uppercase">{row.tableId}</div>
-                                    <div className="text-accent font-serif font-bold text-xl">Â£{Number(row.finalTotal).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                    <div className="text-accent font-serif font-bold text-xl">£{Number(row.finalTotal).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                     <div className="text-right flex items-center justify-end gap-3">
                                         <span className="text-[10px] font-bold tracking-widest uppercase text-emerald-400 border border-emerald-400/20 px-3 py-1 rounded bg-emerald-400/10">
                                             SETTLED
@@ -272,7 +272,7 @@ export default function AdminOverview({ itemAnalytics = [], salesList = [], onDe
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-accent font-serif font-bold text-xl">Â£{Number(item.totalRevenue).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                    <p className="text-accent font-serif font-bold text-xl">£{Number(item.totalRevenue).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                                 </div>
                             </div>
                         ))}

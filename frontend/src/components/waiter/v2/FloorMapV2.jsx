@@ -76,7 +76,7 @@ const FloorMapV2 = ({
                                         >
                                             <span className="text-4xl font-serif font-black italic">{t}</span>
                                             {tableTotal > 0 ? (
-                                                <span className="text-[10px] font-black text-white/90 mt-2 bg-black/40 px-3 py-1 rounded-xl">Â£{tableTotal.toFixed(2)}</span>
+                                                <span className="text-[10px] font-black text-white/90 mt-2 bg-black/40 px-3 py-1 rounded-xl">£{tableTotal.toFixed(2)}</span>
                                             ) : (
                                                 <span className="text-[9px] font-black uppercase opacity-40 mt-2 tracking-widest">{tables[t.toUpperCase()] || 'Free'}</span>
                                             )}

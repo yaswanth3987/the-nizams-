@@ -48,7 +48,7 @@ export default function AdminNewOrders({ orders, updateStatus, cancelOrder, onEd
                         <div className="mt-auto pt-6 border-t border-white/10 pl-4">
                             <div className="flex justify-between items-center mb-8">
                                 <span className="text-xs font-bold text-white/40 uppercase">Intake Total</span>
-                                <span className="text-2xl font-serif font-bold text-emerald-400">Â£{Number(order.finalTotal).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                <span className="text-2xl font-serif font-bold text-emerald-400">£{Number(order.finalTotal).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
 
                             <div className="flex gap-4">

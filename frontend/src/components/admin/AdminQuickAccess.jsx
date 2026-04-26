@@ -345,7 +345,7 @@ export default function AdminQuickAccess({
                                                     </div>
                                                     <span className="text-[15px] text-white/80 font-serif italic tracking-wide">{item.name}</span>
                                                 </div>
-                                                <span className="text-sm font-bold text-nizam-gold/40">Â£{(item.price * item.qty).toFixed(2)}</span>
+                                                <span className="text-sm font-bold text-nizam-gold/40">£{(item.price * item.qty).toFixed(2)}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -353,12 +353,12 @@ export default function AdminQuickAccess({
                                     <div className="pt-10 border-t border-white/10 space-y-4">
                                         <div className="flex justify-between text-[11px] font-black text-white/20 uppercase tracking-[0.2em]">
                                             <span>Subtotal</span>
-                                            <span>Â£{Number(session.subtotal).toFixed(2)}</span>
+                                            <span>£{Number(session.subtotal).toFixed(2)}</span>
                                         </div>
                                         <div className="flex justify-between items-baseline">
                                             <span className="text-[10px] font-black text-nizam-gold uppercase tracking-[0.5em] italic">Gross Total</span>
                                             <span className="text-5xl font-serif font-bold text-nizam-gold italic tracking-tighter">
-                                                Â£{Number(session.finalTotal).toFixed(2)}
+                                                £{Number(session.finalTotal).toFixed(2)}
                                             </span>
                                         </div>
                                     </div>

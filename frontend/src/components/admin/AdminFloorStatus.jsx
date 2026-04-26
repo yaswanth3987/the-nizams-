@@ -64,7 +64,7 @@ export default function AdminFloorStatus({ orders: sessions, updateStatus, API_U
                                     <div className="mt-auto border-t border-white/10 pt-6 mb-8">
                                         <div className="flex justify-between items-center">
                                             <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Live Total</span>
-                                            <span className="text-2xl font-serif font-bold text-accent glow-gold">Â£{Number(session.finalTotal).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                            <span className="text-2xl font-serif font-bold text-accent glow-gold">£{Number(session.finalTotal).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                         </div>
                                     </div>
 
@@ -120,7 +120,7 @@ export default function AdminFloorStatus({ orders: sessions, updateStatus, API_U
                         <div className="flex flex-col">
                             <span className="text-[10px] font-bold text-accent uppercase tracking-widest">Revenue</span>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-sm font-bold text-white/40">Â£</span>
+                                <span className="text-sm font-bold text-white/40">£</span>
                                 <span className="text-2xl font-serif text-white font-bold italic">142.85</span>
                             </div>
                         </div>

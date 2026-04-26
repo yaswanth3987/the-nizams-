@@ -609,7 +609,7 @@ export default function CustomerMenu() {
                     <div className="p-8">
                         <div className="flex justify-between items-start mb-2">
                             <h3 className="text-[#0B3A2E] text-2xl font-black font-serif uppercase tracking-tight">{previewItem.name}</h3>
-                            <span className="text-2xl font-black text-[#0B3A2E]">Â£{(previewItem.price || 0).toFixed(2)}</span>
+                            <span className="text-2xl font-black text-[#0B3A2E]">£{(previewItem.price || 0).toFixed(2)}</span>
                         </div>
                         {renderItemBadge(previewItem)}
                         <p className="text-[#6D5D4B] text-sm leading-relaxed mb-4 opacity-80 italic font-medium mt-2">"{previewItem.desc || previewItem.description}"</p>
@@ -779,7 +779,7 @@ export default function CustomerMenu() {
                                 <h4 className="text-[#0B3A2E] font-black text-[12px] uppercase tracking-tight leading-none mb-1.5 truncate">{item.name}</h4>
                                 {renderItemBadge(item)}
                                 <div className="flex justify-between items-center mt-auto pt-1">
-                                    <span className="text-[#C29958] text-xs font-black">Â£{(item.price || 0).toFixed(2)}</span>
+                                    <span className="text-[#C29958] text-xs font-black">£{(item.price || 0).toFixed(2)}</span>
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); handleAddToCart(item); }}
                                         className="w-8 h-8 bg-[#0B3A2E] text-white rounded-full flex items-center justify-center shadow-lg active:rotate-12 transition-all"
@@ -896,7 +896,7 @@ export default function CustomerMenu() {
                                                     <div>
                                                         <div className="flex justify-between items-start gap-2 mb-1">
                                                             <h4 className="font-extrabold text-[#0B3A2E] text-[14px] leading-tight flex-1">{item.name}</h4>
-                                                            <span className="font-black text-[#0B3A2E] text-sm">Â£{(item.price || 0).toFixed(2)}</span>
+                                                            <span className="font-black text-[#0B3A2E] text-sm">£{(item.price || 0).toFixed(2)}</span>
                                                         </div>
                                                         {renderItemBadge(item)}
                                                         {item.category === 'Mandi Platters' ? (
@@ -966,7 +966,7 @@ export default function CustomerMenu() {
                                 </div>
                                 <div className="text-left">
                                     <p className="text-white/50 text-[8px] font-black uppercase tracking-[0.2em] mb-0">{cart.reduce((s, i) => s + i.qty, 0)} Items in cart</p>
-                                    <p className="text-white text-lg font-black tabular-nums leading-tight">Â£{(cart.reduce((s, i) => s + (i.price || 0) * (i.qty || 0), 0) || 0).toFixed(2)}</p>
+                                    <p className="text-white text-lg font-black tabular-nums leading-tight">£{(cart.reduce((s, i) => s + (i.price || 0) * (i.qty || 0), 0) || 0).toFixed(2)}</p>
                                 </div>
                             </div>
                             <div className="bg-[#C29958] text-[#0B3A2E] px-5 py-2.5 rounded-[18px] font-black uppercase tracking-[0.1em] text-[10px] group-hover:bg-white transition-all shadow-lg">
@@ -1025,7 +1025,7 @@ export default function CustomerMenu() {
                                 <div className="flex-1 flex flex-col justify-center gap-1.5">
                                     <div className="flex justify-between items-start">
                                         <h4 className="font-black text-[#0B3A2E] text-base leading-tight pr-4">{item.name}</h4>
-                                        <span className="font-black text-[#0B3A2E] text-base whitespace-nowrap">Â£{((item.price || 0) * (item.qty || 0)).toFixed(2)}</span>
+                                        <span className="font-black text-[#0B3A2E] text-base whitespace-nowrap">£{((item.price || 0) * (item.qty || 0)).toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between items-center mt-3">
                                         <div className="flex items-center gap-4 bg-white rounded-[20px] p-2 shadow-inner border border-black/5">
@@ -1131,7 +1131,7 @@ export default function CustomerMenu() {
                                     <span className="text-[#0B3A2E] text-[10px] font-black uppercase tracking-[0.25em] block mb-1">Items Total</span>
                                     <span className="text-[#0B3A2E] text-[10px] font-medium opacity-60">Excluding service fee</span>
                                 </div>
-                                <span className="text-[#0B3A2E] text-4xl font-black font-serif tabular-nums">Â£{(finalTotal || 0).toFixed(2)}</span>
+                                <span className="text-[#0B3A2E] text-4xl font-black font-serif tabular-nums">£{(finalTotal || 0).toFixed(2)}</span>
                             </div>
                         </div>
                         <button 
@@ -1287,7 +1287,7 @@ export default function CustomerMenu() {
                                     <p className="text-[#6D5D4B] text-[10px] font-black opacity-40 uppercase tracking-widest">{new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long' })} â€¢ {(order.items && order.items.length) || 0} Items</p>
                                 </div>
                                 <div className="text-[#0B3A2E] font-black text-lg tabular-nums bg-[#F5E6CC]/20 px-4 py-2 rounded-2xl">
-                                    Â£{(order.total || 0).toFixed(2)}
+                                    £{(order.total || 0).toFixed(2)}
                                 </div>
                             </div>
                         ))}
@@ -1424,7 +1424,7 @@ export default function CustomerMenu() {
                                                         <p className="text-[#6D5D4B] text-[9px] font-black uppercase tracking-widest opacity-40">{item.category}</p>
                                                     </div>
                                                     <div className="flex items-center gap-3">
-                                                        <span className="text-sm font-black text-[#0B3A2E]">Â£{(item.price || 0).toFixed(2)}</span>
+                                                        <span className="text-sm font-black text-[#0B3A2E]">£{(item.price || 0).toFixed(2)}</span>
                                                         <button 
                                                             onClick={(e) => { e.stopPropagation(); handleAddToCart(item); }}
                                                             className="w-10 h-10 bg-[#0B3A2E] text-white rounded-xl flex items-center justify-center shadow-lg"
