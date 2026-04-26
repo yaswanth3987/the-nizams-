@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, ReceiptText, MapPin, Printer, RotateCcw, X, CreditCard, Banknote, SplitSquareHorizontal, CheckCircle, Copy, Calculator, ArrowLeft, Wallet, Search } from 'lucide-react';
+import { User, ReceiptText, MapPin, Printer, RotateCcw, X, CreditCard, Banknote, SplitSquareHorizontal, CheckCircle, Copy, Calculator, ArrowLeft, Wallet, Search, Trash2 } from 'lucide-react';
 
 export default function AdminBilledOrders({ orders: sessions, updateStatus, printReceipt }) {
     const [searchQuery, setSearchQuery] = useState('');
@@ -164,6 +164,24 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
                                         {session.customerName || (session.tableId === 'TAKEAWAY' ? 'Takeaway Guest' : 'Dine-in Guest')}
                                     </h3>
                                 </div>
+                                <button 
+                                     onClick={async () => {
+                                         const pw = prompt("Enter Master Password to delete this bill:");
+                                         if (pw === '1819219') {
+                                             if (window.confirm("Are you sure you want to PERMANENTLY delete this session?")) {
+                                                 try {
+                                                     for (const id of session.ids) {
+                                                         await fetch(`${import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api'}/orders/${id}`, { method: 'DELETE' });
+                                                     }
+                                                     window.location.reload(); 
+                                                 } catch (e) { alert("Delete failed"); }
+                                             }
+                                         } else { alert("Incorrect password"); }
+                                     }}
+                                     className="p-3 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl transition-all border border-red-500/20 group/del"
+                                 >
+                                     <Trash2 size={18} />
+                                 </button>
                             </div>
 
                             <div className="flex-1 space-y-3 overflow-y-auto mb-8">

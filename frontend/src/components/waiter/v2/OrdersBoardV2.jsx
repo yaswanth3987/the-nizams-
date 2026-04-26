@@ -11,7 +11,7 @@ const OrdersBoardV2 = ({
     onViewDetails 
 }) => {
     const [searchQuery, setSearchQuery] = React.useState('');
-    // Filter logic based on active tab
+    const getFilteredOrders = () => {
         const orders = (() => {
             if (activeTab === 'new_orders') {
                 return activeOrders.filter(o => o._source === 'new' && (o.status === 'new' || o.status === 'pending'));

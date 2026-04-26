@@ -1,7 +1,8 @@
-﻿import React from 'react';
-import { Hourglass, AlertTriangle, CheckCircle, X, Layers, BellRing } from 'lucide-react';
+import React from 'react';
+import { Hourglass, AlertTriangle, CheckCircle, X, Layers, BellRing, Search } from 'lucide-react';
 
 export default function AdminActiveRequests({ assistanceRequests = [], updateAssistance, deleteAssistance }) {
+    const [searchQuery, setSearchQuery] = React.useState('');
     // Process real requests
     const activeRequests = (assistanceRequests || []).map(r => {
         const isAttended = r.status === 'attended';
@@ -27,6 +28,11 @@ export default function AdminActiveRequests({ assistanceRequests = [], updateAss
             buttonLeft: isAttended ? 'Marked Attended' : 'Mark as Attended',
             buttonRight: 'Clear Request'
         };
+    }).filter(r => {
+        const q = searchQuery.toLowerCase();
+        return (r.table || '').toString().toLowerCase().includes(q) || 
+               (r.label || '').toLowerCase().includes(q) ||
+               (r.type || '').toLowerCase().includes(q);
     });
 
     const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -39,6 +45,16 @@ export default function AdminActiveRequests({ assistanceRequests = [], updateAss
                     <p className="text-white/60 max-w-lg text-sm leading-relaxed">
                         Instant concierge calls from table sessions requiring floor attention.
                     </p>
+                    <div className="mt-8 relative max-w-md">
+                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/30" size={18} />
+                        <input 
+                            type="text" 
+                            placeholder="Search Table or Type..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl pl-16 pr-6 py-4 text-sm text-white outline-none focus:border-accent/50 transition-all shadow-inner"
+                        />
+                    </div>
                 </div>
                 <div className="text-right">
                     <h2 className="text-4xl font-serif text-white/90 font-bold italic">

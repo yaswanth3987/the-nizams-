@@ -1,5 +1,5 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
-import { Layers, RotateCcw, AlertCircle, Sparkles, X } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Layers, RotateCcw, AlertCircle, Sparkles, X, Search } from 'lucide-react';
 
 export default function AdminTableOverview({ socket, API_URL }) {
     const tableCategories = [
@@ -20,6 +20,7 @@ export default function AdminTableOverview({ socket, API_URL }) {
         }))
     );
     const [resetModal, setResetModal] = useState({ isOpen: false, tableId: null });
+    const [searchQuery, setSearchQuery] = useState('');
 
     const fetchStatuses = useCallback(async () => {
         try {
@@ -137,6 +138,16 @@ export default function AdminTableOverview({ socket, API_URL }) {
                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                         Connected to Core
                     </div>
+                    <div className="mt-8 relative max-w-md ml-auto">
+                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/30" size={18} />
+                        <input 
+                            type="text" 
+                            placeholder="Search Unit ID..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl pl-16 pr-6 py-4 text-sm text-white outline-none focus:border-accent/50 transition-all shadow-inner"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -150,7 +161,7 @@ export default function AdminTableOverview({ socket, API_URL }) {
                         </div>
 
                         <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:${cat.gridCols} gap-8`}>
-                            {tableStatuses.filter(t => t.tableId.startsWith(cat.prefix)).map((table) => {
+                            {tableStatuses.filter(t => t.tableId.startsWith(cat.prefix) && (t.tableId.toLowerCase().includes(searchQuery.toLowerCase()))).map((table) => {
                                 const config = getStatusConfig(table.status);
 
                                 return (

@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { TrendingUp, Package, FileText, Filter, Printer, Trash2 } from 'lucide-react';
+import { TrendingUp, Package, FileText, Filter, Printer, Trash2, Search } from 'lucide-react';
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
 
 export default function AdminOverview({ itemAnalytics = [], salesList = [], onDeleteOrder }) {
+    const [searchQuery, setSearchQuery] = useState('');
     // --- Date Filtering State ---
     const [datePreset, setDatePreset] = useState('today'); // 'today', 'week', 'month', 'custom', 'all'
     const [now] = useState(() => Date.now());
@@ -212,7 +213,19 @@ export default function AdminOverview({ itemAnalytics = [], salesList = [], onDe
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                 <div className="lg:col-span-2">
-                    <h3 className="text-3xl font-serif text-white font-bold tracking-tight mb-8">Recent Historical Context</h3>
+                    <div className="flex justify-between items-end mb-8">
+                        <h3 className="text-3xl font-serif text-white font-bold tracking-tight">Recent Historical Context</h3>
+                        <div className="relative w-80">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={16} />
+                            <input 
+                                type="text" 
+                                placeholder="Search by ID or Table..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-2 text-sm text-white focus:outline-none focus:border-accent transition-all"
+                            />
+                        </div>
+                    </div>
                     <div className="bg-[#111311] border border-white/5 rounded-[2rem] overflow-hidden shadow-2xl">
                         <div className="grid grid-cols-5 text-xs font-bold uppercase tracking-widest text-white/20 border-b border-white/10 px-8 py-5 bg-white/5">
                             <div>Order ID</div>
@@ -222,7 +235,11 @@ export default function AdminOverview({ itemAnalytics = [], salesList = [], onDe
                             <div className="text-right">Action</div>
                         </div>
                         <div className="flex flex-col max-h-[500px] overflow-y-auto divide-y divide-white/10">
-                            {filteredSalesList.map((row, idx) => (
+                            {filteredSalesList.filter(row => {
+                                const q = searchQuery.toLowerCase();
+                                return (row.id || '').toString().toLowerCase().includes(q) || 
+                                       (row.tableId || '').toString().toLowerCase().includes(q);
+                            }).map((row, idx) => (
                                 <div key={row.id || idx} className="grid grid-cols-5 px-8 py-6 hover:bg-white/5 transition-colors items-center">
                                     <div className="font-serif text-white font-bold text-lg">#{row.id.toString().slice(-4)}</div>
                                     <div className="text-xs font-bold text-white/40">

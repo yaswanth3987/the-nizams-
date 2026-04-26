@@ -305,8 +305,13 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                                 </button>
                                 <button 
                                     onClick={() => {
-                                        deleteOrder?.(confirmDelete.id, confirmDelete.isRaw);
-                                        setConfirmDelete({ isOpen: false, id: null, isRaw: false, name: '' });
+                                        const pw = prompt("Enter Master Password to authorize deletion:");
+                                        if (pw === '1819219') {
+                                            deleteOrder?.(confirmDelete.id, confirmDelete.isRaw);
+                                            setConfirmDelete({ isOpen: false, id: null, isRaw: false, name: '' });
+                                        } else {
+                                            alert("Unauthorized: Incorrect Master Password");
+                                        }
                                     }}
                                     className="h-20 bg-gradient-to-r from-red-600 to-red-800 text-white py-4 rounded-[2rem] font-black uppercase tracking-[0.4em] text-[10px] shadow-[0_15px_30px_rgba(220,38,38,0.2)] hover:brightness-125 transition-all"
                                 >
