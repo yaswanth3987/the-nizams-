@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShoppingBag, Plus, Minus, Search, UtensilsCrossed, CheckCircle, Info, Printer, ArrowRight } from 'lucide-react';
 
 const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
@@ -13,6 +13,7 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [orderStatus, setOrderStatus] = useState(null);
     const [lastOrderId, setLastOrderId] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const getRemainingTime = (until) => {
         if (!until) return null;
@@ -180,27 +181,47 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
         );
     }
 
-    const filteredItems = menu.items.filter(item => item.category === activeCategory);
+    const filteredItems = menu.items.filter(item => {
+        const matchesCategory = activeCategory === 'All' || item.category === activeCategory;
+        const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                             item.category.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesCategory && matchesSearch;
+    });
+
+    const displayCategories = ['All', ...menu.categories];
 
     return (
         <div className="flex h-full gap-8 animate-in fade-in duration-700 pb-20 w-full pr-4">
             <div className="flex-1 flex flex-col bg-[#111311] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl relative">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-nizam-gold/5 blur-[100px] -mr-32 -mt-32 rounded-full pointer-events-none"></div>
                 
-                <div className="flex gap-4 overflow-x-auto p-8 border-b border-white/10 shrink-0">
-                    {menu.categories.map(cat => (
-                        <button
-                            key={cat}
-                            onClick={() => setActiveCategory(cat)}
-                            className={`whitespace-nowrap px-6 py-3 rounded-xl font-bold uppercase text-xs border-2 transition-all ${
-                                activeCategory === cat 
-                                    ? 'bg-accent/10 text-accent border-accent shadow-[0_0_20px_rgba(198,168,124,0.15)]' 
-                                    : 'bg-white/5 border-white/5 text-white/40 hover:text-white hover:bg-white/10'
-                            }`}
-                        >
-                            {cat}
-                        </button>
-                    ))}
+                <div className="flex items-center justify-between px-8 py-6 border-b border-white/5 bg-black/20 gap-8">
+                    <div className="flex gap-3 overflow-x-auto no-scrollbar py-2">
+                        {displayCategories.map(cat => (
+                            <button
+                                key={cat}
+                                onClick={() => setActiveCategory(cat)}
+                                className={`whitespace-nowrap px-6 py-3 rounded-xl font-bold uppercase text-xs border-2 transition-all ${
+                                    activeCategory === cat 
+                                        ? 'bg-accent/10 text-accent border-accent shadow-[0_0_20px_rgba(198,168,124,0.15)]' 
+                                        : 'bg-white/5 border-white/5 text-white/40 hover:text-white hover:bg-white/10'
+                                }`}
+                            >
+                                {cat}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="relative min-w-[300px]">
+                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-white/30" size={18} />
+                        <input 
+                            type="text" 
+                            placeholder="Search dishes..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl pl-14 pr-6 py-3 text-sm text-white outline-none focus:border-accent/50 transition-all"
+                        />
+                    </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-8 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6">

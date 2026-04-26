@@ -1,7 +1,8 @@
-﻿import React, { useState } from 'react';
-import { User, ReceiptText, MapPin, Printer, RotateCcw, X, CreditCard, Banknote, SplitSquareHorizontal, CheckCircle, Copy, Calculator, ArrowLeft, Wallet } from 'lucide-react';
+import React, { useState } from 'react';
+import { User, ReceiptText, MapPin, Printer, RotateCcw, X, CreditCard, Banknote, SplitSquareHorizontal, CheckCircle, Copy, Calculator, ArrowLeft, Wallet, Search } from 'lucide-react';
 
 export default function AdminBilledOrders({ orders: sessions, updateStatus, printReceipt }) {
+    const [searchQuery, setSearchQuery] = useState('');
     // Filter sessions that are 'billed' or 'billing_pending'
     const activeBilledSessions = (sessions || []).filter(s => 
         (s.status === 'billed' || s.status === 'billing_pending')
@@ -33,7 +34,12 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
         return acc;
     }, {});
 
-    const displaySessions = Object.values(groupedSessions);
+    const displaySessions = Object.values(groupedSessions).filter(s => {
+        const query = searchQuery.toLowerCase();
+        return (s.customerName || '').toLowerCase().includes(query) || 
+               (s.tableId || '').toString().toLowerCase().includes(query) ||
+               (s.id || '').toString().includes(query);
+    });
 
     const [paymentModal, setPaymentModal] = useState({
         isOpen: false,
@@ -128,6 +134,16 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
                 <p className="text-white/60 max-w-xl text-sm leading-relaxed">
                     Process final payments and close table sessions for {displaySessions.length} active bills.
                 </p>
+                <div className="mt-8 relative max-w-md">
+                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/30" size={18} />
+                    <input 
+                        type="text" 
+                        placeholder="Search Guest Name or Table..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl pl-16 pr-6 py-4 text-sm text-white outline-none focus:border-accent/50 transition-all shadow-inner"
+                    />
+                </div>
             </div>
 
             <div className="flex-1 px-10 overflow-y-auto no-scrollbar">

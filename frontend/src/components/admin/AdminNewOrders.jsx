@@ -1,9 +1,16 @@
-﻿import React from 'react';
-import { Check, X, Clock, Receipt, UtensilsCrossed, Utensils as UtensilsIcon, Edit3 } from 'lucide-react';
+import React from 'react';
+import { Check, X, Clock, Receipt, UtensilsCrossed, Utensils as UtensilsIcon, Edit3, Search } from 'lucide-react';
 
 export default function AdminNewOrders({ orders, updateStatus, cancelOrder, onEdit }) {
+    const [searchQuery, setSearchQuery] = React.useState('');
     // Filter only standard dine-in 'new' or 'pending' orders
-    const activeOrders = (orders || []).filter(o => (o.status === 'new' || o.status === 'pending') && o.orderType !== 'takeaway');
+    const activeOrders = (orders || []).filter(o => {
+        const matchesStatus = (o.status === 'new' || o.status === 'pending') && o.orderType !== 'takeaway';
+        const query = searchQuery.toLowerCase();
+        const matchesSearch = (o.tableId || '').toString().toLowerCase().includes(query) ||
+                             (o.id || '').toString().includes(query);
+        return matchesStatus && matchesSearch;
+    });
     
     return (
         <div className="space-y-8 animate-in fade-in duration-700 pb-24 font-sans">
@@ -13,6 +20,16 @@ export default function AdminNewOrders({ orders, updateStatus, cancelOrder, onEd
                     <p className="text-white/60 max-w-lg text-sm leading-relaxed font-sans">
                         Review and accept guest requests to initialize table sessions.
                     </p>
+                    <div className="mt-8 relative max-w-md">
+                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/30" size={18} />
+                        <input 
+                            type="text" 
+                            placeholder="Search Table or ID..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl pl-16 pr-6 py-4 text-sm text-white outline-none focus:border-accent/50 transition-all shadow-inner"
+                        />
+                    </div>
                 </div>
                 <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-6 py-3 rounded-xl text-accent">
                     <span className="w-2 h-2 bg-accent animate-pulse rounded-full"></span>

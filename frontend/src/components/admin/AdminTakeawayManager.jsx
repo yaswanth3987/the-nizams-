@@ -1,12 +1,21 @@
-﻿import React from 'react';
-import { Package, CheckCircle, Clock, ShoppingBag, ArrowRight, Printer, Check, CreditCard, XCircle, Utensils, Plus, Trash2 } from 'lucide-react';
+import React from 'react';
+import { Package, CheckCircle, Clock, ShoppingBag, ArrowRight, Printer, Check, CreditCard, XCircle, Utensils, Plus, Trash2, Search } from 'lucide-react';
 
 export default function AdminTakeawayManager({ sessions, newOrders, updateStatus, deleteOrder, onViewChange, onEdit }) {
     const [confirmDelete, setConfirmDelete] = React.useState({ isOpen: false, id: null, isRaw: false, name: '' });
+    const [searchQuery, setSearchQuery] = React.useState('');
 
     // Filter only takeaway sessions that aren't completed yet
-    const activeSessions = (sessions || []).filter(s => s.orderType === 'takeaway' && s.status !== 'completed');
-    const incomingTakeaways = (newOrders || []).filter(o => o.orderType === 'takeaway' && (o.status === 'new' || o.status === 'pending'));
+    const activeSessions = (sessions || []).filter(s => {
+        const matchesSearch = (s.customerName || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+                             (s.id || '').toString().includes(searchQuery);
+        return s.orderType === 'takeaway' && s.status !== 'completed' && matchesSearch;
+    });
+    const incomingTakeaways = (newOrders || []).filter(o => {
+        const matchesSearch = (o.customerName || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+                             (o.id || '').toString().includes(searchQuery);
+        return o.orderType === 'takeaway' && (o.status === 'new' || o.status === 'pending') && matchesSearch;
+    });
     
     // Grouping by status for management columns
     const incoming = incomingTakeaways;
@@ -21,6 +30,16 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                     <p className="text-white/60 max-w-lg text-sm leading-relaxed">
                         Track and manage active takeaway orders for pick-up.
                     </p>
+                    <div className="mt-6 relative max-w-md">
+                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-white/30" size={18} />
+                        <input 
+                            type="text" 
+                            placeholder="Search by Guest Name or Order ID..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl pl-14 pr-6 py-4 text-sm text-white outline-none focus:border-accent/50 transition-all shadow-inner"
+                        />
+                    </div>
                 </div>
                 <div className="flex items-center gap-6">
                     <button 

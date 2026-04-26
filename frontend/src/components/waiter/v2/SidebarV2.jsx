@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { 
     LayoutGrid, ShoppingBag, FileText, ListOrdered, 
     CheckCircle, CreditCard, UserPlus, Bell, Clock, 
@@ -16,15 +16,15 @@ const SidebarV2 = ({
     // 1. Memoize nav items to prevent scroll jumping on re-renders
     const navItems = React.useMemo(() => [
         { id: 'all-in-one', label: 'Quick Access', icon: LayoutGrid, count: 0 },
+        { id: 'takeaway', label: 'Takeaway', icon: ShoppingBag, count: badgeCounts.takeaway },
         { id: 'tables', label: 'Floor Map', icon: LayoutGrid, count: badgeCounts.tables },
         { id: 'assistance', label: 'Assistance Hub', icon: Bell, count: badgeCounts.alerts },
         { id: 'new_orders', label: 'New Requests', icon: FileText, count: badgeCounts.new_orders },
-        { id: 'takeaway', label: 'Takeaway', icon: ShoppingBag, count: badgeCounts.takeaway },
         { id: 'orders', label: 'Ready to Serve', icon: ListOrdered, count: badgeCounts.ready },
         { id: 'confirmed', label: 'In Progress', icon: CheckCircle, count: badgeCounts.confirmed },
         { id: 'billing', label: 'Billing', icon: CreditCard, count: badgeCounts.billing },
         { id: 'completed', label: 'History', icon: CheckSquare, count: badgeCounts.completed },
-        { id: 'scheduler', label: 'Scheduler', icon: Clock, count: 0 }
+        { id: 'scheduler', label: 'Clock', icon: Clock, count: 0 }
     ], [badgeCounts]);
 
     // 2. Filter pending alerts

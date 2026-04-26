@@ -1,6 +1,6 @@
-﻿import React from 'react';
+import React from 'react';
 import OrderCardV2 from './OrderCardV2';
-import { Sparkles, ShoppingBag, Utensils } from 'lucide-react';
+import { Sparkles, ShoppingBag, Utensils, Search } from 'lucide-react';
 
 const OrdersBoardV2 = ({ 
     activeOrders, 
@@ -10,27 +10,36 @@ const OrdersBoardV2 = ({
     onEdit, 
     onViewDetails 
 }) => {
+    const [searchQuery, setSearchQuery] = React.useState('');
     // Filter logic based on active tab
-    const getFilteredOrders = () => {
-        if (activeTab === 'new_orders') {
-            return activeOrders.filter(o => o._source === 'new' && (o.status === 'new' || o.status === 'pending'));
-        }
-        if (activeTab === 'orders') {
-            return activeOrders.filter(o => o.status === 'ready');
-        }
-        if (activeTab === 'confirmed') {
-            return activeOrders.filter(o => ['confirmed', 'active', 'ready', 'served'].includes(o.status) && o.orderType !== 'takeaway');
-        }
-        if (activeTab === 'billing') {
-            return activeOrders.filter(o => ['billed', 'billing_pending'].includes(o.status));
-        }
-        if (activeTab === 'takeaway') {
-            return activeOrders.filter(o => o.orderType === 'takeaway' && o.status !== 'completed');
-        }
-        if (activeTab === 'completed') {
-            return activeOrders.filter(o => o.status === 'completed' && o.orderType !== 'takeaway');
-        }
-        return activeOrders;
+        const orders = (() => {
+            if (activeTab === 'new_orders') {
+                return activeOrders.filter(o => o._source === 'new' && (o.status === 'new' || o.status === 'pending'));
+            }
+            if (activeTab === 'orders') {
+                return activeOrders.filter(o => o.status === 'ready');
+            }
+            if (activeTab === 'confirmed') {
+                return activeOrders.filter(o => ['confirmed', 'active', 'ready', 'served'].includes(o.status) && o.orderType !== 'takeaway');
+            }
+            if (activeTab === 'billing') {
+                return activeOrders.filter(o => ['billed', 'billing_pending'].includes(o.status));
+            }
+            if (activeTab === 'takeaway') {
+                return activeOrders.filter(o => o.orderType === 'takeaway' && o.status !== 'completed');
+            }
+            if (activeTab === 'completed') {
+                return activeOrders.filter(o => o.status === 'completed' && o.orderType !== 'takeaway');
+            }
+            return activeOrders;
+        })();
+
+        return orders.filter(o => {
+            const query = searchQuery.toLowerCase();
+            return (o.customerName || '').toLowerCase().includes(query) || 
+                   (o.tableId || '').toString().toLowerCase().includes(query) ||
+                   (o.id || '').toString().includes(query);
+        });
     };
 
     const filteredOrders = getFilteredOrders();
@@ -45,8 +54,19 @@ const OrdersBoardV2 = ({
                             {activeTab.replace('_', ' ')}
                         </h1>
                         <p className="text-[#86a69d] text-[10px] font-black uppercase tracking-[0.3em] mt-2">
-                            {filteredOrders.length} Active Records â€¢ Terminal Live
+                            {filteredOrders.length} Active Records • Terminal Live
                         </p>
+                    </div>
+
+                    <div className="relative min-w-[300px]">
+                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/30" size={18} />
+                        <input 
+                            type="text" 
+                            placeholder="Search orders..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-black/40 border border-white/10 rounded-[2rem] pl-16 pr-6 py-4 text-sm text-white focus:outline-none focus:border-[#FFD700] transition-colors"
+                        />
                     </div>
                 </div>
             </header>
