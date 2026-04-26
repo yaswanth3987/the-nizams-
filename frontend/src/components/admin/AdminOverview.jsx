@@ -1,10 +1,10 @@
-﻿import React, { useState, useMemo } from 'react';
-import { TrendingUp, Package, FileText, Filter, Printer } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { TrendingUp, Package, FileText, Filter, Printer, Trash2 } from 'lucide-react';
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
 
-export default function AdminOverview({ itemAnalytics = [], salesList = [] }) {
+export default function AdminOverview({ itemAnalytics = [], salesList = [], onDeleteOrder }) {
     // --- Date Filtering State ---
     const [datePreset, setDatePreset] = useState('today'); // 'today', 'week', 'month', 'custom', 'all'
     const [now] = useState(() => Date.now());
@@ -230,10 +230,26 @@ export default function AdminOverview({ itemAnalytics = [], salesList = [] }) {
                                     </div>
                                     <div className="text-white/60 font-bold text-xs uppercase">{row.tableId}</div>
                                     <div className="text-accent font-serif font-bold text-xl">Â£{Number(row.finalTotal).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                                    <div className="text-right">
+                                    <div className="text-right flex items-center justify-end gap-3">
                                         <span className="text-[10px] font-bold tracking-widest uppercase text-emerald-400 border border-emerald-400/20 px-3 py-1 rounded bg-emerald-400/10">
                                             SETTLED
                                         </span>
+                                        <button 
+                                            onClick={() => {
+                                                const pwd = window.prompt("ENTER MASTER PASSWORD TO DELETE ORDER:");
+                                                if (pwd === '1819219') {
+                                                    if (window.confirm("Are you sure you want to delete this settled order?")) {
+                                                        onDeleteOrder(row.id);
+                                                    }
+                                                } else if (pwd !== null) {
+                                                    alert("Invalid Password.");
+                                                }
+                                            }}
+                                            className="p-2 hover:bg-red-500/20 rounded-lg text-white/20 hover:text-red-500 transition-all"
+                                            title="Delete Entry"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
                                     </div>
                                 </div>
                             ))}

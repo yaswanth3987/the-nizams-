@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import AdminUnavailabilityScheduler from '../components/admin/AdminUnavailabilityScheduler';
 import { socket } from '../utils/socket';
 import Receipt from '../components/Receipt';
@@ -267,6 +267,7 @@ export default function AdminDashboard() {
             
             await fetchSessions();
             await fetchNewOrders();
+            await fetchDashboardData(); // Refresh inventory/analytics after deletion
         } catch (err) {
             console.error('Delete failed:', err);
         }
@@ -393,6 +394,7 @@ export default function AdminDashboard() {
                         analyticsDaily={analyticsDaily} 
                         itemAnalytics={itemAnalytics} 
                         salesList={salesList} 
+                        onDeleteOrder={deleteOrder}
                     />
                 )}
                 
