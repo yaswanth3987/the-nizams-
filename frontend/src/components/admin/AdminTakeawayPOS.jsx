@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { ShoppingBag, Plus, Minus, Search, UtensilsCrossed, CheckCircle, Info, Printer, ArrowRight } from 'lucide-react';
 
 const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
@@ -158,7 +158,7 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
                     <div class="dashed"></div>
                     <div class="total">
                         <span>TOTAL</span>
-                        <span>£ ${Number(finalTotal).toFixed(2)}</span>
+                        <span>Â£ ${Number(finalTotal).toFixed(2)}</span>
                     </div>
                     <div class="dashed"></div>
                     <div style="text-align: center; margin-top: 20px; font-size: 11px;">
@@ -228,7 +228,7 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
                                     {item.veg && <span className="inline-block mt-1 text-[10px] font-bold text-emerald-400 uppercase tracking-widest">VEG</span>}
                                 </div>
                                 <div className="flex justify-between items-end">
-                                    <span className="text-accent font-serif font-bold text-2xl">£{Number(item.price).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                    <span className="text-accent font-serif font-bold text-2xl">Â£{Number(item.price).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                     {!isLocked && (
                                         <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white group-hover:bg-accent group-hover:text-black transition-all">
                                             <Plus size={18} />
@@ -273,7 +273,7 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
                                 <div className="flex-1 min-w-0">
                                     <h4 className="text-white font-serif font-bold text-lg italic tracking-tight group-hover:text-accent transition-colors">{item.name}</h4>
                                     <div className="flex items-center gap-2 mt-1">
-                                        <span className="text-accent/40 font-serif font-bold text-xs uppercase">£</span>
+                                        <span className="text-accent/40 font-serif font-bold text-xs uppercase">Â£</span>
                                         <span className="text-accent/60 font-serif font-bold text-sm">{Number(item.price).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                     </div>
                                 </div>
@@ -298,7 +298,7 @@ export default function AdminTakeawayPOS({ initialOrder, onComplete }) {
                                 <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Total Payable</p>
                                 <span className="text-xs text-white/60 font-bold uppercase">{cart.reduce((s,i)=>s+i.qty,0)} Items</span>
                             </div>
-                            <span className="text-4xl font-serif font-bold text-accent">£{Number(finalTotal).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            <span className="text-4xl font-serif font-bold text-accent">Â£{Number(finalTotal).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </div>
                     </div>
 

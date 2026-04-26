@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Clock, CheckCircle, CreditCard, Trash2, Edit3, ArrowRight } from 'lucide-react';
 
 const OrderCardV2 = ({ 
@@ -44,7 +44,7 @@ const OrderCardV2 = ({
                         <p className="text-white/40 text-[8px] font-black uppercase tracking-[0.2em] mt-1.5">ID: {order.id}</p>
                     </div>
                     <div className="text-right shrink-0">
-                        <p className="text-white text-xl font-black tabular-nums">£{Number(order.finalTotal || 0).toFixed(2)}</p>
+                        <p className="text-white text-xl font-black tabular-nums">Â£{Number(order.finalTotal || 0).toFixed(2)}</p>
                         <p className="text-[#FFD700] text-[9px] font-black uppercase tracking-[0.2em] opacity-60">{order.orderType}</p>
                     </div>
                 </div>

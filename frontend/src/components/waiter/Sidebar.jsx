@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { LayoutGrid, ShoppingBag, FileText, ListOrdered, CheckCircle, CreditCard, UserPlus, Bell, Clock, Plus, User, SquareCheck as CheckSquare } from 'lucide-react';
 
 const Sidebar = ({ 

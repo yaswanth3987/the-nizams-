@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { Search, ArrowLeft, Utensils, Plus, Minus, Trash2, Send } from 'lucide-react';
 
 const OrderEntryV2 = ({ 
@@ -161,7 +161,7 @@ const OrderEntryV2 = ({
                             >
                                 <p className="text-[#86a69d] group-hover:text-[#0a261f]/60 text-[9px] font-black uppercase tracking-[0.2em] mb-2">{item.category}</p>
                                 <h3 className="text-white group-hover:text-[#0a261f] font-serif font-black italic text-xl leading-tight mb-4 flex-1">{item.name}</h3>
-                                <div className="text-[#FFD700] group-hover:text-[#0a261f] font-black text-2xl tabular-nums">£{(item.price || 0).toFixed(2)}</div>
+                                <div className="text-[#FFD700] group-hover:text-[#0a261f] font-black text-2xl tabular-nums">Â£{(item.price || 0).toFixed(2)}</div>
                             </button>
                         ))}
                     </div>
@@ -186,7 +186,7 @@ const OrderEntryV2 = ({
                             <div key={item.id} className="bg-white/5 border border-white/5 rounded-[2rem] p-5 flex items-center justify-between group">
                                 <div className="min-w-0 mr-4">
                                     <div className="text-white font-black text-sm truncate">{item.name}</div>
-                                    <div className="text-[#FFD700] font-black text-xs mt-1 tabular-nums">£{((item.price || 0) * (item.qty || 0)).toFixed(2)}</div>
+                                    <div className="text-[#FFD700] font-black text-xs mt-1 tabular-nums">Â£{((item.price || 0) * (item.qty || 0)).toFixed(2)}</div>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <div className="flex items-center gap-4 bg-black/40 rounded-2xl p-1 shrink-0 border border-white/5">
@@ -206,7 +206,7 @@ const OrderEntryV2 = ({
                 <div className="p-8 bg-black/60 border-t border-white/10">
                     <div className="flex justify-between items-center mb-8">
                         <span className="text-[#86a69d] text-[10px] font-black uppercase tracking-[0.3em]">Total Value</span>
-                        <span className="text-[#FFD700] text-4xl font-serif font-black italic">£{subtotal.toFixed(2)}</span>
+                        <span className="text-[#FFD700] text-4xl font-serif font-black italic">Â£{subtotal.toFixed(2)}</span>
                     </div>
                     <button 
                         onClick={() => onSubmit(cart, orderType, customerName, phone)} 

@@ -1,10 +1,10 @@
-const { Pool } = require('pg');
+﻿const { Pool } = require('pg');
 
 // Requirement 5: Debugging & Masking
 const dbUrl = process.env.DATABASE_URL;
 
 if (!dbUrl) {
-    console.error("❌ Error: DATABASE_URL not found in environment.");
+    console.error("âŒ Error: DATABASE_URL not found in environment.");
     process.exit(1);
 }
 
@@ -20,12 +20,12 @@ console.log("Requirement 6: Validating connection with 'SELECT 1'...");
 
 pool.query('SELECT NOW() as time, version() as version', (err, res) => {
     if (err) {
-        if (err.code === '28P01') console.error("❌ Auth Failed: Incorrect password.");
-        else if (err.code === 'ENETUNREACH') console.error("❌ Network Failed: Cannot reach host (ENETUNREACH). Use the IPv4 Pooler host.");
-        else console.error("❌ Connection Failed:", err.message);
+        if (err.code === '28P01') console.error("âŒ Auth Failed: Incorrect password.");
+        else if (err.code === 'ENETUNREACH') console.error("âŒ Network Failed: Cannot reach host (ENETUNREACH). Use the IPv4 Pooler host.");
+        else console.error("âŒ Connection Failed:", err.message);
         process.exit(1);
     } else {
-        console.log("✅ SUCCESS!");
+        console.log("âœ… SUCCESS!");
         console.log("Server Time:", res.rows[0].time);
         console.log("Postgres Version:", res.rows[0].version);
         console.log("\nYour connection is stable and authenticated.");

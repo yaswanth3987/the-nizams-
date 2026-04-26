@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { FileText, CheckCircle, PoundSterling, CheckSquare, Package, HelpCircle, CalendarDays, LogOut, Utensils, LayoutGrid, ShoppingBag, Columns, Activity, Clock } from 'lucide-react';
 
 export default function AdminSidebar({ activeView, onViewChange, counts = {} }) {

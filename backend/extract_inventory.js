@@ -1,4 +1,4 @@
-const sqlite3 = require('sqlite3').verbose();
+﻿const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('nizam.db');
 
 db.serialize(() => {
@@ -24,7 +24,7 @@ db.serialize(() => {
                 db.close();
             });
         } else {
-            console.log("\n❌ No inventory table found in local nizam.db.");
+            console.log("\nâŒ No inventory table found in local nizam.db.");
             db.close();
         }
     });

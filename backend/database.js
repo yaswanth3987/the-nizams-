@@ -1,4 +1,4 @@
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+﻿process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const { Pool } = require('pg');
 const path = require('path');
 const isPg = !!process.env.DATABASE_URL;
@@ -26,12 +26,12 @@ if (isPg) {
     
     // Immediate verification query (Requirement 6)
     pgPool.query('SELECT 1').then(() => {
-        console.log('✅ DATABASE CONNECTED: PostgreSQL cloud connection verified.');
+        console.log('âœ… DATABASE CONNECTED: PostgreSQL cloud connection verified.');
     }).catch(err => {
-        if (err.code === '28P01') console.error('❌ DATABASE AUTHENTICATION FAILED: Check your password in DATABASE_URL.');
-        else if (err.code === 'ETIMEDOUT' || err.code === 'ENETUNREACH') console.error('❌ DATABASE CONNECTION TIMEOUT/UNREACHABLE: Check network/port/IPv4.');
-        else if (err.message.includes('certificate')) console.error('❌ DATABASE SSL ERROR: Certificate validation failed.');
-        else console.error('❌ DATABASE ERROR:', err.message);
+        if (err.code === '28P01') console.error('âŒ DATABASE AUTHENTICATION FAILED: Check your password in DATABASE_URL.');
+        else if (err.code === 'ETIMEDOUT' || err.code === 'ENETUNREACH') console.error('âŒ DATABASE CONNECTION TIMEOUT/UNREACHABLE: Check network/port/IPv4.');
+        else if (err.message.includes('certificate')) console.error('âŒ DATABASE SSL ERROR: Certificate validation failed.');
+        else console.error('âŒ DATABASE ERROR:', err.message);
     });
     
     // Create new schemas
@@ -182,12 +182,12 @@ const runQuery = async (sql, params = []) => {
         }
     } catch (err) {
         // Detailed Error Reporting
-        if (err.code === '28P01') console.error('❌ DATABASE AUTHENTICATION FAILED: Check your password in DATABASE_URL.');
-        else if (err.code === 'ETIMEDOUT') console.error('❌ DATABASE CONNECTION TIMEOUT: Could not reach Supabase. Check your network/region.');
-        else if (err.code === 'SELF_SIGNED_CERT_IN_CHAIN') console.error('❌ DATABASE SSL ERROR: Certificate validation failed. Check rejectUnauthorized setting.');
-        else if (err.message.includes('Tenant or user not found')) console.error('❌ DATABASE TENANT ERROR: The project-id in your hostname might be wrong.');
+        if (err.code === '28P01') console.error('âŒ DATABASE AUTHENTICATION FAILED: Check your password in DATABASE_URL.');
+        else if (err.code === 'ETIMEDOUT') console.error('âŒ DATABASE CONNECTION TIMEOUT: Could not reach Supabase. Check your network/region.');
+        else if (err.code === 'SELF_SIGNED_CERT_IN_CHAIN') console.error('âŒ DATABASE SSL ERROR: Certificate validation failed. Check rejectUnauthorized setting.');
+        else if (err.message.includes('Tenant or user not found')) console.error('âŒ DATABASE TENANT ERROR: The project-id in your hostname might be wrong.');
         
-        console.error(`❌ DATABASE ERROR [${isPg ? 'PostgreSQL' : 'SQLite'}]:`, err.message);
+        console.error(`âŒ DATABASE ERROR [${isPg ? 'PostgreSQL' : 'SQLite'}]:`, err.message);
         console.error(`   Query: ${sql}`);
         throw err;
     }

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+﻿import React, { useState, useCallback, useEffect } from 'react';
 import { useWaiterData } from '../hooks/waiter/v2/useWaiterData';
 import { useSoundSystem } from '../hooks/useSoundSystem';
 import SidebarV2 from '../components/waiter/v2/SidebarV2';

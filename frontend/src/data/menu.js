@@ -1,4 +1,4 @@
-export const categoriesData = [
+﻿export const categoriesData = [
     { id: 100, name: "Chef's Specials", sub: 'Signature dishes from our master chef' },
     { id: 12, name: 'Nizami Mandi', sub: 'Aromatic rice with tender meat' },
     { id: 2, name: 'Non Veg Starters', sub: "Appetizers from the Nizam's table" },

@@ -1,10 +1,10 @@
-const { Client } = require('pg');
+﻿const { Client } = require('pg');
 const { menuData } = require('./menu_seed_data');
 
 const password = process.argv[2];
 
 if (!password) {
-    console.error('❌ Error: Please provide your database password.');
+    console.error('âŒ Error: Please provide your database password.');
     console.log('Usage: node restore_database.js "nizams@41@Highstreet"');
     process.exit(1);
 }
@@ -18,11 +18,11 @@ const client = new Client({
 
 async function setup() {
     try {
-        console.log('⏳ Connecting to Supabase...');
+        console.log('â³ Connecting to Supabase...');
         await client.connect();
-        console.log('✅ Connected!');
+        console.log('âœ… Connected!');
 
-        console.log('⏳ Creating tables...');
+        console.log('â³ Creating tables...');
         // Create Schemas
         await client.query(`CREATE TABLE IF NOT EXISTS menu_items (id SERIAL PRIMARY KEY, name TEXT NOT NULL, price REAL NOT NULL, category TEXT NOT NULL, image TEXT, description TEXT, "isAvailable" BOOLEAN DEFAULT true, "unavailableUntil" TIMESTAMP, "isPopular" BOOLEAN DEFAULT false, "isRecommended" BOOLEAN DEFAULT false, "isBestSeller" BOOLEAN DEFAULT false, "isNew" BOOLEAN DEFAULT false, "availableFrom" TEXT, "availableTo" TEXT, "platterItems" TEXT);`);
         await client.query(`CREATE TABLE IF NOT EXISTS table_sessions (id SERIAL PRIMARY KEY, "tableId" TEXT NOT NULL, items TEXT NOT NULL, "finalTotal" REAL NOT NULL, "subtotal" REAL DEFAULT 0, "serviceCharge" REAL DEFAULT 0, status TEXT DEFAULT 'active', "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "settled" BOOLEAN DEFAULT false, "paymentDetails" TEXT, "orderType" TEXT DEFAULT 'dine-in', "customerName" TEXT, "phone" TEXT, "sessionId" TEXT, "prepTime" INTEGER, "prepStartedAt" TIMESTAMP);`);
@@ -38,9 +38,9 @@ async function setup() {
         await client.query(`CREATE TABLE IF NOT EXISTS attendance (id SERIAL PRIMARY KEY, "employeeId" INTEGER NOT NULL, date DATE NOT NULL, "checkInTime" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, verified BOOLEAN DEFAULT false, UNIQUE(date, "employeeId"));`);
         await client.query(`CREATE TABLE IF NOT EXISTS unavailability_schedules (id SERIAL PRIMARY KEY, "itemIds" TEXT, category TEXT, type TEXT NOT NULL, "startDate" DATE, "startTime" TEXT NOT NULL, "endTime" TEXT NOT NULL, "daysOfWeek" TEXT, "isEnabled" BOOLEAN DEFAULT true, label TEXT, "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
         
-        console.log('✅ Tables created/verified.');
+        console.log('âœ… Tables created/verified.');
 
-        console.log(`⏳ Seeding menu with ${menuData.length} items...`);
+        console.log(`â³ Seeding menu with ${menuData.length} items...`);
         for (const item of menuData) {
             const check = await client.query('SELECT id FROM menu_items WHERE name = $1 AND category = $2', [item.name, item.category]);
             if (check.rows.length === 0) {
@@ -62,11 +62,11 @@ async function setup() {
                 );
             }
         }
-        console.log('✅ Menu seeding complete!');
-        console.log('\n🚀 ALL DONE! Your Supabase database is ready.');
+        console.log('âœ… Menu seeding complete!');
+        console.log('\nðŸš€ ALL DONE! Your Supabase database is ready.');
         
     } catch (err) {
-        console.error('❌ Error during setup:', err);
+        console.error('âŒ Error during setup:', err);
     } finally {
         await client.end();
     }

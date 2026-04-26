@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import OrderCardV2 from './OrderCardV2';
 import { Sparkles, ShoppingBag, Utensils } from 'lucide-react';
 
@@ -45,7 +45,7 @@ const OrdersBoardV2 = ({
                             {activeTab.replace('_', ' ')}
                         </h1>
                         <p className="text-[#86a69d] text-[10px] font-black uppercase tracking-[0.3em] mt-2">
-                            {filteredOrders.length} Active Records • Terminal Live
+                            {filteredOrders.length} Active Records â€¢ Terminal Live
                         </p>
                     </div>
                 </div>

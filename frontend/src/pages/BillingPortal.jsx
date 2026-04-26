@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { socket } from '../utils/socket';
 import { PoundSterling, CheckCircle, Search, User, FileText, Printer, CreditCard, ArrowLeft, X, Wallet, Calculator, AlertCircle } from 'lucide-react';
 
@@ -26,7 +26,7 @@ function PaymentModal({ session, onClose, onComplete }) {
 
     const handleSettle = () => {
         if (remaining > 0) {
-            setError(`Insufficient amount. Still need £${(remaining || 0).toFixed(2)}`);
+            setError(`Insufficient amount. Still need Â£${(remaining || 0).toFixed(2)}`);
             return;
         }
         onComplete(session.id, {
@@ -64,14 +64,14 @@ function PaymentModal({ session, onClose, onComplete }) {
                     <div className="flex items-center justify-between bg-[#F6EFE6] p-8 rounded-3xl border border-[#0B3A2E]/5">
                         <div className="text-right">
                             <p className="text-[10px] font-black text-[#86a69d] uppercase tracking-widest mb-1">Grand Total Due</p>
-                            <p className="text-5xl font-serif font-black text-[#0B3A2E]">£{(total || 0).toFixed(2)}</p>
+                            <p className="text-5xl font-serif font-black text-[#0B3A2E]">Â£{(total || 0).toFixed(2)}</p>
                         </div>
                         <Wallet className="w-12 h-12 text-[#C29958]" />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-3">
-                            <label className="text-[10px] font-black text-[#6D5D4B]/60 uppercase tracking-widest ml-2">Cash Received (£)</label>
+                            <label className="text-[10px] font-black text-[#6D5D4B]/60 uppercase tracking-widest ml-2">Cash Received (Â£)</label>
                             <div className="relative">
                                 <input 
                                     type="number" 
@@ -89,7 +89,7 @@ function PaymentModal({ session, onClose, onComplete }) {
                         </div>
                         <div className="space-y-3">
                             <div className="flex justify-between items-center ml-2">
-                                <label className="text-[10px] font-black text-[#6D5D4B]/60 uppercase tracking-widest">Card (£)</label>
+                                <label className="text-[10px] font-black text-[#6D5D4B]/60 uppercase tracking-widest">Card (Â£)</label>
                                 <button 
                                     onClick={() => handleQuickPay('card')}
                                     className="text-[9px] font-black text-[#C29958] uppercase tracking-widest hover:underline"
@@ -113,7 +113,7 @@ function PaymentModal({ session, onClose, onComplete }) {
                             </div>
                         </div>
                         <div className="space-y-3">
-                            <label className="text-[10px] font-black text-[#6D5D4B]/60 uppercase tracking-widest ml-2">Other/Custom (£)</label>
+                            <label className="text-[10px] font-black text-[#6D5D4B]/60 uppercase tracking-widest ml-2">Other/Custom (Â£)</label>
                             <div className="relative">
                                 <input 
                                     type="number" 
@@ -142,7 +142,7 @@ function PaymentModal({ session, onClose, onComplete }) {
                         <div>
                             <p className="text-[10px] font-black text-[#6D5D4B]/40 uppercase tracking-widest mb-1">Change Due</p>
                             <p className={`text-3xl font-serif font-black ${change > 0 ? 'text-emerald-600' : 'text-[#0B3A2E]/20'}`}>
-                                £{change.toFixed(2)}
+                                Â£{change.toFixed(2)}
                             </p>
                         </div>
                         <button 
@@ -267,7 +267,7 @@ export default function BillingPortal() {
                     </div>
                     <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem; border-top: 2px solid #000; padding-top: 10px;">
                         <span>TOTAL</span>
-                        <span>£ ${Number(session.finalTotal || 0).toFixed(2)}</span>
+                        <span>Â£ ${Number(session.finalTotal || 0).toFixed(2)}</span>
                     </div>
                     <div class="dashed"></div>
                     <div style="text-align: center; margin-top: 20px; font-size: 11px;">
@@ -374,7 +374,7 @@ export default function BillingPortal() {
                                     {session.items?.map((item, i) => (
                                         <div key={i} className="flex justify-between text-sm italic font-medium text-[#6D5D4B]">
                                             <span className="text-xs italic font-medium">{item.qty}x {item.name}</span>
-                                            <span className="font-bold">£{((item.price || 0) * (item.qty || 0)).toFixed(2)}</span>
+                                            <span className="font-bold">Â£{((item.price || 0) * (item.qty || 0)).toFixed(2)}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -382,7 +382,7 @@ export default function BillingPortal() {
                                 <div className="mt-auto border-t border-[#0B3A2E]/5 pt-6 mb-8">
                                     <div className="flex justify-between items-end">
                                         <span className="text-[10px] font-black text-[#86a69d] uppercase tracking-widest">Total Bill</span>
-                                        <span className="text-3xl font-serif font-black text-[#0B3A2E]">£{Number(session.finalTotal || 0).toFixed(2)}</span>
+                                        <span className="text-3xl font-serif font-black text-[#0B3A2E]">Â£{Number(session.finalTotal || 0).toFixed(2)}</span>
                                     </div>
                                 </div>
 

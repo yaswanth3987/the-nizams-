@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import AdminUnavailabilityScheduler from '../components/admin/AdminUnavailabilityScheduler';
 import { socket } from '../utils/socket';
 import Receipt from '../components/Receipt';
@@ -254,10 +254,10 @@ export default function AdminDashboard() {
     const deleteOrder = async (id, isRawOrder = false) => {
         try {
             if (isRawOrder) {
-                // Raw orders (new/pending) � delete from orders table
+                // Raw orders (new/pending) ï¿½ delete from orders table
                 await fetch(`${API_URL}/new-orders/${id}`, { method: 'DELETE' });
             } else {
-                // Active sessions (confirmed/ready/etc) � delete from sessions table
+                // Active sessions (confirmed/ready/etc) ï¿½ delete from sessions table
                 const r1 = await fetch(`${API_URL}/sessions/${id}`, { method: 'DELETE' });
                 if (!r1.ok) {
                     // Fallback: try orders table

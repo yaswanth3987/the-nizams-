@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Plus, Trash2, Check, X, AlertTriangle, ChevronDown, Utensils, LayoutGrid, Timer } from 'lucide-react';
 import { socket } from '../../utils/socket';
 

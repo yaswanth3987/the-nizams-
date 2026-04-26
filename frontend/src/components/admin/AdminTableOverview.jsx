@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { Layers, RotateCcw, AlertCircle, Sparkles, X } from 'lucide-react';
 
 export default function AdminTableOverview({ socket, API_URL }) {

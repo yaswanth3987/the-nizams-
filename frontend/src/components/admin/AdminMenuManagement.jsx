@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2, Edit2, Check, X, Utensils, IndianRupee, Search, Clock, AlertCircle, ChevronDown, ChevronRight } from 'lucide-react';
 import { socket } from '../../utils/socket';
 
@@ -251,7 +251,7 @@ export default function AdminMenuManagement() {
                             <thead className="text-[10px] uppercase font-bold text-white/20 border-b border-white/5 bg-black/20">
                                 <tr>
                                     <th className="px-8 py-5 tracking-[0.2em]">Item Asset</th>
-                                    <th className="px-8 py-5 tracking-[0.2em]">Metric (£)</th>
+                                    <th className="px-8 py-5 tracking-[0.2em]">Metric (Â£)</th>
                                     <th className="px-8 py-5 tracking-[0.2em]">Status Lock</th>
                                     <th className="px-8 py-5 tracking-[0.2em] text-right">Operations</th>
                                 </tr>
@@ -273,7 +273,7 @@ export default function AdminMenuManagement() {
                                                 </div>
                                             </td>
                                             <td className="px-8 py-7">
-                                                <span className="text-lg font-black text-accent glow-gold">£{Number(item.price).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                <span className="text-lg font-black text-accent glow-gold">Â£{Number(item.price).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                             </td>
                                             <td className="px-8 py-7">
                                                 {timeRem ? (
@@ -481,7 +481,7 @@ export default function AdminMenuManagement() {
                                 <div>
                                     <label className="block text-[10px] font-black text-white/20 uppercase tracking-[0.5em] mb-4">UNIT PRICE (GBP)</label>
                                     <div className="relative">
-                                        <span className="absolute left-6 top-1/2 -translate-y-1/2 text-accent/40 font-serif font-bold text-xl italic">£</span>
+                                        <span className="absolute left-6 top-1/2 -translate-y-1/2 text-accent/40 font-serif font-bold text-xl italic">Â£</span>
                                         <input 
                                             required 
                                             type="number" 

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Printer, RefreshCw, Archive, History } from 'lucide-react';
 
 export default function AdminCompletedView({ orders: sessions, printReceipt, clearTable }) {
@@ -35,7 +35,7 @@ export default function AdminCompletedView({ orders: sessions, printReceipt, cle
                         <div className="mb-6 space-y-1">
                              <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest">Final Value</p>
                              <h3 className="text-4xl font-serif font-bold text-accent italic">
-                                 £{Number(session.finalTotal).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                 Â£{Number(session.finalTotal).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                              </h3>
                         </div>
 

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Clock, Bell, Volume2, VolumeX } from 'lucide-react';
 import { useSound } from '../../hooks/useSound';
 

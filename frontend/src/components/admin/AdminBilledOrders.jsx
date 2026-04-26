@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { User, ReceiptText, MapPin, Printer, RotateCcw, X, CreditCard, Banknote, SplitSquareHorizontal, CheckCircle, Copy, Calculator, ArrowLeft, Wallet } from 'lucide-react';
 
 export default function AdminBilledOrders({ orders: sessions, updateStatus, printReceipt }) {
@@ -80,7 +80,7 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
             paymentData.cash = parseFloat(paymentModal.cashAmount) || 0;
             // Ensure split totals match the bill
             if (Math.abs((paymentData.card + paymentData.cash) - total) > 0.01) {
-                alert(`Split total (£${(paymentData.card + paymentData.cash).toFixed(2)}) must match the bill total (£${total.toFixed(2)})`);
+                alert(`Split total (Â£${(paymentData.card + paymentData.cash).toFixed(2)}) must match the bill total (Â£${total.toFixed(2)})`);
                 setPaymentModal(p => ({ ...p, status: 'idle' }));
                 return;
             }
@@ -162,7 +162,7 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
                             <div className="mt-auto border-t border-white/10 pt-6 mb-8">
                                 <div className="flex justify-between items-center">
                                     <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Final Total</span>
-                                    <span className="text-2xl font-serif font-bold text-accent">£{Number(session.finalTotal).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                    <span className="text-2xl font-serif font-bold text-accent">Â£{Number(session.finalTotal).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                 </div>
                             </div>
 
@@ -226,7 +226,7 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
                                     <div className="pt-8 border-t border-white/5 space-y-4">
                                         <div className="flex justify-between items-center text-xl">
                                             <span className="text-white/40 uppercase text-xs font-black tracking-widest">Ordered Items Total</span>
-                                            <span className="text-white font-bold font-serif">£{subtotal.toFixed(2)}</span>
+                                            <span className="text-white font-bold font-serif">Â£{subtotal.toFixed(2)}</span>
                                         </div>
                                         <div className="flex justify-between items-center text-xl">
                                             <div className="flex items-center gap-3">
@@ -239,14 +239,14 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
                                                 </button>
                                             </div>
                                             <span className={`font-bold font-serif ${paymentModal.serviceChargeEnabled ? 'text-white' : 'text-white/10 line-through'}`}>
-                                                £{(parseFloat(paymentModal.session.serviceCharge) || 0).toFixed(2)}
+                                                Â£{(parseFloat(paymentModal.session.serviceCharge) || 0).toFixed(2)}
                                             </span>
                                         </div>
                                         
                                         <div className="flex justify-between items-end bg-black/20 p-8 rounded-[2rem] border border-nizam-gold/20 shadow-2xl mt-8">
                                             <div>
                                                 <p className="text-[10px] font-black text-nizam-gold/60 tracking-[0.4em] uppercase mb-2">Grand Total (Items + Service Charge)</p>
-                                                <span className="text-xl font-serif font-bold text-nizam-gold mr-3">£</span>
+                                                <span className="text-xl font-serif font-bold text-nizam-gold mr-3">Â£</span>
                                                 <span className="text-6xl font-serif font-bold text-nizam-gold tracking-tight">{Number(total).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                             </div>
                                         </div>
@@ -303,7 +303,7 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
                                                     <div className="bg-black/40 rounded-2xl p-6 border border-white/5 shadow-inner">
                                                         <p className="text-[9px] font-black text-white/20 tracking-[0.4em] uppercase mb-4">AMOUNT RECEIVED</p>
                                                         <div className="flex items-center">
-                                                            <span className="text-2xl font-serif font-bold text-nizam-gold mr-4">£</span>
+                                                            <span className="text-2xl font-serif font-bold text-nizam-gold mr-4">Â£</span>
                                                             <input 
                                                                 type="number"
                                                                 autoFocus
@@ -316,7 +316,7 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
                                                     </div>
                                                     <div className="flex justify-between items-center px-6">
                                                         <span className="text-[9px] font-black text-white/20 tracking-[0.4em] uppercase">CHANGE DUE</span>
-                                                        <span className="text-2xl font-serif font-bold text-nizam-gold">£{changeDue.toFixed(2)}</span>
+                                                        <span className="text-2xl font-serif font-bold text-nizam-gold">Â£{changeDue.toFixed(2)}</span>
                                                     </div>
                                                     <button onClick={() => handleProcessPayment('cash')} disabled={!paymentModal.cashReceived || changeDue < 0} className="w-full py-4 rounded-xl bg-nizam-gold text-black font-black text-xs tracking-widest uppercase disabled:opacity-30">Confirm Cash Settlement</button>
                                                 </div>
@@ -350,14 +350,14 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
                                                         <div className="bg-black/40 rounded-2xl p-4 border border-white/5">
                                                             <p className="text-[8px] font-black text-white/20 tracking-[0.3em] uppercase mb-2">CARD PORTION</p>
                                                             <div className="flex items-center">
-                                                                <span className="text-lg font-serif font-bold text-nizam-gold mr-2">£</span>
+                                                                <span className="text-lg font-serif font-bold text-nizam-gold mr-2">Â£</span>
                                                                 <input type="number" value={paymentModal.cardAmount} onChange={e => setPaymentModal(p => ({ ...p, cardAmount: e.target.value }))} className="bg-transparent text-xl font-serif font-bold text-white outline-none w-full" />
                                                             </div>
                                                         </div>
                                                         <div className="bg-black/40 rounded-2xl p-4 border border-white/5">
                                                             <p className="text-[8px] font-black text-white/20 tracking-[0.3em] uppercase mb-2">CASH PORTION</p>
                                                             <div className="flex items-center">
-                                                                <span className="text-lg font-serif font-bold text-nizam-gold mr-2">£</span>
+                                                                <span className="text-lg font-serif font-bold text-nizam-gold mr-2">Â£</span>
                                                                 <input type="number" value={paymentModal.cashAmount} onChange={e => setPaymentModal(p => ({ ...p, cashAmount: e.target.value }))} className="bg-transparent text-xl font-serif font-bold text-white outline-none w-full" />
                                                             </div>
                                                         </div>

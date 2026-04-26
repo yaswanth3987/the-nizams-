@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Trash2, X } from 'lucide-react';
 
 const ConfirmDeleteModalV2 = ({ 
@@ -32,7 +32,7 @@ const ConfirmDeleteModalV2 = ({
                     <div className="bg-white/5 rounded-3xl p-6 mb-10 border border-white/5">
                         <p className="text-[#86a69d] text-[10px] font-black uppercase tracking-[0.2em] mb-2">Target Order</p>
                         <h4 className="text-[#FFD700] text-3xl font-serif font-black italic uppercase">Table {order.tableId}</h4>
-                        <p className="text-white/40 text-[11px] font-bold mt-2">ID: #{order.id} • {order.orderType}</p>
+                        <p className="text-white/40 text-[11px] font-bold mt-2">ID: #{order.id} â€¢ {order.orderType}</p>
                     </div>
 
                     <p className="text-[15px] text-white/40 leading-relaxed mb-12 italic">

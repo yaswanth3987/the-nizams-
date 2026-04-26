@@ -1,4 +1,4 @@
-import { io } from 'socket.io-client';
+﻿import { io } from 'socket.io-client';
 
 // Use same host but port 3001 for backend
 const SOCKET_URL = import.meta.env.DEV

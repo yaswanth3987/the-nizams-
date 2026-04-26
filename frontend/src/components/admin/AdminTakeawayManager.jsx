@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Package, CheckCircle, Clock, ShoppingBag, ArrowRight, Printer, Check, CreditCard, XCircle, Utensils, Plus, Trash2 } from 'lucide-react';
 
 export default function AdminTakeawayManager({ sessions, newOrders, updateStatus, deleteOrder, onViewChange, onEdit }) {
@@ -139,7 +139,7 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                                 <div className="mt-auto border-t border-white/10 pt-6 mb-6">
                                     <div className="flex justify-between items-center">
                                         <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Order Total</span>
-                                        <span className="text-2xl font-serif font-bold text-accent">£{Number(order.finalTotal).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        <span className="text-2xl font-serif font-bold text-accent">Â£{Number(order.finalTotal).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                     </div>
                                 </div>
 
@@ -212,7 +212,7 @@ export default function AdminTakeawayManager({ sessions, newOrders, updateStatus
                                 <div className="mt-auto border-t border-white/10 pt-6 mb-6">
                                     <div className="flex justify-between items-center">
                                         <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Settlement Due</span>
-                                        <span className="text-2xl font-serif font-bold text-accent">£{Number(order.finalTotal).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        <span className="text-2xl font-serif font-bold text-accent">Â£{Number(order.finalTotal).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                     </div>
                                 </div>
 

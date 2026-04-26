@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 const Receipt = React.forwardRef(({ order: session }, ref) => {
     if (!session) return null;
@@ -72,7 +72,7 @@ const Receipt = React.forwardRef(({ order: session }, ref) => {
 
             <div className="flex justify-between items-center font-black text-sm border-t-2 border-black pt-3 mt-3 w-full uppercase">
                 <span className="text-[14px]">Grand Total (Items + Service Charge)</span>
-                <span className="text-[18px]">£ {(session.finalTotal || 0).toFixed(2)}</span>
+                <span className="text-[18px]">Â£ {(session.finalTotal || 0).toFixed(2)}</span>
             </div>
 
             <div className="text-center mt-6 text-[11px] border-t-[1.5px] border-dashed border-black pt-3 pb-8">
