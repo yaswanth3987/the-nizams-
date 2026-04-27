@@ -14,7 +14,7 @@ const {
     getTableStatuses, updateTableStatus, allocateSession, getActiveSession, clearSession,
     getSessionsByTable, getOrdersByTable, updatePrepTime, updateOrderItems, resetAllSalesAndSessions,
     getUnavailabilitySchedules, createUnavailabilitySchedule, updateUnavailabilitySchedule, deleteUnavailabilitySchedule, processSchedulesTask,
-    getInventory, updateSessionServiceCharge, deleteSession, deleteItemSale
+    getInventory, updateSessionServiceCharge, deleteSession, deleteItemSale, transferTableSession
 } = require('./database');
 
 const app = express();
@@ -248,6 +248,33 @@ app.delete('/api/tables/:tableId/orders', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+app.post('/api/tables/:tableId/transfer', async (req, res) => {
+    try {
+        const oldTableId = req.params.tableId;
+        const { destinationTableId } = req.body;
+        
+        if (!destinationTableId) {
+            return res.status(400).json({ error: 'destinationTableId is required' });
+        }
+
+        const result = await transferTableSession(oldTableId, destinationTableId);
+        
+        // Notify clients about the table updates
+        io.emit('tableStatusUpdated', { tableId: oldTableId, status: 'free' });
+        io.emit('tableStatusUpdated', result.newStatus);
+        
+        // Emit a general event so clients can refresh their data
+        io.emit('tableTransferred', { oldTableId, newTableId: destinationTableId });
+        // Force refresh for other clients
+        io.emit('forceRefresh');
+
+        res.json({ success: true, newTableId: destinationTableId });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.get('/api/tables/:tableId/sessions', async (req, res) => {
     try {
         const statuses = ['confirmed', 'active', 'ready', 'served', 'billed', 'completed'];

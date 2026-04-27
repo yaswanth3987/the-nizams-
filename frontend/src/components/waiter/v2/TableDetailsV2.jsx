@@ -1,5 +1,5 @@
-﻿import React from 'react';
-import { ArrowLeft, Plus, Bell, Check, Trash2, CreditCard, Utensils } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowLeft, Plus, Bell, Check, Trash2, CreditCard, Utensils, ArrowRightLeft, X } from 'lucide-react';
 
 const TableDetailsV2 = ({ 
     selectedTable, 
@@ -7,18 +7,31 @@ const TableDetailsV2 = ({
     tableAssistance, 
     serviceChargeEnabled, 
     setServiceChargeEnabled, 
+    tables,
     onBack, 
     onNewOrder, 
     onStatusUpdate, 
     onEditOrder, 
     onClearAssistance, 
     onSettle, 
-    onResetTable 
+    onResetTable,
+    onTransferTable
 }) => {
+    const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+    
     const subtotal = tableOrders.reduce((sum, order) => sum + (order.subtotal || order.finalTotal || 0), 0);
     const firstOrder = tableOrders[0] || {};
     const serviceCharge = serviceChargeEnabled ? (parseFloat(firstOrder.serviceCharge) || (subtotal * 0.1)) : 0;
     const totalBill = subtotal + serviceCharge;
+
+    const allTableIds = [
+        ...Array.from({length: 4}, (_, i) => `T${String(i+1).padStart(2, '0')}`),
+        ...Array.from({length: 6}, (_, i) => `B${String(i+1).padStart(2, '0')}`),
+        ...Array.from({length: 13}, (_, i) => `C${String(i+1).padStart(2, '0')}`)
+    ];
+    
+    // Available tables are those not in 'tables' state, or having 'free' status
+    const availableTables = allTableIds.filter(t => t !== selectedTable && (!tables || !tables[t] || tables[t].toLowerCase() === 'free'));
 
     return (
         <div className="flex-1 flex flex-col h-full overflow-hidden bg-black/10">
@@ -33,10 +46,58 @@ const TableDetailsV2 = ({
                         <p className="text-[#86a69d] text-[10px] font-black uppercase tracking-[0.4em] mt-2">Active Management Console</p>
                     </div>
                 </div>
-                <button onClick={onNewOrder} className="bg-[#FFD700] text-[#0a261f] px-10 py-5 rounded-[2rem] font-black uppercase text-xs tracking-widest flex items-center gap-3 active:scale-95 transition-all shadow-2xl shadow-[#FFD700]/20">
-                    <Plus size={20} strokeWidth={4} /> New Order
-                </button>
+                <div className="flex gap-4">
+                    <button onClick={() => setIsTransferModalOpen(true)} className="bg-white/10 text-white px-8 py-5 rounded-[2rem] font-black uppercase text-xs tracking-widest flex items-center gap-3 hover:bg-white/20 active:scale-95 transition-all border border-white/10">
+                        <ArrowRightLeft size={20} /> Transfer Table
+                    </button>
+                    <button onClick={onNewOrder} className="bg-[#FFD700] text-[#0a261f] px-10 py-5 rounded-[2rem] font-black uppercase text-xs tracking-widest flex items-center gap-3 active:scale-95 transition-all shadow-2xl shadow-[#FFD700]/20">
+                        <Plus size={20} strokeWidth={4} /> New Order
+                    </button>
+                </div>
             </header>
+
+            {/* Transfer Modal */}
+            {isTransferModalOpen && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#0a261f] border border-white/10 rounded-[3rem] p-8 max-w-4xl w-full max-h-[80vh] flex flex-col shadow-2xl">
+                        <div className="flex justify-between items-center mb-8 shrink-0">
+                            <div>
+                                <h2 className="text-4xl font-serif font-black text-[#FFD700] italic">Transfer Session</h2>
+                                <p className="text-[#86a69d] text-xs font-black uppercase tracking-[0.2em] mt-2">Moving from {selectedTable}</p>
+                            </div>
+                            <button onClick={() => setIsTransferModalOpen(false)} className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center text-white hover:bg-white/10 transition-all">
+                                <X size={24} />
+                            </button>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto min-h-0 pr-4">
+                            {availableTables.length === 0 ? (
+                                <div className="text-center py-20">
+                                    <p className="text-white/40 font-black uppercase tracking-[0.2em]">No available tables</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                                    {availableTables.map(t => (
+                                        <button 
+                                            key={t}
+                                            onClick={() => {
+                                                if(confirm(`Transfer entire session from ${selectedTable} to ${t}?`)) {
+                                                    onTransferTable(t);
+                                                    setIsTransferModalOpen(false);
+                                                }
+                                            }}
+                                            className="aspect-square rounded-2xl bg-white/5 hover:bg-[#FFD700]/20 hover:border-[#FFD700]/40 hover:text-[#FFD700] border border-white/10 flex flex-col items-center justify-center transition-all group"
+                                        >
+                                            <span className="text-3xl font-serif font-black italic text-white group-hover:text-[#FFD700]">{t}</span>
+                                            <span className="text-[9px] uppercase tracking-widest text-[#86a69d] mt-2 group-hover:text-[#FFD700]/70">Available</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto overscroll-contain p-8 space-y-8 no-scrollbar pb-32">

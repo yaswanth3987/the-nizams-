@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { socket } from '../../../utils/socket';
 
 const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
@@ -69,6 +69,7 @@ export const useWaiterData = () => {
         socket.on('orderUpdated', refresh);
         socket.on('sessionUpdated', refresh);
         socket.on('tableReset', refresh);
+        socket.on('tableTransferred', refresh);
         socket.on('assistanceRequested', refresh);
         socket.on('assistanceUpdated', refresh);
         socket.on('orderDeleted', handleDelete);
@@ -80,6 +81,7 @@ export const useWaiterData = () => {
             socket.off('orderUpdated', refresh);
             socket.off('sessionUpdated', refresh);
             socket.off('tableReset', refresh);
+            socket.off('tableTransferred', refresh);
             socket.off('assistanceRequested', refresh);
             socket.off('assistanceUpdated', refresh);
             socket.off('orderDeleted', handleDelete);
@@ -159,6 +161,23 @@ export const useWaiterData = () => {
         completed: activeOrders.filter(o => o.status === 'completed' && o.orderType !== 'takeaway').length
     }), [activeOrders, assistanceRequests]);
 
+    const transferTable = async (oldTableId, newTableId) => {
+        try {
+            const res = await fetch(`${API_URL}/tables/${oldTableId}/transfer`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ destinationTableId: newTableId })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to transfer table');
+            // Optimistic update isn't strictly necessary since socket 'tableTransferred' will trigger refresh
+            return true;
+        } catch (err) {
+            console.error('Transfer failed:', err);
+            throw err;
+        }
+    };
+
     return {
         tables,
         activeOrders,
@@ -172,6 +191,7 @@ export const useWaiterData = () => {
         updateAssistance,
         deleteAssistance,
         clearAssistance,
+        transferTable,
         refreshData: fetchData
     };
 };

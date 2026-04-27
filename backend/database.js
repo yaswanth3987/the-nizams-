@@ -995,9 +995,48 @@ const getInventory = async () => {
     const res = await runQuery('SELECT * FROM inventory ORDER BY name ASC');
     return res.rows;
 };
+const transferTableSession = async (oldTableId, newTableId) => {
+    const oldStr = oldTableId.toString();
+    const newStr = newTableId.toString();
+
+    // 1. Check if destination table is occupied
+    const activeDest = await getActiveSession(newStr);
+    if (activeDest) {
+        throw new Error(`Destination table ${newStr} is already occupied.`);
+    }
+
+    const colTableId = isPg ? '"tableId"' : 'tableId';
+    const colSeatingId = isPg ? '"seating_id"' : 'seating_id';
+
+    // Get old table status before transferring
+    const oldStatusRes = await runQuery(`SELECT status FROM table_status WHERE ${colTableId} = ?`, [oldStr]);
+    const oldStatus = (oldStatusRes.rows[0] && oldStatusRes.rows[0].status) ? oldStatusRes.rows[0].status : 'occupied';
+
+    // 2. Move orders
+    await runQuery(`UPDATE orders SET ${colTableId} = ? WHERE ${colTableId} = ? AND status NOT IN ('completed', 'billed', 'archived')`, [newStr, oldStr]);
+
+    // 3. Move table sessions
+    await runQuery(`UPDATE table_sessions SET ${colTableId} = ? WHERE ${colTableId} = ? AND status NOT IN ('completed', 'billed', 'archived')`, [newStr, oldStr]);
+
+    // 4. Move qr_sessions
+    await runQuery(`UPDATE qr_sessions SET ${colSeatingId} = ? WHERE ${colSeatingId} = ? AND status = 'ACTIVE'`, [newStr, oldStr]);
+
+    // 5. Move legacy active_sessions
+    await runQuery(`UPDATE active_sessions SET ${colTableId} = ? WHERE ${colTableId} = ?`, [newStr, oldStr]);
+
+    // 6. Move assistance requests
+    await runQuery(`UPDATE assistance_requests SET ${colTableId} = ? WHERE ${colTableId} = ? AND status != 'resolved'`, [newStr, oldStr]);
+
+    // 7. Update table statuses
+    await updateTableStatus(oldStr, 'free');
+    const newStatusData = await updateTableStatus(newStr, oldStatus === 'free' ? 'occupied' : oldStatus);
+    
+    return { success: true, newStatus: newStatusData };
+};
 
 module.exports = {
     db, pgPool, runQuery, isPg, getOrdersByStatus, createOrder, addOrderToSession, updateOrderStatus,
+    transferTableSession,
     deleteOrder, deleteNewOrder, deleteSession, deleteItemSale, clearTableOrders, getAnalyticsDaily, getItemAnalytics, resetAllSalesAndSessions,
     getAssistanceRequests, createAssistanceRequest, updateAssistanceStatus, deleteAssistanceRequest,
     getEmployees, createEmployee, updateEmployee, deleteEmployee, markAttendance, getAttendanceToday,

@@ -21,7 +21,7 @@ const WaitersPortalV2 = () => {
     const { 
         tables, activeOrders, assistanceRequests, menu,
         isLoading, error, badgeCounts,
-        deleteOrder, updateOrderStatus, updateAssistance, deleteAssistance, clearAssistance, refreshData
+        deleteOrder, updateOrderStatus, updateAssistance, deleteAssistance, clearAssistance, transferTable, refreshData
     } = useWaiterData();
 
     const { playSound } = useSoundSystem(assistanceRequests.some(r => r.status === 'pending'));
@@ -243,6 +243,7 @@ const WaitersPortalV2 = () => {
                         tableOrders={activeOrders.filter(o => o.tableId === selectedTable && o.status !== 'completed' && o.status !== 'rejected')}
                         tableAssistance={assistanceRequests.find(r => r.tableId === selectedTable)}
                         serviceChargeEnabled={serviceChargeEnabled} setServiceChargeEnabled={setServiceChargeEnabled}
+                        tables={tables}
                         onBack={() => setView('dashboard')}
                         onNewOrder={() => { setCart([]); setEditingOrder(null); setView('order_entry'); }}
                         onStatusUpdate={updateOrderStatus}
@@ -250,6 +251,15 @@ const WaitersPortalV2 = () => {
                         onClearAssistance={clearAssistance}
                         onSettle={handleSettle}
                         onResetTable={handleResetTable}
+                        onTransferTable={async (newTableId) => {
+                            try {
+                                await transferTable(selectedTable, newTableId);
+                                showToast(`Transferred to Table ${newTableId}`, 'success');
+                                setSelectedTable(newTableId);
+                            } catch (err) {
+                                showToast(err.message || 'Transfer failed', 'error');
+                            }
+                        }}
                     />
                 )}
 
