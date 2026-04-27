@@ -74,6 +74,7 @@ export default function CustomerMenu() {
     const [isMenuLoading, setIsMenuLoading] = useState(true);
     const [menuError, setMenuError] = useState(null);
     const [expandedPlatters, setExpandedPlatters] = useState({}); // { id: boolean }
+    const [transferNotification, setTransferNotification] = useState(null); // 'T04'
 
     const [now, setNow] = useState(() => Date.now());
 
@@ -263,9 +264,33 @@ export default function CustomerMenu() {
             setMenu(fullMenu);
         });
 
+        const handleTableTransfer = (data) => {
+            // Note: because this is inside a useEffect without dependencies on selectedTable,
+            // we should use a functional state update or just check the URL param if closure is stale.
+            // But actually, we can add selectedTable to the dependency array or check searchParams.
+            const currentTable = new URLSearchParams(window.location.search).get('table');
+            if (currentTable && currentTable.toUpperCase() === data.oldTableId.toUpperCase()) {
+                const oldSession = localStorage.getItem(`session_${data.oldTableId}`);
+                if (oldSession) {
+                    localStorage.setItem(`session_${data.newTableId}`, oldSession);
+                    localStorage.removeItem(`session_${data.oldTableId}`);
+                }
+                
+                // Immediately update table
+                handleTableSelect(data.newTableId);
+                
+                // Show notification popup
+                setTransferNotification(data.newTableId);
+                setTimeout(() => setTransferNotification(null), 6000);
+            }
+        };
+
+        socket.on('tableTransferred', handleTableTransfer);
+
         return () => {
             socket.off('menuUpdated');
             socket.off('menuReset');
+            socket.off('tableTransferred', handleTableTransfer);
         };
     }, [fetchRemoteMenu]);
 
@@ -468,6 +493,15 @@ export default function CustomerMenu() {
 
     const renderHeader = () => (
         <header className="sticky top-0 z-50 bg-[#F6EFE6]/80 backdrop-blur-md px-6 py-4 flex justify-between items-center border-b border-[#0B3A2E]/5 shadow-sm">
+            {transferNotification && (
+                <div className="absolute top-full left-4 right-4 mt-2 bg-emerald-600 text-white p-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 z-50 border border-emerald-400">
+                    <CheckCircle size={20} className="shrink-0" />
+                    <div>
+                        <p className="text-[11px] font-black uppercase tracking-widest leading-tight">Table Transferred</p>
+                        <p className="text-[10px] opacity-90 mt-0.5">You have been moved to {transferNotification}. Your session continues normally.</p>
+                    </div>
+                </div>
+            )}
             <div className="flex items-center gap-3">
                 <img src="/logo-icon.png" alt="The Nizam's" className="h-10 w-10 object-contain drop-shadow-sm brightness-90" />
                 <div className="h-8 w-px bg-[#0B3A2E]/10 mx-1"></div>
