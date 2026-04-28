@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { socket } from '../utils/socket';
 import { PoundSterling, CheckCircle, Search, User, FileText, Printer, CreditCard, ArrowLeft, X, Wallet, Calculator, AlertCircle } from 'lucide-react';
 
@@ -373,7 +373,9 @@ export default function BillingPortal() {
                                 <div className="flex-1 space-y-3 mb-8">
                                     {session.items?.map((item, i) => (
                                         <div key={i} className="flex justify-between text-sm italic font-medium text-[#6D5D4B]">
-                                            <span className="text-xs italic font-medium">{item.qty}x {item.name}</span>
+                                            <span className="text-xs italic font-medium">
+                                                {item.qty}x {item.name} <span className="text-[10px] text-[#86a69d] ml-1">(@ £{Number(item.price || 0).toFixed(2)})</span>
+                                            </span>
                                             <span className="font-bold">£{((item.price || 0) * (item.qty || 0)).toFixed(2)}</span>
                                         </div>
                                     ))}
