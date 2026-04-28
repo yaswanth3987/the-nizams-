@@ -184,11 +184,23 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
                                  </button>
                             </div>
 
-                            <div className="flex-1 space-y-3 overflow-y-auto mb-8">
+                            <div className="flex-1 overflow-y-auto mb-8 pr-2">
                                 {(session.items || []).map((item, i) => (
-                                    <div key={i} className="flex justify-between items-center text-sm">
-                                        <span className="text-white/80 font-serif italic">{item.name}</span>
-                                        <span className="text-accent font-bold">x{item.qty}</span>
+                                    <div key={i} className="flex justify-between items-start text-sm mb-3">
+                                        <div className="flex flex-col">
+                                            <span className="text-white/80 font-serif italic">{item.name}</span>
+                                            {item.qty > 1 && (
+                                                <span className="text-white/40 text-[10px] tracking-widest mt-0.5">
+                                                    @ £{Number(item.price || 0).toFixed(2)} EACH
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <span className="text-accent font-bold text-xs">x{item.qty}</span>
+                                            <span className="text-white font-bold text-sm w-16 text-right">
+                                                £{((item.price || 0) * (item.qty || 0)).toFixed(2)}
+                                            </span>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -247,11 +259,23 @@ export default function AdminBilledOrders({ orders: sessions, updateStatus, prin
 
                                     <div className="pt-8 border-t border-white/5">
                                         <p className="text-[10px] font-black text-white/20 tracking-[0.4em] uppercase mb-6">ITEMIZED CONSUMPTION</p>
-                                        <div className="space-y-4 max-h-[200px] overflow-y-auto pr-4">
+                                        <div className="max-h-[200px] overflow-y-auto pr-4">
                                             {(paymentModal.session.items || []).map((item, idx) => (
-                                                <div key={idx} className="flex justify-between items-center text-lg">
-                                                    <span className="text-white/60 font-serif italic">{item.name}</span>
-                                                    <span className="text-white font-bold">x{item.qty}</span>
+                                                <div key={idx} className="flex justify-between items-start text-lg mb-4">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-white/60 font-serif italic">{item.name}</span>
+                                                        {item.qty > 1 && (
+                                                            <span className="text-white/30 text-[10px] tracking-widest mt-1">
+                                                                @ £{Number(item.price || 0).toFixed(2)} EACH
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center gap-6">
+                                                        <span className="text-accent font-bold text-sm">x{item.qty}</span>
+                                                        <span className="text-white font-bold text-lg w-20 text-right">
+                                                            £{((item.price || 0) * (item.qty || 0)).toFixed(2)}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
