@@ -56,7 +56,7 @@ export default function CustomerMenu() {
     const tableParam = searchParams.get('table');
     const [selectedTable, setSelectedTable] = useState(tableParam || null);
 
-    const [menu, setMenu] = useState(menuData);
+    const [menu, setMenu] = useState([]);
     const [cart, setCart] = useState([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [orderStatus, setOrderStatus] = useState(null);

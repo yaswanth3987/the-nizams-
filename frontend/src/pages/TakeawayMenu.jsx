@@ -12,7 +12,7 @@ export default function TakeawayMenu() {
     const navigate = useNavigate();
     const name = localStorage.getItem('takeaway_name') || '';
     const phone = localStorage.getItem('takeaway_phone') || '';
-    const [menu, setMenu] = useState(menuData);
+    const [menu, setMenu] = useState([]);
     const [cart, setCart] = useState([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [orderStatus, setOrderStatus] = useState(null);
