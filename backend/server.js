@@ -493,6 +493,7 @@ app.get('/api/download-inventory', async (req, res) => {
 app.get('/api/download-detailed-report', async (req, res) => {
     try {
         const { startDate, endDate } = req.query;
+        // New attendance report endpoint added below
         // Fetch all settled orders within range or all if not specified
         let query = 'SELECT * FROM table_sessions WHERE settled = true';
         let params = [];
@@ -587,6 +588,49 @@ app.get('/api/download-detailed-report', async (req, res) => {
         res.end();
     } catch (err) {
         console.error('Report Download Error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Attendance Report Download Endpoint
+app.get('/api/download-attendance-report', async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        let query = 'SELECT * FROM attendance';
+        const params = [];
+        if (startDate && endDate) {
+            query += ' WHERE date >= ? AND date <= ?';
+            params.push(startDate, endDate);
+        }
+        const result = await runQuery(query, params);
+        const rows = result.rows;
+
+        const workbook = new ExcelJS.Workbook();
+        const sheet = workbook.addWorksheet('Attendance Report');
+        sheet.columns = [
+            { header: 'Employee ID', key: 'employeeId', width: 15 },
+            { header: 'Date', key: 'date', width: 12 },
+            { header: 'Check In', key: 'checkInTime', width: 22 },
+            { header: 'Check Out', key: 'checkOutTime', width: 22 },
+            { header: 'Verified', key: 'verified', width: 10 }
+        ];
+        sheet.getRow(1).font = { bold: true };
+        rows.forEach(row => {
+            sheet.addRow({
+                employeeId: row.employeeId,
+                date: row.date,
+                checkInTime: row.checkInTime,
+                checkOutTime: row.checkOutTime,
+                verified: row.verified ? 'Yes' : 'No'
+            });
+        });
+        const filename = `Attendance_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (err) {
+        console.error('Attendance Report Download Error:', err);
         res.status(500).json({ error: err.message });
     }
 });
