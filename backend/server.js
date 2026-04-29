@@ -440,7 +440,6 @@ app.get('/api/download-inventory', async (req, res) => {
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Inventory');
 
-        // Define columns
         worksheet.columns = [
             { header: 'Item Name', key: 'name', width: 25 },
             { header: 'Category', key: 'category', width: 15 },
@@ -451,11 +450,9 @@ app.get('/api/download-inventory', async (req, res) => {
             { header: 'Status', key: 'status', width: 15 }
         ];
 
-        // Style the header
         worksheet.getRow(1).font = { bold: true };
         worksheet.getRow(1).alignment = { horizontal: 'center' };
 
-        // Add rows
         inventory.forEach(item => {
             const stock = parseFloat(item.stock || 0);
             const price = parseFloat(item.price || 0);
@@ -473,18 +470,15 @@ app.get('/api/download-inventory', async (req, res) => {
                 status: status
             });
 
-            // Color code status
             if (status === 'LOW STOCK') {
                 row.getCell('status').font = { color: { argb: 'FFFF0000' }, bold: true };
             }
         });
 
-        // Add total summary at bottom
         const totalInventoryValue = inventory.reduce((sum, item) => sum + (parseFloat(item.stock || 0) * parseFloat(item.price || 0)), 0);
         worksheet.addRow({});
         worksheet.addRow({ name: 'TOTAL INVENTORY VALUE', total: totalInventoryValue }).font = { bold: true };
 
-        // Set response headers
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', 'attachment; filename=Inventory_Report_' + new Date().toISOString().split('T')[0] + '.xlsx');
 
@@ -492,6 +486,107 @@ app.get('/api/download-inventory', async (req, res) => {
         res.end();
     } catch (err) {
         console.error('Inventory Download Error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/download-detailed-report', async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        // Fetch all settled orders within range or all if not specified
+        let query = 'SELECT * FROM table_sessions WHERE settled = true';
+        let params = [];
+        if (startDate && endDate) {
+            query += ' AND createdAt >= ? AND createdAt <= ?';
+            params = [startDate, endDate];
+        }
+        const orders = await runQuery(query, params);
+
+        const workbook = new ExcelJS.Workbook();
+        
+        // 1. Table-wise Breakdown
+        const tableSheet = workbook.addWorksheet('Table-wise Breakdown');
+        tableSheet.columns = [
+            { header: 'Table ID', key: 'tableId', width: 15 },
+            { header: 'Total Orders', key: 'orders', width: 12 },
+            { header: 'Total Revenue', key: 'revenue', width: 15 },
+            { header: 'Service Charge', key: 'sc', width: 15 },
+            { header: 'Avg Bill', key: 'avg', width: 15 }
+        ];
+
+        const tableMetrics = {};
+        orders.forEach(o => {
+            if (!tableMetrics[o.tableId]) {
+                tableMetrics[o.tableId] = { orders: 0, revenue: 0, sc: 0 };
+            }
+            tableMetrics[o.tableId].orders += 1;
+            tableMetrics[o.tableId].revenue += parseFloat(o.finalTotal || 0);
+            tableMetrics[o.tableId].sc += parseFloat(o.serviceCharge || 0);
+        });
+
+        Object.keys(tableMetrics).forEach(tid => {
+            const m = tableMetrics[tid];
+            tableSheet.addRow({
+                tableId: tid,
+                orders: m.orders,
+                revenue: m.revenue,
+                sc: m.sc,
+                avg: m.revenue / m.orders
+            });
+        });
+
+        // 2. Section Breakdown
+        const sectionSheet = workbook.addWorksheet('Section Breakdown');
+        sectionSheet.columns = [
+            { header: 'Section', key: 'section', width: 20 },
+            { header: 'Total Revenue', key: 'revenue', width: 20 }
+        ];
+
+        const getSection = (tid) => {
+            const t = tid.toUpperCase();
+            if (t.includes('BOX') || t.startsWith('B')) return 'Boxes';
+            if (t.includes('CH') || t.startsWith('C')) return 'Chowkie';
+            if (t === 'TAKEAWAY') return 'Takeaway';
+            return 'Main Dining';
+        };
+
+        const sectionMetrics = { Boxes: 0, Chowkie: 0, Takeaway: 0, 'Main Dining': 0 };
+        orders.forEach(o => {
+            const section = getSection(o.tableId);
+            sectionMetrics[section] += parseFloat(o.finalTotal || 0);
+        });
+
+        Object.keys(sectionMetrics).forEach(s => {
+            sectionSheet.addRow({ section: s, revenue: sectionMetrics[s] });
+        });
+
+        // 3. Raw Orders Data
+        const rawSheet = workbook.addWorksheet('Daily Sales List');
+        rawSheet.columns = [
+            { header: 'Order ID', key: 'id', width: 10 },
+            { header: 'Date', key: 'date', width: 20 },
+            { header: 'Table', key: 'tableId', width: 15 },
+            { header: 'Final Total', key: 'total', width: 15 },
+            { header: 'Service Charge', key: 'sc', width: 15 }
+        ];
+
+        orders.forEach(o => {
+            rawSheet.addRow({
+                id: o.id,
+                date: o.createdAt,
+                tableId: o.tableId,
+                total: o.finalTotal,
+                sc: o.serviceCharge
+            });
+        });
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename=Detailed_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (err) {
+        console.error('Report Download Error:', err);
         res.status(500).json({ error: err.message });
     }
 });
