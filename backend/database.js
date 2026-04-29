@@ -621,7 +621,6 @@ const seedMenu = async (menuData) => {
             addedCount++;
         } else if (
             existingItem.price !== item.price || 
-            (item.image && existingItem.image !== item.image) ||
             (item.isPopular !== undefined && !!existingItem.isPopular !== !!item.isPopular) ||
             (item.isRecommended !== undefined && !!existingItem.isRecommended !== !!item.isRecommended) ||
             (item.isBestSeller !== undefined && !!existingItem.isBestSeller !== !!item.isBestSeller) ||
