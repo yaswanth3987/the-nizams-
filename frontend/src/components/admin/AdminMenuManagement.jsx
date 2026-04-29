@@ -22,7 +22,7 @@ export default function AdminMenuManagement() {
     const [newItem, setNewItem] = useState({
         name: '',
         price: '',
-        category: 'Main Course',
+        category: 'Biryani',
         description: '',
         image: '',
         isPopular: false,
@@ -113,7 +113,7 @@ export default function AdminMenuManagement() {
                 fetchMenu();
                 setIsAddModalOpen(false);
                 setNewItem({ 
-                    name: '', price: '', category: 'Main Course', description: '', image: '',
+                    name: '', price: '', category: 'Biryani', description: '', image: '',
                     isPopular: false, isRecommended: false, isBestSeller: false, isNew: false
                 });
             }
@@ -183,7 +183,14 @@ export default function AdminMenuManagement() {
     };
 
 
-    const categories = ['All', ...new Set(menuItems.map(item => item.category))];
+    const standardCategories = [
+        'Biryani', 'Biryani Thaali', 'Nizami Mandi', 'Mandi Platters', 
+        'Non Veg Starters', 'Veg Starters', 'Sea Food', 'Soups',
+        'Chicken Main Course', 'Mutton Main Course', 'Veg Main Course', "Chef's Specials",
+        'Rice', 'Breads (Naan & Roti)', "Extra's", 'Desserts',
+        'Lassi', 'Milk Shakes', 'Mock Tails', 'Drinks'
+    ];
+    const categories = ['All', ...new Set([...standardCategories, ...menuItems.map(item => item.category)])];
     
     const filteredMenu = menuItems.filter(item => {
         const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -567,20 +574,34 @@ export default function AdminMenuManagement() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                 <div>
                                     <label className="block text-[10px] font-black text-white/20 uppercase tracking-[0.5em] mb-4">CLASSIFICATION</label>
-                                    <select 
-                                        value={editingItem ? editingItem.category : newItem.category}
-                                        onChange={e => editingItem ? setEditingItem({...editingItem, category: e.target.value}) : setNewItem({...newItem, category: e.target.value})}
-                                        className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-xl text-white font-serif italic focus:outline-none focus:border-nizam-gold/50 transition-all shadow-inner appearance-none"
-                                    >
-                                        <option>Biryani Thaali</option>
-                                        <option>Non Veg Starters</option>
-                                        <option>Sea Food</option>
-                                        <option>Veg Starters</option>
-                                        <option>Main Course</option>
-                                        <option>Mandi</option>
-                                        <option>Desserts</option>
-                                        <option>Drinks</option>
-                                    </select>
+                                    <div className="space-y-3">
+                                        <select 
+                                            value={standardCategories.includes(editingItem ? editingItem.category : newItem.category) ? (editingItem ? editingItem.category : newItem.category) : 'Other'}
+                                            onChange={e => {
+                                                const val = e.target.value;
+                                                if (val !== 'Other') {
+                                                    editingItem ? setEditingItem({...editingItem, category: val}) : setNewItem({...newItem, category: val});
+                                                } else {
+                                                    // Set to empty or keep current to trigger input show
+                                                    editingItem ? setEditingItem({...editingItem, category: 'Other'}) : setNewItem({...newItem, category: 'Other'});
+                                                }
+                                            }}
+                                            className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-xl text-white font-serif italic focus:outline-none focus:border-nizam-gold/50 transition-all shadow-inner appearance-none"
+                                        >
+                                            {standardCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                            <option value="Other">+ Add Custom Category</option>
+                                        </select>
+                                        {(editingItem?.category === 'Other' || newItem?.category === 'Other' || !standardCategories.includes(editingItem ? editingItem.category : newItem.category)) && (
+                                            <input 
+                                                type="text"
+                                                value={(editingItem ? (editingItem.category === 'Other' ? '' : editingItem.category) : (newItem.category === 'Other' ? '' : newItem.category))}
+                                                onChange={e => editingItem ? setEditingItem({...editingItem, category: e.target.value}) : setNewItem({...newItem, category: e.target.value})}
+                                                placeholder="Type your custom category name..."
+                                                autoFocus
+                                                className="w-full bg-black/80 border border-accent/30 rounded-2xl p-6 text-xl text-white font-serif italic focus:outline-none focus:border-accent transition-all shadow-inner animate-in fade-in slide-in-from-top-2"
+                                            />
+                                        )}
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="block text-[10px] font-black text-white/20 uppercase tracking-[0.5em] mb-4">MEDIA ASSETS</label>
