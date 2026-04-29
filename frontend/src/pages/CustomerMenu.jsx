@@ -1246,10 +1246,19 @@ export default function CustomerMenu() {
                                 <div key={order.id} className="bg-white rounded-[45px] p-8 shadow-[0_25px_60px_rgba(0,0,0,0.06)] relative overflow-hidden mb-8 border border-white transition-all hover:shadow-[0_40px_80px_rgba(0,0,0,0.12)]">
                                     <div className="absolute -top-10 -right-10 w-48 h-48 bg-[#C29958]/5 blur-[60px] rounded-full pointer-events-none"></div>
                                     <div className="flex justify-between items-start mb-6 relative z-10">
-                                        <div className="bg-[#0B3A2E]/5 px-5 py-2.5 rounded-2xl">
+                                        <div className="bg-[#0B3A2E]/5 px-5 py-2.5 rounded-2xl flex-1">
                                             <p className="text-[#0B3A2E] text-[10px] font-black uppercase tracking-[0.15em] opacity-50 mb-0.5">Order #NIZ-{order.id?.toString().slice(-4) || '0000'}</p>
                                             <h4 className="text-[#0B3A2E] text-xl font-bold font-serif leading-none italic">Royal Order</h4>
                                         </div>
+                                        <div className="text-right">
+                                            <p className="text-[#C29958] text-[10px] font-black uppercase tracking-[0.15em] mb-1">Order Total</p>
+                                            <p className="text-[#0B3A2E] text-xl font-black tabular-nums">£{(order.total || 0).toFixed(2)}</p>
+                                        </div>
+                                    </div>
+                                    <div className="mb-4 px-4 py-2 bg-[#F6EFE6]/30 border border-[#0B3A2E]/5 rounded-xl">
+                                        <p className="text-[8px] text-[#0B3A2E]/40 font-black uppercase tracking-widest text-center">
+                                            * Prices exclude 10% Service Charge (added to total bill)
+                                        </p>
                                     </div>
                                     
                                     <div className="space-y-3 mb-8 relative z-10">
@@ -1258,6 +1267,9 @@ export default function CustomerMenu() {
                                                 <div className="flex items-center gap-3">
                                                     <span className="w-5 h-5 bg-[#C29958]/10 text-[#C29958] flex items-center justify-center rounded text-[10px] font-black">x{item?.qty || 1}</span>
                                                     <span className="font-bold text-[#0B3A2E] opacity-90">{item?.name || 'Item'}</span>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-[#0B3A2E] font-black tabular-nums">£{(Number(item?.price || 0) * (item?.qty || 1)).toFixed(2)}</p>
                                                 </div>
                                             </div>
                                         ))}
@@ -1635,6 +1647,9 @@ export default function CustomerMenu() {
                             <div>
                                  <h3 className="text-[#0B3A2E] text-4xl font-black font-serif mb-2 italic">Order Received!</h3>
                                  <p className="text-[#6D5D4B] text-xs font-black leading-[1.6] uppercase tracking-[0.25em] opacity-60">Our chefs have started preparing<br/>your royal selection.</p>
+                                 <p className="mt-3 text-[#C29958] text-[9px] font-black uppercase tracking-[0.2em] px-6 py-2 bg-[#F6EFE6] rounded-xl border border-[#C29958]/20">
+                                     Prices mentioned exclude 10% service charge,<br/>added to your final running bill.
+                                 </p>
                             </div>
                             <button 
                                 onClick={() => { setOrderStatus(null); setView('orders'); }}
