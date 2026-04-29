@@ -75,6 +75,7 @@ export default function CustomerMenu() {
     const [menuError, setMenuError] = useState(null);
     const [expandedPlatters, setExpandedPlatters] = useState({}); // { id: boolean }
     const [transferNotification, setTransferNotification] = useState(null); // 'T04'
+    const [isBillModalOpen, setIsBillModalOpen] = useState(false);
 
     const [now, setNow] = useState(() => Date.now());
 
@@ -1164,9 +1165,11 @@ export default function CustomerMenu() {
                             <div className="flex justify-between items-end pt-5 mt-2">
                                 <div>
                                     <span className="text-[#0B3A2E] text-[10px] font-black uppercase tracking-[0.25em] block mb-1">Items Total</span>
-                                    <span className="text-[#0B3A2E] text-[10px] font-medium opacity-60">Excluding service fee</span>
+                                    <span className="text-[#C29958] text-[9px] font-bold flex items-center gap-1.5 uppercase tracking-wider">
+                                        <Info size={10} /> + 10% Service Charge at Checkout
+                                    </span>
                                 </div>
-                                <span className="text-[#0B3A2E] text-4xl font-black font-serif tabular-nums">£{(finalTotal || 0).toFixed(2)}</span>
+                                <span className="text-[#0B3A2E] text-4xl font-black font-serif tabular-nums">£{(subtotal || 0).toFixed(2)}</span>
                             </div>
                         </div>
                         <button 
@@ -1204,9 +1207,17 @@ export default function CustomerMenu() {
                 <section>
                     <div className="flex justify-between items-center mb-8">
                         <h3 className="text-[#0B3A2E] text-2xl font-black font-serif">Current Delights</h3>
-                        <div className="flex items-center gap-2">
-                             <div className="w-2 h-2 bg-[#C29958] rounded-full animate-pulse"></div>
-                             <span className="text-[#C29958] text-[10px] font-black uppercase tracking-widest">IN PROGRESS</span>
+                        <div className="flex items-center gap-3">
+                             <button 
+                                onClick={() => setIsBillModalOpen(true)}
+                                className="flex items-center gap-2 px-6 py-2.5 bg-[#C29958] text-[#0B3A2E] rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-[#C29958]/20 border border-white/20 active:scale-95 transition-all"
+                             >
+                                <PoundSterling size={14} strokeWidth={3} /> View Current Bill
+                             </button>
+                             <div className="flex items-center gap-2">
+                                  <div className="w-2 h-2 bg-[#C29958] rounded-full animate-pulse"></div>
+                                  <span className="text-[#C29958] text-[10px] font-black uppercase tracking-widest">IN PROGRESS</span>
+                             </div>
                         </div>
                     </div>
                     {(myOrders || []).filter(o => ['Pending', 'Order Received', 'Cooking Started', 'Ready to Serve', 'Served', 'Accepted ✓', 'Rejected ✗'].includes(o.status)).length === 0 ? (
@@ -1378,6 +1389,120 @@ export default function CustomerMenu() {
         </div>
     );
 
+    const renderBillModal = () => {
+        if (!isBillModalOpen) return null;
+
+        const activeOrders = (myOrders || []).filter(o => 
+            ['Order Received', 'Cooking Started', 'Ready to Serve', 'Served', 'Pending', 'Accepted ✓'].includes(o.status)
+        );
+
+        // Combine all items from all active orders
+        const allItems = activeOrders.reduce((acc, order) => {
+            (order.items || []).forEach(item => {
+                const existing = acc.find(i => i.name === item.name && i.price === item.price);
+                if (existing) {
+                    existing.qty += (item.qty || 1);
+                } else {
+                    acc.push({ ...item, qty: item.qty || 1 });
+                }
+            });
+            return acc;
+        }, []);
+
+        const subtotal = allItems.reduce((sum, item) => sum + (Number(item.price || 0) * (item.qty || 1)), 0);
+        const serviceChargePercent = 10;
+        const serviceChargeAmount = subtotal * (serviceChargePercent / 100);
+        const total = subtotal + serviceChargeAmount;
+
+        return (
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-fade-in">
+                <div className="absolute inset-0 bg-[#0B3A2E]/80 backdrop-blur-xl" onClick={() => setIsBillModalOpen(false)}></div>
+                
+                <div className="relative bg-[#F9F6F0] w-full max-w-sm rounded-[40px] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.5)] flex flex-col animate-zoom-in border border-white">
+                    {/* Header */}
+                    <div className="bg-[#0B3A2E] p-8 text-center relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#C29958]/10 blur-3xl rounded-full"></div>
+                        <img src="/logo-icon.png" alt="Logo" className="w-12 h-12 mx-auto mb-4 brightness-150" />
+                        <h3 className="text-white text-2xl font-black font-serif italic mb-1">Current Bill</h3>
+                        <p className="text-[#C29958] text-[9px] font-black uppercase tracking-[0.3em]">Estimated Total • Table {selectedTable}</p>
+                        
+                        <button 
+                            onClick={() => setIsBillModalOpen(false)}
+                            className="absolute top-6 right-6 text-white/40 hover:text-white transition-colors"
+                        >
+                            <X size={24} />
+                        </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-8 pt-10">
+                        {allItems.length === 0 ? (
+                            <div className="text-center py-20 opacity-30 flex flex-col items-center">
+                                <ShoppingBag size={48} className="mb-4" />
+                                <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed">No active items<br/>on your running bill</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-6">
+                                {/* Itemized List */}
+                                <div className="space-y-4">
+                                    {allItems.map((item, idx) => (
+                                        <div key={idx} className="flex justify-between items-start text-sm">
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-[#C29958] font-black tabular-nums">x{item.qty}</span>
+                                                <span className="text-[#0B3A2E] font-bold opacity-80">{item.name}</span>
+                                            </div>
+                                            <span className="text-[#0B3A2E] font-black tabular-nums">£{(Number(item.price || 0) * item.qty).toFixed(2)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Divider */}
+                                <div className="h-px border-t border-dashed border-[#0B3A2E]/20 my-6"></div>
+
+                                {/* Summary */}
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center text-[11px] font-black uppercase tracking-wider text-[#6D5D4B] opacity-60">
+                                        <span>Subtotal</span>
+                                        <span className="tabular-nums">£{subtotal.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-[11px] font-black uppercase tracking-wider text-[#C29958]">
+                                        <div className="flex items-center gap-2">
+                                            <span>Service Charge ({serviceChargePercent}%)</span>
+                                            <Info size={12} className="opacity-60" />
+                                        </div>
+                                        <span className="tabular-nums">£{serviceChargeAmount.toFixed(2)}</span>
+                                    </div>
+                                    
+                                    <div className="pt-4 border-t border-[#0B3A2E]/5 mt-4">
+                                        <div className="flex justify-between items-end">
+                                            <div>
+                                                <span className="text-[#0B3A2E] text-[10px] font-black uppercase tracking-[0.25em] block mb-1">Running Total</span>
+                                                <span className="text-[#0B3A2E]/40 text-[9px] font-bold italic">Subject to final checkout</span>
+                                            </div>
+                                            <span className="text-[#0B3A2E] text-4xl font-black font-serif tabular-nums">£{total.toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="p-8 bg-white border-t border-black/5">
+                        <button 
+                            onClick={() => setIsBillModalOpen(false)}
+                            className="w-full bg-[#0B3A2E] text-white py-5 rounded-[28px] font-black uppercase tracking-[0.2em] text-[11px] shadow-xl active:scale-95 transition-all"
+                        >
+                            Back to Dining
+                        </button>
+                        <p className="text-[8px] text-center text-[#6D5D4B]/40 font-black uppercase tracking-[0.2em] mt-6 leading-relaxed">
+                            ⓘ Service charge shown transparently for customer convenience.<br/>
+                            Applied at 10% on all dine-in experiences.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     const renderSessionError = () => (
         <div className="min-h-screen bg-[#111312] py-8 px-4 flex flex-col items-center justify-center font-sans tracking-tight">
             <div className="w-full max-w-[360px] bg-[#1c1e1c] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden border border-[#d4af37]/20 p-8 text-center text-white">
@@ -1495,6 +1620,7 @@ export default function CustomerMenu() {
                     {renderTabs()}
                 </div>
                 {renderCartSheet()}
+                {renderBillModal()}
                 {renderImagePreviewModal()}
                 
                 {/* Visual Feedback Overlays */}
