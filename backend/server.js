@@ -4,6 +4,8 @@ const cors = require('cors');
 const path = require('path');
 const { Server } = require('socket.io');
 const ExcelJS = require('exceljs');
+const multer = require('multer');
+const fs = require('fs');
 const { 
     getOrdersByStatus, createOrder, addOrderToSession, updateOrderStatus, deleteOrder, deleteNewOrder, clearTableOrders,
     getAnalyticsDaily, getItemAnalytics, getAssistanceRequests, createAssistanceRequest, 
@@ -20,6 +22,32 @@ const {
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Image Upload Configuration
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)){
+    fs.mkdirSync(uploadDir);
+}
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir)
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+    cb(null, uniqueSuffix + path.extname(file.originalname))
+  }
+});
+
+const upload = multer({ storage: storage });
+
+app.use('/uploads', express.static(uploadDir));
+
+app.post('/api/upload', upload.single('image'), (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const imageUrl = `/uploads/${req.file.filename}`;
+    res.json({ imageUrl });
+});
 
 const server = http.createServer(app);
 const io = new Server(server, {

@@ -1,5 +1,5 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Trash2, Edit2, Check, X, Utensils, IndianRupee, Search, Clock, AlertCircle, ChevronDown, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Plus, Trash2, Edit2, Check, X, Utensils, IndianRupee, Search, Clock, AlertCircle, ChevronDown, ChevronRight, Image as ImageIcon, Eye, EyeOff, Upload } from 'lucide-react';
 import { socket } from '../../utils/socket';
 
 const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
@@ -10,6 +10,7 @@ export default function AdminMenuManagement() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeCategory, setActiveCategory] = useState('All');
+    const [visibleImages, setVisibleImages] = useState(new Set());
     
     // Availability Modal State
     const [availabilityModal, setAvailabilityModal] = useState(null); 
@@ -23,6 +24,7 @@ export default function AdminMenuManagement() {
         price: '',
         category: 'Main Course',
         description: '',
+        image: '',
         isPopular: false,
         isRecommended: false,
         isBestSeller: false,
@@ -51,6 +53,33 @@ export default function AdminMenuManagement() {
             console.error('Failed to fetch menu:', err);
         }
     }, []);
+
+    const handleImageUpload = async (e, isEditing = false) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('image', file);
+
+        try {
+            const res = await fetch(`${API_URL}/upload`, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.imageUrl) {
+                const fullUrl = import.meta.env.DEV ? `http://${window.location.hostname}:3001${data.imageUrl}` : data.imageUrl;
+                if (isEditing) {
+                    setEditingItem(prev => ({ ...prev, image: fullUrl }));
+                } else {
+                    setNewItem(prev => ({ ...prev, image: fullUrl }));
+                }
+            }
+        } catch (err) {
+            console.error('Failed to upload image:', err);
+            alert('Upload failed');
+        }
+    };
 
     useEffect(() => {
         setTimeout(() => fetchMenu(), 0);
@@ -84,7 +113,7 @@ export default function AdminMenuManagement() {
                 fetchMenu();
                 setIsAddModalOpen(false);
                 setNewItem({ 
-                    name: '', price: '', category: 'Main Course', description: '',
+                    name: '', price: '', category: 'Main Course', description: '', image: '',
                     isPopular: false, isRecommended: false, isBestSeller: false, isNew: false
                 });
             }
@@ -168,6 +197,15 @@ export default function AdminMenuManagement() {
         acc[item.category].push(item);
         return acc;
     }, {});
+    
+    const toggleImageVisibility = (id) => {
+        setVisibleImages(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
 
     return (
         <div className="space-y-8 animate-in fade-in duration-700 pb-24 font-sans">
@@ -250,7 +288,8 @@ export default function AdminMenuManagement() {
                         <table className="w-full text-left border-collapse">
                             <thead className="text-[10px] uppercase font-bold text-white/20 border-b border-white/5 bg-black/20">
                                 <tr>
-                                    <th className="px-8 py-5 tracking-[0.2em]">Item Asset</th>
+                                    <th className="px-8 py-5 tracking-[0.2em]">Identity</th>
+                                    <th className="px-8 py-5 tracking-[0.2em]">Asset Preview</th>
                                     <th className="px-8 py-5 tracking-[0.2em]">Metric (£)</th>
                                     <th className="px-8 py-5 tracking-[0.2em]">Status Lock</th>
                                     <th className="px-8 py-5 tracking-[0.2em] text-right">Operations</th>
@@ -271,6 +310,37 @@ export default function AdminMenuManagement() {
                                                         <p className="text-[11px] text-white/40 font-bold uppercase tracking-wider">{item.category}</p>
                                                     </div>
                                                 </div>
+                                            </td>
+                                            <td className="px-8 py-7">
+                                                {item.image ? (
+                                                    <div className="flex items-center gap-3">
+                                                        {visibleImages.has(item.id) ? (
+                                                            <div className="flex items-center gap-4 animate-in slide-in-from-left-2 duration-300">
+                                                                <img 
+                                                                    src={item.image} 
+                                                                    alt={item.name} 
+                                                                    className="w-16 h-16 object-cover rounded-xl border border-white/20 shadow-2xl"
+                                                                />
+                                                                <button 
+                                                                    onClick={() => toggleImageVisibility(item.id)}
+                                                                    className="p-2 bg-white/5 rounded-lg text-white/40 hover:text-white transition-all"
+                                                                    title="Hide Asset"
+                                                                >
+                                                                    <EyeOff size={16} />
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <button 
+                                                                onClick={() => toggleImageVisibility(item.id)}
+                                                                className="flex items-center gap-2 px-4 py-2 bg-accent/10 border border-accent/20 text-accent rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-accent hover:text-black transition-all"
+                                                            >
+                                                                <Eye size={14} /> View Asset
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-[10px] font-bold text-white/10 uppercase tracking-widest">NO ASSET</span>
+                                                )}
                                             </td>
                                             <td className="px-8 py-7">
                                                 <span className="text-lg font-black text-accent glow-gold">£{Number(item.price).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
@@ -512,27 +582,62 @@ export default function AdminMenuManagement() {
                                         <option>Drinks</option>
                                     </select>
                                 </div>
-                                <div className="space-y-4">
-                                    <label className="block text-[10px] font-black text-white/20 uppercase tracking-[0.5em] mb-4">FLAGS</label>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        {[
-                                            { id: 'isPopular', label: 'POPULAR', color: 'text-red-500' },
-                                            { id: 'isRecommended', label: 'ELITE', color: 'text-nizam-gold' }
-                                        ].map(badge => {
-                                            const target = editingItem || newItem;
-                                            return (
-                                                <label key={badge.id} className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${target[badge.id] ? 'bg-white/5 border-nizam-gold' : 'bg-black/40 border-white/5 hover:border-white/20'}`}>
-                                                    <span className={`text-[9px] font-black tracking-widest ${target[badge.id] ? badge.color : 'text-white/20'}`}>{badge.label}</span>
-                                                    <input 
-                                                        type="checkbox"
-                                                        checked={target[badge.id]}
-                                                        onChange={e => editingItem ? setEditingItem({ ...editingItem, [badge.id]: e.target.checked }) : setNewItem({ ...newItem, [badge.id]: e.target.checked })}
-                                                        className="hidden"
-                                                    />
-                                                </label>
-                                            );
-                                        })}
+                                <div>
+                                    <label className="block text-[10px] font-black text-white/20 uppercase tracking-[0.5em] mb-4">MEDIA ASSETS</label>
+                                    <div className="flex gap-4">
+                                        {(editingItem?.image || newItem?.image) ? (
+                                            <div className="relative group/img">
+                                                <img 
+                                                    src={editingItem ? editingItem.image : newItem.image} 
+                                                    className="w-24 h-24 object-cover rounded-2xl border border-white/10"
+                                                    alt="Preview"
+                                                />
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => editingItem ? setEditingItem({...editingItem, image: ''}) : setNewItem({...newItem, image: ''})}
+                                                    className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity"
+                                                >
+                                                    <X size={12} />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <label className="flex-1 border-2 border-dashed border-white/10 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer hover:border-accent/50 hover:bg-white/5 transition-all group">
+                                                <Upload className="text-white/20 group-hover:text-accent transition-colors mb-2" size={24} />
+                                                <span className="text-[10px] font-black text-white/20 group-hover:text-white uppercase tracking-widest">Upload Asset</span>
+                                                <input 
+                                                    type="file" 
+                                                    accept="image/*"
+                                                    onChange={(e) => handleImageUpload(e, !!editingItem)}
+                                                    className="hidden"
+                                                />
+                                            </label>
+                                        )}
                                     </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <label className="block text-[10px] font-black text-white/20 uppercase tracking-[0.5em] mb-4">FLAGS</label>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {[
+                                        { id: 'isPopular', label: 'POPULAR', color: 'text-red-500' },
+                                        { id: 'isRecommended', label: 'ELITE', color: 'text-accent' },
+                                        { id: 'isBestSeller', label: 'BEST SELLER', color: 'text-emerald-500' },
+                                        { id: 'isNew', label: 'NEW', color: 'text-blue-500' }
+                                    ].map(badge => {
+                                        const target = editingItem || newItem;
+                                        return (
+                                            <label key={badge.id} className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${target[badge.id] ? 'bg-white/5 border-accent shadow-lg shadow-accent/10' : 'bg-black/40 border-white/5 hover:border-white/20'}`}>
+                                                <span className={`text-[9px] font-black tracking-widest ${target[badge.id] ? badge.color : 'text-white/20'}`}>{badge.label}</span>
+                                                <input 
+                                                    type="checkbox"
+                                                    checked={target[badge.id]}
+                                                    onChange={e => editingItem ? setEditingItem({ ...editingItem, [badge.id]: e.target.checked }) : setNewItem({ ...newItem, [badge.id]: e.target.checked })}
+                                                    className="hidden"
+                                                />
+                                            </label>
+                                        );
+                                    })}
                                 </div>
                             </div>
 

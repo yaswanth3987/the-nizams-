@@ -84,6 +84,7 @@ if (isPg) {
             await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "isRecommended" BOOLEAN DEFAULT false;`).catch(() => {});
             await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "isBestSeller" BOOLEAN DEFAULT false;`).catch(() => {});
             await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "isNew" BOOLEAN DEFAULT false;`).catch(() => {});
+            await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "image" TEXT;`).catch(() => {});
             await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "availableFrom" TEXT;`).catch(() => {});
             await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "availableTo" TEXT;`).catch(() => {});
             await pgPool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS "platterItems" TEXT;`).catch(() => {});
@@ -849,10 +850,30 @@ const updateOrderItems = async (id, items, total, type = 'session') => {
     const table = type === 'session' ? 'table_sessions' : 'orders';
     const itemsJson = JSON.stringify(items);
     
-    await runQuery(`UPDATE ${table} SET items = ?, "finalTotal" = ? WHERE id = ?`, [itemsJson, total, id]);
+    // Fetch existing order to determine orderType and tableId for service charge logic
+    const oldRes = await runQuery(`SELECT * FROM ${table} WHERE id = ?`, [id]);
+    const oldRow = oldRes.rows[0];
+    if (!oldRow) throw new Error(`${type} with id ${id} not found`);
+
+    const orderType = oldRow.orderType || (oldRow.tableId === 'TAKEAWAY' ? 'takeaway' : 'dine-in');
+    const tableId = oldRow.tableId;
+
+    // Securely recalculate totals
+    const calcSubtotal = items.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.qty || 0)), 0);
+    const calcServiceCharge = (orderType === 'takeaway' || tableId === 'TAKEAWAY') ? 0 : calcSubtotal * 0.10;
+    const calcFinalTotal = calcSubtotal + calcServiceCharge;
+
+    const colSubtotal = isPg ? '"subtotal"' : 'subtotal';
+    const colServiceCharge = isPg ? '"serviceCharge"' : 'serviceCharge';
+    const colFinalTotal = isPg ? '"finalTotal"' : 'finalTotal';
+
+    await runQuery(
+        `UPDATE ${table} SET items = ?, ${colSubtotal} = ?, ${colServiceCharge} = ?, ${colFinalTotal} = ? WHERE id = ?`, 
+        [itemsJson, calcSubtotal, calcServiceCharge, calcFinalTotal, id]
+    );
+
     const res = await runQuery(`SELECT * FROM ${table} WHERE id = ?`, [id]);
     const row = res.rows[0];
-    if (!row) throw new Error(`${type} with id ${id} not found`);
     
     return { ...row, items: typeof row.items === 'string' ? JSON.parse(row.items) : row.items };
 };
