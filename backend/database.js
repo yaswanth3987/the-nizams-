@@ -1066,8 +1066,8 @@ const transferTableSession = async (oldTableId, newTableId) => {
 
 const addWaitlistEntry = async (name, party_size, phone, email, bookingDate, bookingTime, seatingId, seatingType) => {
     if (isPg) {
-        const sql = `INSERT INTO waitlist (name, party_size, phone, status, "email", "bookingDate", "bookingTime", "seatingId", "seatingType") VALUES (?, ?, ?, 'waiting', ?, ?, ?, ?, ?) RETURNING *`;
-        const res = await runQuery(sql, [name, party_size, phone, email, bookingDate, bookingTime, seatingId, seatingType]);
+        const sql = `INSERT INTO waitlist (name, party_size, phone, status, "email", "bookingDate", "bookingTime", "seatingId", "seatingType") VALUES ($1, $2, $3, 'waiting', $4, $5, $6, $7, $8) RETURNING *`;
+        const res = await pgPool.query(sql, [name, party_size, phone, email, bookingDate, bookingTime, seatingId, seatingType]);
         return res.rows[0];
     } else {
         const sql = `INSERT INTO waitlist (name, party_size, phone, status, email, bookingDate, bookingTime, seatingId, seatingType) VALUES (?, ?, ?, 'waiting', ?, ?, ?, ?, ?)`;
