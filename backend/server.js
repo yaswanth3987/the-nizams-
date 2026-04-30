@@ -21,10 +21,35 @@ const {
 } = require('./database');
 
 const rateLimit = require('express-rate-limit');
+const nodemailer = require('nodemailer');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// In-memory store for pending OTPs (Expires in 5 minutes)
+const pendingOTPs = new Map();
+
+// Helper to send OTP Email (Currently logs to console for testing)
+const sendOTPEmail = async (email, otp) => {
+    console.log(`\n-----------------------------------------`);
+    console.log(`📧 [OTP SENT] To: ${email} | Code: ${otp}`);
+    console.log(`-----------------------------------------\n`);
+    
+    /* 
+       For Production: 
+       const transporter = nodemailer.createTransport({
+           service: 'gmail',
+           auth: { user: 'USER_GMAIL', pass: 'APP_PASSWORD' }
+       });
+       await transporter.sendMail({
+           from: '"The Great Nizam" <no-reply@thegreatnizam.com>',
+           to: email,
+           subject: "Verification Code for your Reservation",
+           text: `Your verification code is: ${otp}. It will expire in 5 minutes.`
+       });
+    */
+};
 
 // Image Upload Configuration
 const uploadDir = path.join(__dirname, 'uploads');
@@ -913,28 +938,63 @@ const bookingLimiter = rateLimit({
     legacyHeaders: false,
 });
 
+// 1. Request OTP (Validates availability before sending)
+app.post('/api/waitlist/request-otp', bookingLimiter, async (req, res) => {
+    try {
+        const { email, name, bookingDate, bookingTime, seatingId } = req.body;
+        
+        if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+            return res.status(400).json({ error: 'A valid email address is required for verification' });
+        }
+
+        // Pre-verification availability check
+        const isAvailable = await checkWaitlistAvailability(bookingDate, bookingTime, seatingId);
+        if (!isAvailable) {
+            return res.status(409).json({ error: 'This seating option is already booked around this time.' });
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        pendingOTPs.set(email, { 
+            otp, 
+            data: req.body, 
+            expires: Date.now() + 5 * 60 * 1000 
+        });
+
+        await sendOTPEmail(email, otp);
+        res.json({ success: true, message: 'Verification code sent to your email' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 2. Verify OTP and Finalize Booking
+app.post('/api/waitlist/verify-otp', bookingLimiter, async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        const pending = pendingOTPs.get(email);
+
+        if (!pending || pending.otp !== otp || Date.now() > pending.expires) {
+            return res.status(400).json({ error: 'Invalid or expired verification code' });
+        }
+
+        const { name, party_size, phone, bookingDate, bookingTime, seatingId, seatingType } = pending.data;
+        
+        // Final confirmation check
+        const isAvailable = await checkWaitlistAvailability(bookingDate, bookingTime, seatingId);
+        if (!isAvailable) {
+            return res.status(409).json({ error: 'Table was just booked. Please choose another slot.' });
+        }
+
+        const entry = await addWaitlistEntry(name, party_size, phone, email, bookingDate, bookingTime, seatingId, seatingType);
+        pendingOTPs.delete(email); // Clear OTP after success
+        
+        io.emit('waitlistUpdated', entry);
+        res.status(201).json(entry);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Legacy direct endpoint (Internal use or fallback)
 app.post('/api/waitlist', bookingLimiter, async (req, res) => {
     try {
         const { name, party_size, phone, email, bookingDate, bookingTime, seatingId, seatingType } = req.body;
-        
-        // Input Validation
-        if (!name || name.length < 2 || name.length > 50) return res.status(400).json({ error: 'Valid name is required (2-50 chars)' });
-        if (!phone || !/^\+?[0-9\s\-\(\)]{7,15}$/.test(phone)) return res.status(400).json({ error: 'Valid phone number is required' });
-        if (!party_size || party_size < 1 || party_size > 30) return res.status(400).json({ error: 'Party size must be between 1 and 30' });
-        if (!bookingDate || !bookingTime || !seatingId || !seatingType) return res.status(400).json({ error: 'Booking date, time, and seating selection are required' });
-        
-        // Date/Time validation (must be future)
-        const reqDate = new Date(`${bookingDate}T${bookingTime}`);
-        if (reqDate < new Date()) {
-            return res.status(400).json({ error: 'Booking date and time must be in the future' });
-        }
-
-        // Double Booking Check (1.5 hours window)
-        const isAvailable = await checkWaitlistAvailability(bookingDate, bookingTime, seatingId);
-        if (!isAvailable) {
-            return res.status(409).json({ error: 'This seating option is already booked around this time. Please choose another time or seating option.' });
-        }
-        
         const entry = await addWaitlistEntry(name, party_size, phone, email || null, bookingDate, bookingTime, seatingId, seatingType);
         io.emit('waitlistUpdated', entry);
         res.status(201).json(entry);
