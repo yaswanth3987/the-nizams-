@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import AdminUnavailabilityScheduler from '../components/admin/AdminUnavailabilityScheduler';
 import { socket } from '../utils/socket';
 import Receipt from '../components/Receipt';
@@ -15,6 +15,7 @@ import AdminTableOverview from '../components/admin/AdminTableOverview';
 import AdminQuickAccess from '../components/admin/AdminQuickAccess';
 import AdminTakeawayPOS from '../components/admin/AdminTakeawayPOS';
 import AdminTakeawayManager from '../components/admin/AdminTakeawayManager';
+import AdminReservations from '../components/admin/AdminReservations';
 import InventoryDashboard from '../components/InventoryDashboard';
 import { useSoundSystem } from '../hooks/useSoundSystem';
 
@@ -321,6 +322,7 @@ export default function AdminDashboard() {
             case 'attendance': return { title: 'Staff Attendance', active: 'attendance', tabs: [] };
             case 'menu': return { title: 'Menu Management', active: 'menu', tabs: [] };
             case 'scheduler': return { title: 'Temporal Scheduler', active: 'scheduler', tabs: [] };
+            case 'reservations': return { title: 'Reservations & Waitlist', active: 'reservations', tabs: [] };
             default: return { title: 'The Great Nizam', active: '', tabs: [] };
         }
     };
@@ -483,6 +485,10 @@ export default function AdminDashboard() {
                         clearTable={clearTable}
                         printReceipt={printReceipt}
                     />
+                )}
+
+                {activeView === 'reservations' && (
+                    <AdminReservations />
                 )}
             </AdminLayout>
 

@@ -1054,6 +1054,31 @@ const transferTableSession = async (oldTableId, newTableId) => {
     return { success: true, newStatus: newStatusData };
 };
 
+const addWaitlistEntry = async (name, party_size, phone) => {
+    if (isPg) {
+        const sql = `INSERT INTO waitlist (name, party_size, phone, status) VALUES (?, ?, ?, 'waiting') RETURNING *`;
+        const res = await runQuery(sql, [name, party_size, phone]);
+        return res.rows[0];
+    } else {
+        const sql = `INSERT INTO waitlist (name, party_size, phone, status) VALUES (?, ?, ?, 'waiting')`;
+        const res = await runQuery(sql, [name, party_size, phone]);
+        const sel = await runQuery(`SELECT * FROM waitlist WHERE id = ?`, [res.lastID]);
+        return sel.rows[0];
+    }
+};
+
+const getWaitlist = async () => {
+    const colName = isPg ? '"createdAt"' : 'createdAt';
+    const res = await runQuery(`SELECT * FROM waitlist ORDER BY ${colName} DESC`);
+    return res.rows;
+};
+
+const updateWaitlistStatus = async (id, status) => {
+    await runQuery(`UPDATE waitlist SET status = ? WHERE id = ?`, [status, id]);
+    const res = await runQuery(`SELECT * FROM waitlist WHERE id = ?`, [id]);
+    return res.rows[0];
+};
+
 module.exports = {
     db, pgPool, runQuery, isPg, getOrdersByStatus, createOrder, addOrderToSession, updateOrderStatus,
     transferTableSession,
@@ -1065,5 +1090,6 @@ module.exports = {
     getTableStatuses, getTableStatus, updateTableStatus, getSessionsByTable, getOrdersByTable,
     allocateSession, getActiveSession, clearSession, updatePrepTime, updateOrderItems,
     getUnavailabilitySchedules, createUnavailabilitySchedule, updateUnavailabilitySchedule, deleteUnavailabilitySchedule, processSchedulesTask,
-    finalizePayment, getInventory, checkoutAttendance
+    finalizePayment, getInventory, checkoutAttendance,
+    addWaitlistEntry, getWaitlist, updateWaitlistStatus
 };

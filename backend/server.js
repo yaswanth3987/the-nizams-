@@ -16,7 +16,8 @@ const {
     getTableStatuses, updateTableStatus, allocateSession, getActiveSession, clearSession,
     getSessionsByTable, getOrdersByTable, updatePrepTime, updateOrderItems, resetAllSalesAndSessions,
     getUnavailabilitySchedules, createUnavailabilitySchedule, updateUnavailabilitySchedule, deleteUnavailabilitySchedule, processSchedulesTask,
-    getInventory, updateSessionServiceCharge, deleteSession, deleteItemSale, transferTableSession
+    getInventory, updateSessionServiceCharge, deleteSession, deleteItemSale, transferTableSession,
+    addWaitlistEntry, getWaitlist, updateWaitlistStatus
 } = require('./database');
 
 const app = express();
@@ -890,6 +891,33 @@ app.delete('/api/schedules/:id', async (req, res) => {
     try {
         await deleteUnavailabilitySchedule(req.params.id);
         res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Waitlist / Reservations APIs
+app.get('/api/waitlist', async (req, res) => {
+    try {
+        const waitlist = await getWaitlist();
+        res.json(waitlist);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/waitlist', async (req, res) => {
+    try {
+        const { name, party_size, phone } = req.body;
+        if (!name || !party_size || !phone) return res.status(400).json({ error: 'Name, party size, and phone are required' });
+        
+        const entry = await addWaitlistEntry(name, party_size, phone);
+        io.emit('waitlistUpdated', entry);
+        res.status(201).json(entry);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/waitlist/:id/status', async (req, res) => {
+    try {
+        const entry = await updateWaitlistStatus(req.params.id, req.body.status);
+        io.emit('waitlistUpdated', entry);
+        res.json(entry);
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

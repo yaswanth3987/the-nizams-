@@ -1,9 +1,10 @@
-﻿import React from 'react';
-import { FileText, CheckCircle, PoundSterling, CheckSquare, Package, HelpCircle, CalendarDays, LogOut, Utensils, LayoutGrid, ShoppingBag, Columns, Activity, Clock } from 'lucide-react';
+import React from 'react';
+import { FileText, CheckCircle, PoundSterling, CheckSquare, Package, HelpCircle, CalendarDays, LogOut, Utensils, LayoutGrid, ShoppingBag, Columns, Activity, Clock, Calendar } from 'lucide-react';
 
 export default function AdminSidebar({ activeView, onViewChange, counts = {} }) {
     const navItems = [
         { id: 'all-in-one', label: 'QUICK ACCESS', icon: LayoutGrid },
+        { id: 'reservations', label: 'RESERVATIONS', icon: Calendar },
         { id: 'takeaway', label: 'TAKEAWAY', icon: ShoppingBag },
         { id: 'assistance', label: 'ASSISTANCE', icon: HelpCircle },
         { id: 'orders', label: 'ORDERS', icon: FileText },
