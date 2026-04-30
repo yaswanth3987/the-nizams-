@@ -67,6 +67,11 @@ if (isPg) {
             await pgPool.query(`CREATE TABLE IF NOT EXISTS active_sessions ("tableId" TEXT PRIMARY KEY, "sessionId" TEXT NOT NULL, "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
             await pgPool.query(`CREATE TABLE IF NOT EXISTS qr_sessions (id SERIAL PRIMARY KEY, seating_id TEXT NOT NULL, session_token TEXT NOT NULL, status TEXT DEFAULT 'ACTIVE', start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, end_time TIMESTAMP);`);
             await pgPool.query(`CREATE TABLE IF NOT EXISTS waitlist (id SERIAL PRIMARY KEY, name TEXT NOT NULL, party_size INTEGER NOT NULL, phone TEXT NOT NULL, status TEXT DEFAULT 'waiting', "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
+            await pgPool.query(`ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS "email" TEXT;`).catch(() => {});
+            await pgPool.query(`ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS "bookingDate" TEXT;`).catch(() => {});
+            await pgPool.query(`ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS "bookingTime" TEXT;`).catch(() => {});
+            await pgPool.query(`ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS "seatingId" TEXT;`).catch(() => {});
+            await pgPool.query(`ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS "seatingType" TEXT;`).catch(() => {});
             await pgPool.query(`CREATE TABLE IF NOT EXISTS daily_sales (id SERIAL PRIMARY KEY, date DATE NOT NULL UNIQUE, total_sales REAL NOT NULL, total_orders INTEGER NOT NULL, net_profit REAL DEFAULT 0, cash_collected REAL DEFAULT 0, card_collected REAL DEFAULT 0, upi_collected REAL DEFAULT 0, custom_collected REAL DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`);
             await pgPool.query(`ALTER TABLE daily_sales ADD COLUMN IF NOT EXISTS custom_collected REAL DEFAULT 0;`).catch(() => {});
             await pgPool.query(`CREATE TABLE IF NOT EXISTS item_sales (id SERIAL PRIMARY KEY, date DATE NOT NULL, "itemName" TEXT NOT NULL, "quantitySold" INTEGER NOT NULL, "totalRevenue" REAL NOT NULL, "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, UNIQUE(date, "itemName"));`);
@@ -131,6 +136,11 @@ if (isPg) {
             db.run(`CREATE TABLE IF NOT EXISTS active_sessions (tableId TEXT PRIMARY KEY, sessionId TEXT NOT NULL, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
             db.run(`CREATE TABLE IF NOT EXISTS qr_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, seating_id TEXT NOT NULL, session_token TEXT NOT NULL, status TEXT DEFAULT 'ACTIVE', start_time DATETIME DEFAULT CURRENT_TIMESTAMP, end_time DATETIME)`);
             db.run(`CREATE TABLE IF NOT EXISTS waitlist (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, party_size INTEGER NOT NULL, phone TEXT NOT NULL, status TEXT DEFAULT 'waiting', createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+            db.run(`ALTER TABLE waitlist ADD COLUMN email TEXT`, (err) => {});
+            db.run(`ALTER TABLE waitlist ADD COLUMN bookingDate TEXT`, (err) => {});
+            db.run(`ALTER TABLE waitlist ADD COLUMN bookingTime TEXT`, (err) => {});
+            db.run(`ALTER TABLE waitlist ADD COLUMN seatingId TEXT`, (err) => {});
+            db.run(`ALTER TABLE waitlist ADD COLUMN seatingType TEXT`, (err) => {});
             db.run(`CREATE TABLE IF NOT EXISTS daily_sales (id INTEGER PRIMARY KEY AUTOINCREMENT, date DATE NOT NULL UNIQUE, total_sales REAL NOT NULL, total_orders INTEGER NOT NULL, net_profit REAL DEFAULT 0, cash_collected REAL DEFAULT 0, card_collected REAL DEFAULT 0, upi_collected REAL DEFAULT 0, custom_collected REAL DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
             db.run(`ALTER TABLE daily_sales ADD COLUMN custom_collected REAL DEFAULT 0`, (err) => {});
             db.run(`CREATE TABLE IF NOT EXISTS item_sales (id INTEGER PRIMARY KEY AUTOINCREMENT, date DATE NOT NULL, itemName TEXT NOT NULL, quantitySold INTEGER NOT NULL, totalRevenue REAL NOT NULL, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(date, itemName))`);
@@ -1054,16 +1064,56 @@ const transferTableSession = async (oldTableId, newTableId) => {
     return { success: true, newStatus: newStatusData };
 };
 
-const addWaitlistEntry = async (name, party_size, phone) => {
+const addWaitlistEntry = async (name, party_size, phone, email, bookingDate, bookingTime, seatingId, seatingType) => {
     if (isPg) {
-        const sql = `INSERT INTO waitlist (name, party_size, phone, status) VALUES (?, ?, ?, 'waiting') RETURNING *`;
-        const res = await runQuery(sql, [name, party_size, phone]);
+        const sql = `INSERT INTO waitlist (name, party_size, phone, status, "email", "bookingDate", "bookingTime", "seatingId", "seatingType") VALUES (?, ?, ?, 'waiting', ?, ?, ?, ?, ?) RETURNING *`;
+        const res = await runQuery(sql, [name, party_size, phone, email, bookingDate, bookingTime, seatingId, seatingType]);
         return res.rows[0];
     } else {
-        const sql = `INSERT INTO waitlist (name, party_size, phone, status) VALUES (?, ?, ?, 'waiting')`;
-        const res = await runQuery(sql, [name, party_size, phone]);
+        const sql = `INSERT INTO waitlist (name, party_size, phone, status, email, bookingDate, bookingTime, seatingId, seatingType) VALUES (?, ?, ?, 'waiting', ?, ?, ?, ?, ?)`;
+        const res = await runQuery(sql, [name, party_size, phone, email, bookingDate, bookingTime, seatingId, seatingType]);
         const sel = await runQuery(`SELECT * FROM waitlist WHERE id = ?`, [res.lastID]);
         return sel.rows[0];
+    }
+};
+
+const checkWaitlistAvailability = async (bookingDate, bookingTime, seatingId) => {
+    // 1.5 hours = 90 minutes overlap window
+    const OVERLAP_MINUTES = 90;
+    
+    let sql;
+    if (isPg) {
+        sql = `SELECT * FROM waitlist WHERE "bookingDate" = $1 AND "seatingId" = $2 AND status IN ('waiting', 'seated')`;
+        const res = await pgPool.query(sql, [bookingDate, seatingId]);
+        
+        if (res.rows.length === 0) return true;
+        
+        const [reqHours, reqMins] = bookingTime.split(':').map(Number);
+        const reqTotalMins = reqHours * 60 + reqMins;
+        
+        for (const b of res.rows) {
+            if (!b.bookingTime) continue;
+            const [bHours, bMins] = b.bookingTime.split(':').map(Number);
+            const bTotalMins = bHours * 60 + bMins;
+            if (Math.abs(reqTotalMins - bTotalMins) < OVERLAP_MINUTES) return false;
+        }
+        return true;
+    } else {
+        sql = `SELECT * FROM waitlist WHERE bookingDate = ? AND seatingId = ? AND status IN ('waiting', 'seated')`;
+        const res = await runQuery(sql, [bookingDate, seatingId]);
+        
+        if (res.rows.length === 0) return true;
+        
+        const [reqHours, reqMins] = bookingTime.split(':').map(Number);
+        const reqTotalMins = reqHours * 60 + reqMins;
+        
+        for (const b of res.rows) {
+            if (!b.bookingTime) continue;
+            const [bHours, bMins] = b.bookingTime.split(':').map(Number);
+            const bTotalMins = bHours * 60 + bMins;
+            if (Math.abs(reqTotalMins - bTotalMins) < OVERLAP_MINUTES) return false;
+        }
+        return true;
     }
 };
 
@@ -1091,5 +1141,5 @@ module.exports = {
     allocateSession, getActiveSession, clearSession, updatePrepTime, updateOrderItems,
     getUnavailabilitySchedules, createUnavailabilitySchedule, updateUnavailabilitySchedule, deleteUnavailabilitySchedule, processSchedulesTask,
     finalizePayment, getInventory, checkoutAttendance,
-    addWaitlistEntry, getWaitlist, updateWaitlistStatus
+    addWaitlistEntry, getWaitlist, updateWaitlistStatus, checkWaitlistAvailability
 };

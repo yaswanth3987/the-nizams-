@@ -81,7 +81,20 @@ const AdminReservations = () => {
                                 {getStatusBadge(res.status)}
                             </div>
                             
-                            <div className="space-y-3 mb-6">
+                            <div className="space-y-2 mb-6">
+                                {res.bookingDate && (
+                                    <div className="flex items-center justify-between bg-amber-500/10 border border-amber-500/20 p-3 rounded-lg mb-4">
+                                        <div>
+                                            <div className="text-xs text-amber-500/70 uppercase tracking-wider font-bold mb-1">Target Seating</div>
+                                            <div className="text-amber-400 font-bold capitalize">{res.seatingType || 'Table'} - {res.seatingId || 'Any'}</div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-xs text-amber-500/70 uppercase tracking-wider font-bold mb-1">Date & Time</div>
+                                            <div className="text-amber-400 font-bold">{res.bookingDate} @ {res.bookingTime}</div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="flex items-center text-gray-300 gap-3 bg-black/20 p-2 rounded-lg">
                                     <Users size={18} className="text-amber-500" />
                                     <span>Party of <strong className="text-white text-lg">{res.party_size}</strong></span>
@@ -90,9 +103,15 @@ const AdminReservations = () => {
                                     <Phone size={18} className="text-amber-500" />
                                     <span className="text-white">{res.phone}</span>
                                 </div>
-                                <div className="flex items-center text-gray-400 gap-3 text-sm px-2">
-                                    <Clock size={16} />
-                                    <span>Booked: {new Date(res.createdAt).toLocaleString()}</span>
+                                {res.email && (
+                                    <div className="flex items-center text-gray-300 gap-3 bg-black/20 p-2 rounded-lg">
+                                        <span className="text-amber-500 w-[18px] text-center font-bold">@</span>
+                                        <span className="text-white text-sm truncate">{res.email}</span>
+                                    </div>
+                                )}
+                                <div className="flex items-center text-gray-500 gap-3 text-xs px-2 mt-3 border-t border-white/5 pt-3">
+                                    <Clock size={12} />
+                                    <span>Request received: {new Date(res.createdAt).toLocaleString()}</span>
                                 </div>
                             </div>
 

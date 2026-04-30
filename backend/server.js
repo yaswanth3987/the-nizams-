@@ -17,8 +17,10 @@ const {
     getSessionsByTable, getOrdersByTable, updatePrepTime, updateOrderItems, resetAllSalesAndSessions,
     getUnavailabilitySchedules, createUnavailabilitySchedule, updateUnavailabilitySchedule, deleteUnavailabilitySchedule, processSchedulesTask,
     getInventory, updateSessionServiceCharge, deleteSession, deleteItemSale, transferTableSession,
-    addWaitlistEntry, getWaitlist, updateWaitlistStatus
+    addWaitlistEntry, getWaitlist, updateWaitlistStatus, checkWaitlistAvailability
 } = require('./database');
+
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 app.use(cors());
@@ -902,12 +904,38 @@ app.get('/api/waitlist', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/waitlist', async (req, res) => {
+// Rate Limiter for Bookings (Max 3 per IP every 15 minutes)
+const bookingLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, 
+    max: 3, 
+    message: { error: 'Too many booking attempts. Please try again later.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+app.post('/api/waitlist', bookingLimiter, async (req, res) => {
     try {
-        const { name, party_size, phone } = req.body;
-        if (!name || !party_size || !phone) return res.status(400).json({ error: 'Name, party size, and phone are required' });
+        const { name, party_size, phone, email, bookingDate, bookingTime, seatingId, seatingType } = req.body;
         
-        const entry = await addWaitlistEntry(name, party_size, phone);
+        // Input Validation
+        if (!name || name.length < 2 || name.length > 50) return res.status(400).json({ error: 'Valid name is required (2-50 chars)' });
+        if (!phone || !/^\+?[0-9\s\-\(\)]{7,15}$/.test(phone)) return res.status(400).json({ error: 'Valid phone number is required' });
+        if (!party_size || party_size < 1 || party_size > 30) return res.status(400).json({ error: 'Party size must be between 1 and 30' });
+        if (!bookingDate || !bookingTime || !seatingId || !seatingType) return res.status(400).json({ error: 'Booking date, time, and seating selection are required' });
+        
+        // Date/Time validation (must be future)
+        const reqDate = new Date(`${bookingDate}T${bookingTime}`);
+        if (reqDate < new Date()) {
+            return res.status(400).json({ error: 'Booking date and time must be in the future' });
+        }
+
+        // Double Booking Check (1.5 hours window)
+        const isAvailable = await checkWaitlistAvailability(bookingDate, bookingTime, seatingId);
+        if (!isAvailable) {
+            return res.status(409).json({ error: 'This seating option is already booked around this time. Please choose another time or seating option.' });
+        }
+        
+        const entry = await addWaitlistEntry(name, party_size, phone, email || null, bookingDate, bookingTime, seatingId, seatingType);
         io.emit('waitlistUpdated', entry);
         res.status(201).json(entry);
     } catch (err) { res.status(500).json({ error: err.message }); }
