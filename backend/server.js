@@ -931,7 +931,18 @@ server.listen(PORT, '0.0.0.0', async () => {
             io.emit('menuReset', fullMenu); 
         }
     }, 60000);
-});
 
-// Deployment trigger commit
-// Plan upgraded, retrying build
+    // ANTI-SLEEP KEEP-ALIVE: Prevent Render Free Tier from spinning down and causing intermittent 1034/502 errors
+    const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL || 'https://the-nizams.onrender.com';
+    setInterval(() => {
+        const https = require('https');
+        console.log(`[Keep-Alive] Pinging ${RENDER_EXTERNAL_URL} to prevent sleep cycle...`);
+        https.get(`${RENDER_EXTERNAL_URL}/api/menu`, (res) => {
+            if (res.statusCode === 200) {
+                console.log('[Keep-Alive] Server is awake.');
+            }
+        }).on('error', (err) => {
+            console.error('[Keep-Alive] Error:', err.message);
+        });
+    }, 14 * 60 * 1000); // Ping every 14 minutes (Render sleeps after 15)
+});
