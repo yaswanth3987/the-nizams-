@@ -933,7 +933,7 @@ server.listen(PORT, '0.0.0.0', async () => {
     }, 60000);
 
     // ANTI-SLEEP KEEP-ALIVE: Prevent Render Free Tier from spinning down and causing intermittent 1034/502 errors
-    const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL || 'https://the-nizams.onrender.com';
+    const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL || 'https://the-great-nizam.onrender.com';
     setInterval(() => {
         const https = require('https');
         console.log(`[Keep-Alive] Pinging ${RENDER_EXTERNAL_URL} to prevent sleep cycle...`);
