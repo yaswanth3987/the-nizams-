@@ -18,7 +18,7 @@ const {
     getUnavailabilitySchedules, createUnavailabilitySchedule, updateUnavailabilitySchedule, deleteUnavailabilitySchedule, processSchedulesTask,
     getInventory, updateSessionServiceCharge, deleteSession, deleteItemSale, transferTableSession,
     addWaitlistEntry, getWaitlist, updateWaitlistStatus, checkWaitlistAvailability,
-    getHistory, cleanupHistory
+    getHistory, cleanupHistory, getAttendanceLogs
 } = require('./database');
 
 const rateLimit = require('express-rate-limit');
@@ -835,6 +835,42 @@ app.put('/api/attendance/checkout', async (req, res) => {
         res.json(log);
     } catch (err) {
         res.status(400).json({ error: err.message });
+    }
+});
+
+app.get('/api/reports/attendance', async (req, res) => {
+    try {
+        const logs = await getAttendanceLogs();
+        const workbook = new ExcelJS.Workbook();
+        const sheet = workbook.addWorksheet('Attendance Logs');
+
+        sheet.columns = [
+            { header: 'Date', key: 'date', width: 15 },
+            { header: 'Employee Name', key: 'employeeName', width: 25 },
+            { header: 'Designation', key: 'designation', width: 15 },
+            { header: 'Check In', key: 'checkIn', width: 20 },
+            { header: 'Check Out', key: 'checkOut', width: 20 },
+            { header: 'Status', key: 'status', width: 10 }
+        ];
+
+        logs.forEach(log => {
+            sheet.addRow({
+                date: log.date,
+                employeeName: log.employeeName || log.employeename,
+                designation: log.designation,
+                checkIn: (log.checkIn || log.checkin) ? new Date(log.checkIn || log.checkin).toLocaleTimeString() : '-',
+                checkOut: (log.checkOut || log.checkout) ? new Date(log.checkOut || log.checkout).toLocaleTimeString() : '-',
+                status: log.status
+            });
+        });
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=attendance_report.xlsx');
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (err) {
+        console.error('Attendance Report Error:', err);
+        res.status(500).json({ error: err.message });
     }
 });
 

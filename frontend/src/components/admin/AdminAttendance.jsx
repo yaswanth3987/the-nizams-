@@ -1,5 +1,5 @@
-﻿import React, { useState, useEffect } from 'react';
-import { Search, Clock, X, UserPlus, Trash2, CheckCircle, AlertTriangle, User, Edit2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Clock, X, UserPlus, Trash2, CheckCircle, AlertTriangle, User, Edit2, Download } from 'lucide-react';
 
 const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
 
@@ -131,13 +131,22 @@ export default function AdminAttendance() {
                         Personnel registry and daily attendance tracking.
                     </p>
                 </div>
-                <button 
-                    onClick={() => { setShowAddModal(true); setNewStaff({name:'', phone:'', shiftTimings:'', designation: 'waiter', pin: ''}); }}
-                    className="h-14 px-8 rounded-xl bg-accent text-black font-bold text-sm flex items-center gap-3 transition-all hover:bg-white shadow-xl"
-                >
-                    <UserPlus size={20} /> 
-                    New Enrollment
-                </button>
+                <div className="flex gap-4">
+                    <button 
+                        onClick={() => window.open(`${API_URL}/reports/attendance`, '_blank')}
+                        className="h-14 px-8 rounded-xl bg-white/5 text-white/60 font-bold text-sm flex items-center gap-3 transition-all hover:bg-white/10 border border-white/10 shadow-xl"
+                    >
+                        <Download size={20} /> 
+                        Download Report
+                    </button>
+                    <button 
+                        onClick={() => { setShowAddModal(true); setNewStaff({name:'', phone:'', shiftTimings:'', designation: 'waiter', pin: ''}); }}
+                        className="h-14 px-8 rounded-xl bg-accent text-black font-bold text-sm flex items-center gap-3 transition-all hover:bg-white shadow-xl"
+                    >
+                        <UserPlus size={20} /> 
+                        New Enrollment
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

@@ -536,6 +536,14 @@ const getAttendanceToday = async () => {
     return res.rows;
 };
 
+const getAttendanceLogs = async () => {
+    const sql = isPg 
+        ? `SELECT a.*, e.name as "employeeName", e.designation FROM attendance a JOIN employees e ON a."employeeId" = CAST(e.id AS TEXT) ORDER BY a.date DESC, a."checkIn" DESC`
+        : `SELECT a.*, e.name as employeeName, e.designation FROM attendance a JOIN employees e ON a.employeeId = e.id ORDER BY a.date DESC, a.checkIn DESC`;
+    const res = await runQuery(sql);
+    return res.rows;
+};
+
 // Menu Management
 const getMenuItems = async () => {
     const res = await runQuery(`SELECT * FROM menu_items ORDER BY id ASC`);
@@ -1166,5 +1174,5 @@ module.exports = {
     getUnavailabilitySchedules, createUnavailabilitySchedule, updateUnavailabilitySchedule, deleteUnavailabilitySchedule, processSchedulesTask,
     finalizePayment, getInventory, checkoutAttendance,
     addWaitlistEntry, getWaitlist, updateWaitlistStatus, checkWaitlistAvailability,
-    getHistory, cleanupHistory
+    getHistory, cleanupHistory, getAttendanceLogs
 };
