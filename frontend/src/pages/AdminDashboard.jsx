@@ -504,7 +504,7 @@ export default function AdminDashboard() {
                 )}
 
                 {activeView === 'history' && (
-                    <AdminHistory />
+                    <AdminHistory printReceipt={printReceipt} />
                 )}
             </AdminLayout>
 

@@ -3,7 +3,7 @@ import { History, Search, Calendar, Clock, ChevronRight, FileText, Printer, Chec
 
 const API_URL = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
 
-const AdminHistory = () => {
+const AdminHistory = ({ printReceipt }) => {
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -110,15 +110,25 @@ const AdminHistory = () => {
             <div className="w-96 bg-[#0c0d0c] border border-white/10 rounded-[3rem] flex flex-col overflow-hidden shadow-2xl relative">
                 {selectedOrder ? (
                     <>
-                        <div className="p-8 border-b border-white/5 bg-white/5">
-                            <div className="flex items-center justify-between mb-6">
+                        <div className="p-8 border-b border-white/5 bg-white/5 space-y-6">
+                            <div className="flex items-center justify-between">
                                 <div className="w-10 h-10 rounded-xl bg-nizam-gold/10 border border-nizam-gold/20 flex items-center justify-center text-nizam-gold">
                                     <FileText size={18} />
                                 </div>
                                 <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em]">Order #{selectedOrder.id}</span>
                             </div>
-                            <h3 className="text-2xl font-serif font-bold text-white italic mb-1">Service Details</h3>
-                            <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">Table {selectedOrder.tableId}</p>
+                            
+                            <div className="space-y-4">
+                                <h3 className="text-2xl font-serif font-bold text-white italic mb-1">Service Details</h3>
+                                <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">Table {selectedOrder.tableId}</p>
+                            </div>
+
+                            <button 
+                                onClick={() => printReceipt(selectedOrder)}
+                                className="w-full py-4 bg-nizam-gold text-black rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-[0_10px_20px_rgba(198,168,124,0.3)] hover:scale-[0.98] active:scale-95 transition-all flex items-center justify-center gap-3"
+                            >
+                                <Printer size={14} /> Print Audit Copy
+                            </button>
                         </div>
 
                         <div className="flex-1 overflow-y-auto p-8 space-y-6 no-scrollbar">
@@ -173,13 +183,8 @@ const AdminHistory = () => {
                             })()}
                         </div>
 
-                        <div className="p-8 bg-white/5 border-t border-white/5 grid grid-cols-2 gap-4">
-                            <button 
-                                onClick={() => window.print()}
-                                className="col-span-2 py-4 bg-nizam-gold text-black rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-xl hover:scale-[0.98] transition-all flex items-center justify-center gap-3"
-                            >
-                                <Printer size={14} /> Print Audit Copy
-                            </button>
+                        <div className="p-8 bg-white/5 border-t border-white/5 text-center">
+                            <p className="text-[8px] font-black text-white/10 uppercase tracking-[0.4em]">Audit record verified and sealed</p>
                         </div>
                     </>
                 ) : (
