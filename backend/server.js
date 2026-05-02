@@ -17,7 +17,8 @@ const {
     getSessionsByTable, getOrdersByTable, updatePrepTime, updateOrderItems, resetAllSalesAndSessions,
     getUnavailabilitySchedules, createUnavailabilitySchedule, updateUnavailabilitySchedule, deleteUnavailabilitySchedule, processSchedulesTask,
     getInventory, updateSessionServiceCharge, deleteSession, deleteItemSale, transferTableSession,
-    addWaitlistEntry, getWaitlist, updateWaitlistStatus, checkWaitlistAvailability
+    addWaitlistEntry, getWaitlist, updateWaitlistStatus, checkWaitlistAvailability,
+    getHistory, cleanupHistory
 } = require('./database');
 
 const rateLimit = require('express-rate-limit');
@@ -995,9 +996,23 @@ app.post('/api/waitlist/verify-otp', bookingLimiter, async (req, res) => {
 app.post('/api/waitlist', bookingLimiter, async (req, res) => {
     try {
         const { name, party_size, phone, email, bookingDate, bookingTime, seatingId, seatingType } = req.body;
+        
+        // Final confirmation check for double bookings (90-min buffer)
+        const isAvailable = await checkWaitlistAvailability(bookingDate, bookingTime, seatingId);
+        if (!isAvailable) {
+            return res.status(409).json({ error: 'This table was just booked or is unavailable for this time slot.' });
+        }
+
         const entry = await addWaitlistEntry(name, party_size, phone, email || null, bookingDate, bookingTime, seatingId, seatingType);
         io.emit('waitlistUpdated', entry);
         res.status(201).json(entry);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/history', async (req, res) => {
+    try {
+        const history = await getHistory();
+        res.json(history);
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -1040,6 +1055,11 @@ server.listen(PORT, '0.0.0.0', async () => {
             console.error('Scheduler Task Failed:', e.message);
             return 0;
         });
+
+        // 3. 4-Day History Cleanup (Run once an hour to be safe)
+        if (new Date().getMinutes() === 0) {
+            await cleanupHistory(4).catch(e => console.error('Cleanup Task Failed:', e.message));
+        }
 
         if (resets > 0 || scheduleChanges > 0) {
             console.log(`[Scheduler] Auto-updated ${resets + scheduleChanges} menu items.`);

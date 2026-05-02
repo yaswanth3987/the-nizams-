@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminUnavailabilityScheduler from '../components/admin/AdminUnavailabilityScheduler';
+import AdminHistory from '../components/admin/AdminHistory';
 import { socket } from '../utils/socket';
 import Receipt from '../components/Receipt';
 import AdminLayout from '../components/admin/AdminLayout';
@@ -43,6 +44,7 @@ export default function AdminDashboard() {
     const [analyticsDaily, setAnalyticsDaily] = useState(null);
     const [itemAnalytics, setItemAnalytics] = useState([]);
     const [salesList, setSalesList] = useState([]);
+    const [historyList, setHistoryList] = useState([]);
 
     // --- Define Callbacks first for Hook Stability ---
     const fetchSessions = useCallback(() => {
@@ -92,6 +94,13 @@ export default function AdminDashboard() {
             .catch(err => console.error(err));
     }, []);
 
+    const fetchHistory = useCallback(() => {
+        return fetch(`${API_URL}/history`)
+            .then(res => res.json())
+            .then(data => setHistoryList(data || []))
+            .catch(err => console.error(err));
+    }, []);
+
     // Sound System Integration
     const hasUnattendedAssistance = assistanceRequests.some(r => r.status === 'pending');
     const { playSound } = useSoundSystem(hasUnattendedAssistance);
@@ -103,7 +112,8 @@ export default function AdminDashboard() {
             fetchSessions(),
             fetchNewOrders(),
             fetchAssistance(),
-            fetchDashboardData()
+            fetchDashboardData(),
+            fetchHistory()
         ])
         .then(() => setIsLoading(false))
         .catch(err => {
@@ -111,7 +121,7 @@ export default function AdminDashboard() {
             setErrorMsg("Failed to connect to backend server.");
             setIsLoading(false);
         });
-    }, [fetchSessions, fetchNewOrders, fetchAssistance, fetchDashboardData]);
+    }, [fetchSessions, fetchNewOrders, fetchAssistance, fetchDashboardData, fetchHistory]);
 
     // Socket Listeners Effect
     useEffect(() => {
@@ -323,6 +333,7 @@ export default function AdminDashboard() {
             case 'menu': return { title: 'Menu Management', active: 'menu', tabs: [] };
             case 'scheduler': return { title: 'Temporal Scheduler', active: 'scheduler', tabs: [] };
             case 'reservations': return { title: 'Reservations & Waitlist', active: 'reservations', tabs: [] };
+            case 'history': return { title: 'The Great Nizam', active: 'history', tabs: [] };
             default: return { title: 'The Great Nizam', active: '', tabs: [] };
         }
     };
@@ -358,6 +369,7 @@ export default function AdminDashboard() {
         completed: (sessions || []).filter(s => s.status === 'completed' && s.orderType !== 'takeaway').length,
         takeaway: (newOrders || []).filter(o => o.orderType === 'takeaway' && (o.status === 'new' || o.status === 'pending')).length + (sessions || []).filter(s => s.orderType === 'takeaway' && s.status !== 'completed').length,
         assistance: (assistanceRequests || []).length,
+        history: (historyList || []).length,
         hasBillRequest: (assistanceRequests || []).some(r => r.type === 'bill' && r.status === 'pending')
     };
 
@@ -489,6 +501,10 @@ export default function AdminDashboard() {
 
                 {activeView === 'reservations' && (
                     <AdminReservations />
+                )}
+
+                {activeView === 'history' && (
+                    <AdminHistory />
                 )}
             </AdminLayout>
 

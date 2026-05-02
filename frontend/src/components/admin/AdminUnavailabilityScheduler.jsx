@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Plus, Trash2, Check, X, AlertTriangle, ChevronDown, Utensils, LayoutGrid, Timer } from 'lucide-react';
 import { socket } from '../../utils/socket';
 
@@ -213,7 +213,13 @@ export default function AdminUnavailabilityScheduler() {
                                 <div className="flex items-center gap-3">
                                     <Utensils size={14} className="text-white/20" />
                                     <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">
-                                        {sched.category ? `Category: ${sched.category}` : `${JSON.parse(sched.itemIds || '[]').length} Items Linked`}
+                                        {sched.category ? `Category: ${sched.category}` : (() => {
+                                            try {
+                                                return `${JSON.parse(sched.itemIds || '[]').length} Items Linked`;
+                                            } catch (e) {
+                                                return 'Malformed Items Data';
+                                            }
+                                        })()}
                                     </p>
                                 </div>
                             </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, CheckCircle, PoundSterling, CheckSquare, Package, HelpCircle, CalendarDays, LogOut, Utensils, LayoutGrid, ShoppingBag, Columns, Activity, Clock, Calendar } from 'lucide-react';
+import { FileText, CheckCircle, PoundSterling, CheckSquare, Package, HelpCircle, CalendarDays, LogOut, Utensils, LayoutGrid, ShoppingBag, Columns, Activity, Clock, Calendar, History } from 'lucide-react';
 
 export default function AdminSidebar({ activeView, onViewChange, counts = {} }) {
     const navItems = [
@@ -15,7 +15,8 @@ export default function AdminSidebar({ activeView, onViewChange, counts = {} }) 
         { id: 'menu', label: 'MENU', icon: Utensils },
         { id: 'scheduler', label: 'SCHEDULER', icon: Clock },
         { id: 'inventory', label: 'INVENTORY', icon: Package },
-        { id: 'attendance', label: 'ATTENDANCE', icon: CalendarDays }
+        { id: 'attendance', label: 'ATTENDANCE', icon: CalendarDays },
+        { id: 'history', label: 'HISTORY', icon: History }
     ];
 
     return (

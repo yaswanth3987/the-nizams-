@@ -1104,12 +1104,13 @@ const checkWaitlistAvailability = async (bookingDate, bookingTime, seatingId) =>
         
         if (res.rows.length === 0) return true;
         
-        const [reqHours, reqMins] = bookingTime.split(':').map(Number);
+        const [reqHours, reqMins] = (bookingTime || "00:00").split(':').map(Number);
         const reqTotalMins = reqHours * 60 + reqMins;
         
         for (const b of res.rows) {
-            if (!b.bookingTime) continue;
-            const [bHours, bMins] = b.bookingTime.split(':').map(Number);
+            const bTime = b.bookingTime || b.time; // Handle variations
+            if (!bTime) continue;
+            const [bHours, bMins] = bTime.split(':').map(Number);
             const bTotalMins = bHours * 60 + bMins;
             if (Math.abs(reqTotalMins - bTotalMins) < OVERLAP_MINUTES) return false;
         }
@@ -1129,6 +1130,29 @@ const updateWaitlistStatus = async (id, status) => {
     return res.rows[0];
 };
 
+const getHistory = async (limit = 100) => {
+    const colName = isPg ? '"createdAt"' : 'createdAt';
+    // Fetch completed orders from the last 4 days
+    const sql = isPg 
+        ? `SELECT * FROM table_sessions WHERE status = 'completed' AND "createdAt" >= NOW() - INTERVAL '4 days' ORDER BY "createdAt" DESC LIMIT $1`
+        : `SELECT * FROM table_sessions WHERE status = 'completed' AND createdAt >= datetime('now', '-4 days') ORDER BY createdAt DESC LIMIT ?`;
+    const res = await runQuery(sql, [limit]);
+    return res.rows.map(row => ({ ...row, items: typeof row.items === 'string' ? JSON.parse(row.items) : row.items }));
+};
+
+const cleanupHistory = async (days = 4) => {
+    const colName = isPg ? '"createdAt"' : 'createdAt';
+    const sql = isPg
+        ? `DELETE FROM table_sessions WHERE status = 'completed' AND "createdAt" < NOW() - INTERVAL '${days} days'`
+        : `DELETE FROM table_sessions WHERE status = 'completed' AND createdAt < datetime('now', '-${days} days')`;
+    const res = await runQuery(sql);
+    const count = isPg ? res.rowCount : res.changes;
+    if (count > 0) {
+        console.log(`[Cleanup] Purged ${count} old history records.`);
+    }
+    return count;
+};
+
 module.exports = {
     db, pgPool, runQuery, isPg, getOrdersByStatus, createOrder, addOrderToSession, updateOrderStatus,
     transferTableSession,
@@ -1141,5 +1165,6 @@ module.exports = {
     allocateSession, getActiveSession, clearSession, updatePrepTime, updateOrderItems,
     getUnavailabilitySchedules, createUnavailabilitySchedule, updateUnavailabilitySchedule, deleteUnavailabilitySchedule, processSchedulesTask,
     finalizePayment, getInventory, checkoutAttendance,
-    addWaitlistEntry, getWaitlist, updateWaitlistStatus, checkWaitlistAvailability
+    addWaitlistEntry, getWaitlist, updateWaitlistStatus, checkWaitlistAvailability,
+    getHistory, cleanupHistory
 };

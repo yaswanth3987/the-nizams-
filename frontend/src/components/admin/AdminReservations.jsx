@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { io } from 'socket.io-client';
+import { socket } from '../../utils/socket';
 import { Calendar, Clock, Users, Phone, CheckCircle, XCircle, Clock3 } from 'lucide-react';
 
 const AdminReservations = () => {
     const [reservations, setReservations] = useState([]);
     const [loading, setLoading] = useState(true);
-    const apiUrl = import.meta.env.VITE_API_URL || '';
+    const apiUrl = import.meta.env.DEV ? `http://${window.location.hostname}:3001/api` : '/api';
 
     const fetchReservations = async () => {
         try {
-            const res = await fetch(`${apiUrl}/api/waitlist`);
+            const res = await fetch(`${apiUrl}/waitlist`);
             if (!res.ok) throw new Error('Network response was not ok');
             const data = await res.json();
             setReservations(data);
@@ -22,18 +22,19 @@ const AdminReservations = () => {
 
     useEffect(() => {
         fetchReservations();
-        const socket = io(apiUrl);
         
         socket.on('waitlistUpdated', () => {
             fetchReservations();
         });
 
-        return () => socket.disconnect();
-    }, [apiUrl]);
+        return () => {
+            socket.off('waitlistUpdated');
+        };
+    }, []);
 
     const updateStatus = async (id, newStatus) => {
         try {
-            const res = await fetch(`${apiUrl}/api/waitlist/${id}/status`, {
+            const res = await fetch(`${apiUrl}/waitlist/${id}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus })

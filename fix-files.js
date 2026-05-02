@@ -59,13 +59,18 @@ targets.forEach(target => {
                     'â€¢': '•',
                     'âš ï¸ ': '⚠️',
                     'â—¦': '◦',
-                    'â€”': '—'
+                    'â€”': '—',
+                    'â Œ': '❌',
+                    'âœ…': '✅',
+                    'Ã°Å¸â€ºÂ¡Ã¯Â¸Â ': '🛡️',
+                    'Ã°Å¸Å½Â¯': '🎯',
+                    'Ã°Å¸â€œÅ ': '📊'
                 };
 
                 for (const [mangled, correct] of Object.entries(emojiMap)) {
                     if (content.includes(mangled)) {
-                        console.log(`  🔧 Fixing mangled emoji (${mangled} -> ${correct}) in: ${path.relative(__dirname, filePath)}`);
-                        content = content.replace(new RegExp(mangled, 'g'), correct);
+                        console.log(`  🔧 Fixing mangled emoji in: ${path.relative(__dirname, filePath)}`);
+                        content = content.split(mangled).join(correct);
                         changed = true;
                     }
                 }

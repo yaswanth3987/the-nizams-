@@ -1,5 +1,5 @@
-﻿const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('backend/nizam.db');
+const sqlite3 = require('sqlite3').verbose();
+const db = new sqlite3.Database('nizam.db');
 
 db.all("PRAGMA table_info(table_sessions)", (err, rows) => {
     if (err) console.error(err);
